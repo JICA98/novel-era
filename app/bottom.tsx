@@ -1,5 +1,13 @@
 import * as React from 'react';
 import { BottomNavigation, Text } from 'react-native-paper';
+import { create } from 'zustand'
+
+export const indexes = {
+    favorites: 0,
+    search: 1,
+    recents: 2,
+    settings: 3
+}
 
 const MusicRoute = () => <Text>Music</Text>;
 
@@ -9,8 +17,14 @@ const RecentsRoute = () => <Text>Recents</Text>;
 
 const NotificationsRoute = () => <Text>Notifications</Text>;
 
+export const useBottomIndexStore = create((set) => ({
+    index: 0,
+    setIndex: (index: number) => set({ index: index })
+}))
+
 const MyBottom = () => {
-    const [index, setIndex] = React.useState(0);
+    const index = useBottomIndexStore((state: any) => state.index);
+    const setIndex = useBottomIndexStore((state: any) => state.setIndex);
     const [routes] = React.useState([
         { key: 'favorites', title: 'Favorites', focusedIcon: 'heart', unfocusedIcon: 'heart-outline' },
         { key: 'search', title: 'Search', focusedIcon: 'cloud-search', unfocusedIcon: 'cloud-search-outline' },

@@ -3,9 +3,10 @@ import { Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { AnimatedFAB, Appbar, FAB, Title } from "react-native-paper";
 import { StyleSheet } from 'react-native';
 import { Stack } from "expo-router";
-import MyBottom from "./bottom";
+import MyBottom, { indexes, useBottomIndexStore } from "./bottom";
 
 export default function Index() {
+    const index = useBottomIndexStore((state: any) => state.index);
     const [isExtended, setIsExtended] = React.useState(true);
 
     const isIOS = Platform.OS === 'ios';
@@ -26,11 +27,12 @@ export default function Index() {
             <Stack>
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             </Stack>
-            <FAB
+            {index === indexes.search && (<FAB
                 icon="plus"
                 style={styles.fab}
                 onPress={() => console.log('Pressed')}
-            />
+            />)}
+
         </SafeAreaView>
     );
 }
