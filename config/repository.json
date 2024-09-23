@@ -1,0 +1,19 @@
+{
+    "repos": [
+        {
+            "name": "novel-fire",
+            "id": "1",
+            "repoUrl": "https://novelfire.net",
+            "repoType": "novel",
+            "repoIcon": "https://novelfire.net/favicon.ico",
+            "repoBookUrl": "https://novelfire.net/book/${bookName}",
+            "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",
+            "bookImageSelector": {
+                "type": "css",
+                "selector": ".novel-header .fixed-img img",
+                "attribute": "src",
+                "page": "home"
+            }
+        }
+    ]
+}
