@@ -24,9 +24,6 @@ export default function Index() {
                 <Appbar.Content title="Novel Era" />
             </Appbar.Header>
             <MyBottom />
-            <Stack>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            </Stack>
             {index === indexes.search && (<FAB
                 icon="plus"
                 style={styles.fab}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { BottomNavigation, Text } from 'react-native-paper';
 import { create } from 'zustand'
+import SearchLayout from './search';
 
 export const indexes = {
     favorites: 0,
@@ -9,13 +10,13 @@ export const indexes = {
     settings: 3
 }
 
-const MusicRoute = () => <Text>Music</Text>;
+const FavoritesRoute = () => <Text>Favorites</Text>;
 
-const AlbumsRoute = () => <Text>Albums</Text>;
+const SearchRoute = () => <SearchLayout />;
 
 const RecentsRoute = () => <Text>Recents</Text>;
 
-const NotificationsRoute = () => <Text>Notifications</Text>;
+const SettingsRoute = () => <Text>Settings</Text>;
 
 export const useBottomIndexStore = create((set) => ({
     index: 0,
@@ -33,10 +34,10 @@ const MyBottom = () => {
     ]);
 
     const renderScene = BottomNavigation.SceneMap({
-        favorites: MusicRoute,
-        search: AlbumsRoute,
+        favorites: FavoritesRoute,
+        search: SearchRoute,
         recents: RecentsRoute,
-        settings: NotificationsRoute,
+        settings: SettingsRoute,
     });
 
     return (
