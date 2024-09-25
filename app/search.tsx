@@ -1,83 +1,31 @@
-import { ReposData } from "@/types";
+import { FetchData, Repo, ReposData } from "@/types";
 import { useEffect, useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import { ActivityIndicator, Button, List, TextInput, Title } from "react-native-paper";
 import { create } from "zustand";
+import { router } from 'expo-router';
+import UseRepositoryLayout from "./_repos";
 
-const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
-
-interface FetchData<T> {
-    data?: T;
-    error?: any;
-    isLoading: boolean;
-}
-
-const useRepositoryStore = create((set, get: any) => ({
-    repositories: {} as FetchData<ReposData>,
-    setRepositories: (repositories: FetchData<ReposData>) => set({ repositories: repositories }),
-    fetch: async () => {
-        set({ repositories: { isLoading: true } });
-        try {
-            const response = await fetch(repoLink);
-            const data = await response.json();
-            set({ repositories: { data, isLoading: false } });
-        } catch (error) {
-            set({ repositories: { error, isLoading: false } });
-        }
-    }
-}));
 
 export default function SearchLayout() {
+
+    return (
+        <UseRepositoryLayout props={{ renderRepositories: (repos) => (<SearchBarLayout repos={repos} />) }} />
+    );
+}
+
+function SearchBarLayout({ repos }: { repos: Repo[] }) {
     const [searchQuery, setSearchQuery] = useState('');
-    const [filteredRepos, setFilteredRepos] = useState<ReposData['repos']>([]);
-    const repositories: FetchData<ReposData> = useRepositoryStore((state: any) => state.repositories);
-    const setRepositories = useRepositoryStore((state: any) => state.setRepositories);
-    const fetchData = () => {
-        setRepositories({ isLoading: true });
-        fetch(repoLink)
-            .then(response => response.json())
-            .then(data => {
-                setRepositories({ data, isLoading: false });
-                setFilteredRepos(data.repos);
-            })
-            .catch(error => {
-                setRepositories({ error, isLoading: false });
-            });
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
+    const [filteredRepos, setFilteredRepos] = useState<Repo[]>(repos);
     const handleSearch = (query: string) => {
         setSearchQuery(query);
-        if (repositories.data) {
-            const filtered = repositories.data.repos.filter(repo =>
+        if (repos) {
+            const filtered = repos.filter(repo =>
                 repo.name.toLowerCase().includes(query.toLowerCase())
             );
             setFilteredRepos(filtered);
         }
     };
-
-    if (repositories.isLoading) {
-        return (
-            <View style={styles.container}>
-                <ActivityIndicator animating={true} size="large" />
-            </View>
-        );
-    }
-
-    if (repositories.error) {
-        return (
-            <View style={styles.container}>
-                <Title style={styles.errorText}>Failed to fetch repositories. Please try again.</Title>
-                <Button onPress={fetchData} children={
-                    'Retry'
-                } />
-            </View>
-        );
-    }
-
     return (
         <View style={styles.container}>
             <TextInput
@@ -96,7 +44,7 @@ export default function SearchLayout() {
                             title={() => highlightText(item.name, searchQuery)}
                             description={item.repoUrl}
                             left={props => <List.Icon {...props} icon="folder" />}
-                            onPress={() => console.log('Pressed')}
+                            onPress={() => router.push({ pathname: '/repos/[id]', params: { id: item.id } })}
                         />
                     ))}
                 </List.Section>
