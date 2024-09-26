@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jica98.novelera"
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +32,17 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2a08ae4e-e0a0-496e-96ad-c0b3578a4537"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/2a08ae4e-e0a0-496e-96ad-c0b3578a4537"
     }
   }
 }

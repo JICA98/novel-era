@@ -19,14 +19,20 @@
                 "path": "/genre-all/sort-new/status-all/all-novel",
                 "value": ".list-novel .novel-item",
                 "page": "search",
+                "bookLink": {
+                    "type": "css",
+                    "value": "a",
+                    "attribute": "href"
+                },
                 "bookImage": {
                     "type": "css",
-                    "value": ".novel-cover img"
+                    "selector": ".novel-cover img",
+                    "attribute": "src"
                 },
                 "title": {
                     "type": "attribute",
                     "selector": "",
-                    "value": "title"
+                    "attribute": "title"
                 }
             }
         }

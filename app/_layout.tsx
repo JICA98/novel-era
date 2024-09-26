@@ -4,7 +4,7 @@ export default function RootLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="repos/[id]" options={{ headerShown: true }} />
+      <Stack.Screen name="repos/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
