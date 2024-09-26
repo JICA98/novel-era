@@ -1,5 +1,5 @@
-import { ActivityIndicator, Appbar, Button, Title } from "react-native-paper";
-import { Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Appbar, Button, Card, Title } from "react-native-paper";
+import { FlatList, Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import UseRepositoryLayout from "../_repos";
@@ -76,6 +76,17 @@ function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Eleme
         );
     }
 
+    const renderItem = ({ item }: { item: Content }) => (
+        <Card style={styles.card}>
+            <Card.Cover source={{ uri: item.bookImage }} />
+            <Card.Title title={item.title} />
+            <Card.Actions>
+                <Button onPress={() => { }}>View</Button>
+            </Card.Actions>
+        </Card>
+    );
+
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -87,12 +98,14 @@ function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Eleme
 
 
             <ScrollView>
-                {content.data?.map((item: Content, index: number) => (
-                    <View key={index} style={{ padding: 16 }}>
-                        <Text>{item.title}</Text>
-                        <Text>{item.bookLink}</Text>
-                    </View>
-                ))}
+
+                <FlatList
+                    data={content.data}
+                    renderItem={renderItem}
+                    keyExtractor={(item, index) => index.toString()}
+                    numColumns={2}
+                    contentContainerStyle={styles.grid}
+                />
             </ScrollView>
         </SafeAreaView>
     );
@@ -106,6 +119,13 @@ const styles = StyleSheet.create({
     errorText: {
         textAlign: 'center',
         margin: 16,
+    },
+    grid: {
+        paddingHorizontal: 8,
+    },
+    card: {
+        flex: 1,
+        margin: 8,
     },
     fab: {
         position: 'absolute',
