@@ -27,7 +27,7 @@
                 "bookImage": {
                     "type": "css",
                     "selector": ".novel-cover img",
-                    "attribute": "src"
+                    "attribute": "data-src"
                 },
                 "title": {
                     "type": "attribute",

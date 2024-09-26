@@ -26,7 +26,7 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
         const html = await response.text();
 
         var dom = IDOMParser.parse(html);
-        const list =  dom.querySelectorAll(repo.listSelector.selector);
+        const list = dom.querySelectorAll(repo.listSelector.selector);
 
         return Array.from(list).map((item) => {
             const title = processData(item, repo.listSelector.title);
@@ -84,6 +84,16 @@ function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Eleme
                 <Appbar.Content title={repo.name} />
                 <Appbar.Action icon="magnify" onPress={() => { }} />
             </Appbar.Header>
+
+
+            <ScrollView>
+                {content.data?.map((item: Content, index: number) => (
+                    <View key={index} style={{ padding: 16 }}>
+                        <Text>{item.title}</Text>
+                        <Text>{item.bookLink}</Text>
+                    </View>
+                ))}
+            </ScrollView>
         </SafeAreaView>
     );
 }
