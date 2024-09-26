@@ -19,10 +19,8 @@ export interface Repo {
     listSelector: ListSelector;
 }
 
-export interface ListSelector {
-    type: string;
+export interface ListSelector extends Selector {
     path: string;
-    value: string;
     page: string;
     bookImage: Selector;
     title: Selector;

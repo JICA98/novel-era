@@ -21,7 +21,7 @@
                 "page": "search",
                 "bookLink": {
                     "type": "css",
-                    "value": "a",
+                    "selector": "a",
                     "attribute": "href"
                 },
                 "bookImage": {
@@ -31,7 +31,7 @@
                 },
                 "title": {
                     "type": "attribute",
-                    "selector": "",
+                    "selector": "a",
                     "attribute": "title"
                 }
             }

@@ -6,7 +6,7 @@ import UseRepositoryLayout from "../_repos";
 import { Content, FetchData, processData, Repo } from "@/types";
 import { useEffect } from "react";
 import { create } from "zustand";
-var HTMLParser = require('fast-html-parser');
+const IDOMParser = require("advanced-html-parser");
 
 export default function RepositorLayout() {
     const id = useLocalSearchParams().id as string;
@@ -25,10 +25,8 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
         const response = await fetch(url);
         const html = await response.text();
 
-        var dom = HTMLParser.parse(html);
-        const list =  dom.querySelectorAll(repo.listSelector.value);
-
-        console.log(list);
+        var dom = IDOMParser.parse(html);
+        const list =  dom.querySelectorAll(repo.listSelector.selector);
 
         return Array.from(list).map((item) => {
             const title = processData(item, repo.listSelector.title);
