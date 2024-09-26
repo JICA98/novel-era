@@ -10,9 +10,22 @@
             "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",
             "bookImageSelector": {
                 "type": "css",
-                "selector": ".novel-header .fixed-img img",
+                "value": ".novel-header .fixed-img img",
                 "attribute": "src",
                 "page": "home"
+            },
+            "listSelector": {
+                "type": "css",
+                "value": ".list-novel .novel-item a",
+                "page": "search",
+                "bookImage": {
+                    "type": "css",
+                    "value": ".novel-cover img"
+                },
+                "title": {
+                    "type": "attribute",
+                    "value": "title"
+                }
             }
         }
     ]
