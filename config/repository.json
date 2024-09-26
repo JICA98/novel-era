@@ -16,6 +16,7 @@
             },
             "listSelector": {
                 "type": "css",
+                "path": "genre-all/sort-new/status-all/all-novel",
                 "value": ".list-novel .novel-item a",
                 "page": "search",
                 "bookImage": {
