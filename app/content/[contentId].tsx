@@ -24,7 +24,7 @@ async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeD
         const response = await fetch(url);
         const html = await response.text();
         var dom = IDOMParser.parse(html).documentElement;
-        const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector));
+        const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
         const summary = processData(dom, repo.homeSelector.summarySelector);
         return { latestChapter, summary };
     } catch (error) {
@@ -155,7 +155,7 @@ function renderHeaderContent(scrollY: Animated.Value, content: Content, data: Ho
                 )}
                 scrollEventThrottle={16}
             >
-                {new Array(10).map((chapter, index) => (
+                {new Array(data.latestChapter).map((chapter, index) => (
                     <View key={index} style={styles.listItem}>
                         <Text style={styles.chapterTitle}>{chapter.title}</Text>
                         <Button mode="contained" onPress={() => console.log(`Downloading ${chapter.title}`)}>
