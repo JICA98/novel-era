@@ -1,5 +1,5 @@
 import { ActivityIndicator, Appbar, Button, Card, Title } from "react-native-paper";
-import { FlatList, Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { FlatList, SafeAreaView, ScrollView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import UseRepositoryLayout from "../_repos";
@@ -9,7 +9,7 @@ import { create } from "zustand";
 const IDOMParser = require("advanced-html-parser");
 
 export default function RepositorLayout() {
-    const id = useLocalSearchParams().id as string;
+    const id = useLocalSearchParams().repoId as string;
     console.log(id);
     return (
         <UseRepositoryLayout props={{
@@ -41,52 +41,51 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
 }
 
 const useContentStore = create((set) => ({
-    content: {} as FetchData<Content[]>,
-    setContent: (repositories: FetchData<Content[]>) => set({ content: repositories }),
+    content: { isLoading: true } as FetchData<Content[]>,
+    fetchData: (repo: Repo) => {
+        set({ content: { isLoading: true } });
+        fetchContentList(repo)
+            .then(data => set({ content: { data, isLoading: false } }))
+            .catch(error => set({ content: { error, isLoading: false } }));
+    },
 }));
 
 function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Element {
     const repo = repos.filter(repo => repo.id === id)[0];
-    const setContent = useContentStore((state: any) => state.setContent);
+    const fetchData = useContentStore((state: any) => state.fetchData);
     const content = useContentStore((state: any) => state.content);
+    let child;
 
     useEffect(() => {
-        setContent({ isLoading: true });
-        fetchContentList(repo)
-            .then(data => setContent({ data, isLoading: false }))
-            .catch(error => setContent({ error, isLoading: false }));
+        fetchData(repo);
     }, []);
 
     if (content.isLoading) {
-        return (
-            <View style={styles.container}>
+        child = (
+            <View style={styles.listPadding}>
                 <ActivityIndicator animating={true} size="large" />
             </View>
         );
-    }
-
-    if (content.error) {
-        return (
-            <View style={styles.container}>
+    } else if (content.error) {
+        child = (
+            <View style={styles.listPadding}>
                 <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
                 <Button onPress={() => fetchContentList(repo)} children={
                     'Retry'
                 } />
             </View>
         );
+    } else {
+        child = (
+            <FlatList
+                data={content.data}
+                renderItem={({ item }) => renderItem(id, item)}
+                keyExtractor={(item, index) => index.toString()}
+                numColumns={2}
+                contentContainerStyle={styles.grid}
+            />
+        );
     }
-
-    const renderItem = ({ item }: { item: Content }) => (
-        <Card style={styles.card}>
-            <Card.Cover source={{ uri: item.bookImage }} />
-            <Card.Title title={item.title} />
-            <Card.Actions>
-                <Button onPress={() => { }}>View</Button>
-            </Card.Actions>
-        </Card>
-    );
-
-
 
     return (
         <SafeAreaView style={styles.container}>
@@ -96,25 +95,36 @@ function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Eleme
                 <Appbar.Action icon="magnify" onPress={() => { }} />
             </Appbar.Header>
 
+            {child}
 
-            <ScrollView>
-
-                <FlatList
-                    data={content.data}
-                    renderItem={renderItem}
-                    keyExtractor={(item, index) => index.toString()}
-                    numColumns={2}
-                    contentContainerStyle={styles.grid}
-                />
-            </ScrollView>
         </SafeAreaView>
     );
 }
 
 
+const renderItem = (id: string, item: Content) => (
+    <Card style={styles.card} onPress={() => console.log('Pressed')}>
+        <Card.Cover source={{ uri: item.bookImage }} />
+        <Card.Title title={item.title} />
+        <Card.Actions>
+            <Button onPress={() => {
+                return router.push({
+                    pathname: '/content/[contentId]',
+                    params: { repoId: id, contentId: item.bookLink }
+                });
+            }}>
+                View</Button>
+        </Card.Actions>
+    </Card >
+);
+
+
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
+    },
+    listPadding: {
+        padding: 16,
     },
     errorText: {
         textAlign: 'center',

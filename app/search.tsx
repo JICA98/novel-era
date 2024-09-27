@@ -44,7 +44,7 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                             title={() => highlightText(item.name, searchQuery)}
                             description={item.repoUrl}
                             left={props => <List.Icon {...props} icon="folder" />}
-                            onPress={() => router.push({ pathname: '/repos/[id]', params: { id: item.id } })}
+                            onPress={() => router.push({ pathname: '/repos/[repoId]', params: { repoId: item.id } })}
                         />
                     ))}
                 </List.Section>

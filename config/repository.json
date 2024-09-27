@@ -19,6 +19,12 @@
                 "path": "/genre-all/sort-new/status-all/all-novel",
                 "selector": "#list-novel .novel-item",
                 "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "book/(.*)"
+                },
                 "bookLink": {
                     "type": "css",
                     "selector": "a",

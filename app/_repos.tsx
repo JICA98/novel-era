@@ -13,18 +13,18 @@ interface FetchData<T> {
     isLoading: boolean;
 }
 
-const useRepositoryStore = create((set, get: any) => ({
-    repositories: {} as FetchData<ReposData>,
-    setRepositories: (repositories: FetchData<ReposData>) => set({ repositories: repositories }),
-    fetch: async () => {
+const useRepositoryStore = create((set) => ({
+    repositories: { isLoading: true } as FetchData<ReposData>,
+    fetchData: () => {
         set({ repositories: { isLoading: true } });
-        try {
-            const response = await fetch(repoLink);
-            const data = await response.json();
-            set({ repositories: { data, isLoading: false } });
-        } catch (error) {
-            set({ repositories: { error, isLoading: false } });
-        }
+        fetch(repoLink)
+            .then(response => response.json())
+            .then(data => {
+                set({ repositories: { data, isLoading: false } });
+            })
+            .catch(error => {
+                set({ repositories: { error, isLoading: false } });
+            });
     }
 }));
 
@@ -34,19 +34,7 @@ interface UseRepositoryLayoutProps {
 
 export default function UseRepositoryLayout({ props }: { props: UseRepositoryLayoutProps }) {
     const repositories: FetchData<ReposData> = useRepositoryStore((state: any) => state.repositories);
-    const setRepositories = useRepositoryStore((state: any) => state.setRepositories);
-
-    const fetchData = () => {
-        setRepositories({ isLoading: true });
-        fetch(repoLink)
-            .then(response => response.json())
-            .then(data => {
-                setRepositories({ data, isLoading: false });
-            })
-            .catch(error => {
-                setRepositories({ error, isLoading: false });
-            });
-    };
+    const fetchData = useRepositoryStore((state: any) => state.fetchData);
 
     useEffect(() => {
         fetchData();
