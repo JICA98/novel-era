@@ -24,7 +24,7 @@
                 "page": "home",
                 "latestChapterSelector": {
                     "type": "css",
-                    "selector": ".chapter-latest-container .latest"
+                    "selector": ".novel-info .header-stats span strong"
                 },
                 "summarySelector": {
                     "type": "css",

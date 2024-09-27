@@ -21,6 +21,13 @@ export interface Repo {
     };
     bookImageSelector: BookImageSelector;
     listSelector: ListSelector;
+    homeSelector: HomeSelector;
+}
+
+export interface HomeSelector extends Selector {
+    path: string;
+    latestChapterSelector: Selector;
+    summarySelector: Selector;
 }
 
 export interface ListSelector extends Selector {

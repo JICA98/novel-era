@@ -1,35 +1,47 @@
 import UseRepositoryLayout from "@/app/_repos";
-import { Content, Repo } from "@/types";
+import { Content, FetchData, processData, Repo } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { Appbar, Card, Title } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Title } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
+import { create } from "zustand";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-function fetchContentChapters(repo: Repo, content: Content): Promise<any> {
-    const url = repo.repoUrl + repo.repoChapterType.path.replace('[bookId]', content.bookId);
-    console.log(url);
-    return fetch(url)
-        .then(response => response.text())
-        .then(html => {
-            var dom = IDOMParser.parse(html).documentElement;
-            const list = dom.querySelectorAll(repo.repoChapterType.selector);
-            return Array.from(list).map((item) => {
-                const title = processData(item, repo.repoChapterType.title);
-                const bookLink = processData(item, repo.repoChapterType.bookLink);
-                return { title, bookLink };
-            });
-        })
-        .catch(error => {
-            console.error(error);
-            return [];
-        });
+interface HomeData {
+    latestChapter: number;
+    summary: string;
 }
+
+async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeData> {
+    const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
+    console.log(url);
+    try {
+        const response = await fetch(url);
+        const html = await response.text();
+        var dom = IDOMParser.parse(html).documentElement;
+        const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector));
+        const summary = processData(dom, repo.homeSelector.summarySelector);
+        return { latestChapter, summary };
+    } catch (error) {
+        console.error(error);
+        return { latestChapter: 0, summary: '' };
+    }
+}
+
+const homeStore = create((set) => ({
+    content: { isLoading: true } as FetchData<{ latestChapter: string, summary: string }>,
+    fetchData: (repo: Repo, content: Content) => {
+        set({ content: { isLoading: true } });
+        fetchContentChapters(repo, content)
+            .then(data => set({ content: { data, isLoading: false } }))
+            .catch(error => set({ content: { error, isLoading: false } }));
+    },
+}));
 
 export default function ContentLayout() {
     const repoId = useLocalSearchParams().repoId as string;
@@ -45,8 +57,45 @@ export default function ContentLayout() {
 function RenderContentView({ repoId, content, repos }: { repoId: string, content: Content, repos: Repo[] }) {
     const repo = repos.filter(repo => repo.id === repoId)[0];
     const scrollY = useRef(new Animated.Value(0)).current;
+    const fetchData = homeStore((state: any) => state.fetchData);
+    const contentData: FetchData<HomeData> = homeStore((state: any) => state.content);
 
+    useEffect(() => {
+        fetchData(repo, content);
+    }, []);
 
+    let child;
+
+    if (contentData.isLoading) {
+        child = (
+            <View style={styles.listPadding}>
+                <ActivityIndicator animating={true} size="large" />
+            </View>
+        );
+    } else if (contentData.error || contentData.data === undefined) {
+        child = (
+            <View style={styles.listPadding}>
+                <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
+                <Button onPress={() => fetchData(repo, content)} children={
+                    'Retry'
+                } />
+            </View>
+        );
+    } else {
+        return renderHeaderContent(scrollY, content, contentData.data);
+    }
+    return (
+        <SafeAreaView style={styles.container}>
+            <Appbar.Header>
+                <Appbar.BackAction onPress={() => router.back()} />
+                <Appbar.Content title={content.title} />
+            </Appbar.Header>
+            {child}
+        </SafeAreaView>
+    );
+}
+
+function renderHeaderContent(scrollY: Animated.Value, content: Content, data: HomeData) {
     const headerHeight = scrollY.interpolate({
         inputRange: [0, HEADER_SCROLL_DISTANCE],
         outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
@@ -86,8 +135,7 @@ function RenderContentView({ repoId, content, repos }: { repoId: string, content
                 >
                     <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.gradient}
-                    />
+                        style={styles.gradient} />
                     <Animated.View style={[styles.innerView, {
                         opacity: titleOpacity,
                         transform: [{ translateY: titleTranslateY }]
@@ -107,59 +155,31 @@ function RenderContentView({ repoId, content, repos }: { repoId: string, content
                 )}
                 scrollEventThrottle={16}
             >
-                <View style={styles.contentContainer}>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 1" />
-                        <Card.Content>
-                            <Title>Content for card 1</Title>
-                        </Card.Content>
-                    </Card>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 2" />
-                        <Card.Content>
-                            <Title>Content for card 2</Title>
-                        </Card.Content>
-                    </Card>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 3" />
-                        <Card.Content>
-                            <Title>Content for card 3</Title>
-                        </Card.Content>
-                    </Card>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 3" />
-                        <Card.Content>
-                            <Title>Content for card 3</Title>
-                        </Card.Content>
-                    </Card>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 3" />
-                        <Card.Content>
-                            <Title>Content for card 3</Title>
-                        </Card.Content>
-                    </Card>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 3" />
-                        <Card.Content>
-                            <Title>Content for card 3</Title>
-                        </Card.Content>
-                    </Card>
-                    <Card style={styles.card}>
-                        <Card.Title title="Card 3" />
-                        <Card.Content>
-                            <Title>Content for card 3</Title>
-                        </Card.Content>
-                    </Card>
-                    {/* Add more cards as needed */}
-                </View>
+                {new Array(10).map((chapter, index) => (
+                    <View key={index} style={styles.listItem}>
+                        <Text style={styles.chapterTitle}>{chapter.title}</Text>
+                        <Button mode="contained" onPress={() => console.log(`Downloading ${chapter.title}`)}>
+                            Download
+                        </Button>
+                    </View>
+                ))}
             </ScrollView>
-        </SafeAreaView>
+
+        </SafeAreaView >
 
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    listPadding: {
+        padding: 16,
+    },
+    errorText: {
+        textAlign: 'center',
+        margin: 16,
     },
     header: {
         position: 'absolute',
@@ -201,5 +221,16 @@ const styles = StyleSheet.create({
     },
     card: {
         marginBottom: 16,
+    },
+    listItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: '#ccc',
+    },
+    chapterTitle: {
+        fontSize: 16,
     },
 });
