@@ -5,14 +5,30 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useRef } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
 import { Appbar, Card, Title } from "react-native-paper";
+import IDOMParser from "advanced-html-parser";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 90;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
-function fetchContentChapters(repo: Repo, content: Content): Promise<Content[]> {
-   repo.repoChapterType.path;
+function fetchContentChapters(repo: Repo, content: Content): Promise<any> {
     const url = repo.repoUrl + repo.repoChapterType.path.replace('[bookId]', content.bookId);
+    console.log(url);
+    return fetch(url)
+        .then(response => response.text())
+        .then(html => {
+            var dom = IDOMParser.parse(html).documentElement;
+            const list = dom.querySelectorAll(repo.repoChapterType.selector);
+            return Array.from(list).map((item) => {
+                const title = processData(item, repo.repoChapterType.title);
+                const bookLink = processData(item, repo.repoChapterType.bookLink);
+                return { title, bookLink };
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            return [];
+        });
 }
 
 export default function ContentLayout() {

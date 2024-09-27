@@ -18,6 +18,19 @@
                 "attribute": "src",
                 "page": "home"
             },
+            "homeSelector": {
+                "type": "css",
+                "path": "/book/[bookId]",
+                "page": "home",
+                "latestChapterSelector": {
+                    "type": "css",
+                    "selector": ".chapter-latest-container .latest"
+                },
+                "summarySelector": {
+                    "type": "css",
+                    "selector": ".summary .content"
+                }
+            },
             "listSelector": {
                 "type": "css",
                 "path": "/genre-all/sort-new/status-all/all-novel",
