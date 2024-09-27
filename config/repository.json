@@ -5,6 +5,10 @@
             "id": "1",
             "repoUrl": "https://novelfire.net",
             "repoType": "novel",
+            "repoChapterType": {
+                "type": "iterative",
+                "path": "/book/[bookId]/chapters"
+            },
             "repoIcon": "https://novelfire.net/favicon.ico",
             "repoBookUrl": "https://novelfire.net/book/${bookName}",
             "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",

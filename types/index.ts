@@ -15,6 +15,10 @@ export interface Repo {
     repoIcon: string;
     repoBookUrl: string;
     repoAllChaptersUrl: string;
+    repoChapterType: {
+        type: string;
+        path: string;
+    };
     bookImageSelector: BookImageSelector;
     listSelector: ListSelector;
 }
@@ -25,12 +29,14 @@ export interface ListSelector extends Selector {
     bookImage: Selector;
     title: Selector;
     bookLink: Selector;
+    bookId: Selector;
 }
 
 export interface Selector {
     type: SelectorType;
     selector: string;
     attribute: string;
+    regex: RegExp;
 }
 
 export interface ReposData {
@@ -53,6 +59,7 @@ export interface Content {
     title: string;
     bookImage: string;
     bookLink: string;
+    bookId: string;
 }
 
 export function processData(data: any, selector: Selector): string {
@@ -61,8 +68,14 @@ export function processData(data: any, selector: Selector): string {
         content = data.querySelector(selector.selector);
     }
     if (selector.attribute) {
-        return content.getAttribute(selector.attribute);
+        content = content.getAttribute(selector.attribute);
+    } else {
+        content = content.textContent;
     }
-    return content.textContent;
+    if (selector.regex) {
+        const match = new String(content).match(selector.regex);
+        content = match ? match[1] : '';
+    }
+    return content;
 
 }

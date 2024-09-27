@@ -6,17 +6,7 @@ import UseRepositoryLayout from "../_repos";
 import { Content, FetchData, processData, Repo } from "@/types";
 import { useEffect } from "react";
 import { create } from "zustand";
-const IDOMParser = require("advanced-html-parser");
-
-export default function RepositorLayout() {
-    const id = useLocalSearchParams().repoId as string;
-    console.log(id);
-    return (
-        <UseRepositoryLayout props={{
-            renderRepositories: (repos) => (<RenderRepoView id={id} repos={repos} />)
-        }} />
-    );
-}
+import IDOMParser from "advanced-html-parser";
 
 async function fetchContentList(repo: Repo): Promise<Content[]> {
     try {
@@ -25,14 +15,15 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
         const response = await fetch(url);
         const html = await response.text();
 
-        var dom = IDOMParser.parse(html);
+        var dom = IDOMParser.parse(html).documentElement;
         const list = dom.querySelectorAll(repo.listSelector.selector);
 
         return Array.from(list).map((item) => {
             const title = processData(item, repo.listSelector.title);
             const bookImage = processData(item, repo.listSelector.bookImage);
             const bookLink = processData(item, repo.listSelector.bookLink);
-            return { title, bookImage, bookLink };
+            const bookId = processData(item, repo.listSelector.bookId);
+            return { title, bookImage, bookLink, bookId };
         });
     } catch (error) {
         console.error(error);
@@ -40,15 +31,25 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
     }
 }
 
-const useContentStore = create((set) => ({
+const useContentStore = create((set, get: any) => ({
     content: { isLoading: true } as FetchData<Content[]>,
     fetchData: (repo: Repo) => {
+        let data = get();
         set({ content: { isLoading: true } });
         fetchContentList(repo)
             .then(data => set({ content: { data, isLoading: false } }))
             .catch(error => set({ content: { error, isLoading: false } }));
     },
 }));
+
+export default function RepositorLayout() {
+    const id = useLocalSearchParams().repoId as string;
+    console.log(id);
+    const renderRepositories = (repos: Repo[]) => <RenderRepoView id={id} repos={repos} />;
+    return (
+        <UseRepositoryLayout props={{ renderRepositories }} />
+    );
+}
 
 function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Element {
     const repo = repos.filter(repo => repo.id === id)[0];
@@ -110,7 +111,7 @@ const renderItem = (id: string, item: Content) => (
             <Button onPress={() => {
                 return router.push({
                     pathname: '/content/[contentId]',
-                    params: { repoId: id, contentId: item.bookLink }
+                    params: { repoId: id, contentId: item.bookId, content: JSON.stringify(item) }
                 });
             }}>
                 View</Button>
