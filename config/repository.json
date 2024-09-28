@@ -36,7 +36,13 @@
                 "page": "chapter",
                 "content": {
                     "type": "html",
-                    "selector": "#chapter-container #content"
+                    "selector": "#chapter-container #content",
+                    "filters": [
+                        {
+                            "type": "css",
+                            "selector": ".box-notification"
+                        }
+                    ]
                 }
             },
             "listSelector": {
