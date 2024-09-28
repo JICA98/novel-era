@@ -7,35 +7,36 @@ import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Tit
 import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
 import RenderPagedContent from "./content";
-import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
+import { allDownloadsStore, saveFile, useDownloadStore } from "../downloads/utils";
+import RNFetchBlob from 'rn-fetch-blob';
 
 interface ChapterData {
+    id: string;
     chapterContent: string;
+    repo: Repo;
+    content: Content;
 }
 
 export function chapterKey(repo: Repo, content: Content, id: string) {
     return repo.repoUrl + repo.chapterSelector.path.replace('[bookId]', content.bookId).replace('[chapterId]', id);
 }
 
-export async function fetchChapterUsing(key: string, repo: Repo): Promise<ChapterData> {
+export async function fetchChapter(repo: Repo, content: Content, id: string): Promise<ChapterData> {
     try {
+        const key = chapterKey(repo, content, id);
         console.log(key);
         const response = await fetch(key);
         const html = await response.text();
         const dom = IDOMParser.parse(html).documentElement;
-        const chapterContent = processData(dom, repo.chapterSelector.content);
-        return { chapterContent };
+        const contentData = processData(dom, repo.chapterSelector.content);
+        const chapterContent = { id, chapterContent: contentData, repo, content } as ChapterData;
+        saveFile(key, chapterContent).then(() => console.log('Saved'));
+        return chapterContent;
     } catch (error) {
         console.error(error);
-        return { chapterContent: '' };
+        return { chapterContent: '', repo, content } as ChapterData;
     }
 }
-
-async function fetchChapter(repo: Repo, content: Content, id: string): Promise<ChapterData> {
-    return fetchChapterUsing(chapterKey(repo, content, id), repo);
-}
-
-
 
 export default function ChapterLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;

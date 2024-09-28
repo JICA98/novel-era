@@ -1,7 +1,19 @@
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
+import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 
 export default function RootLayout() {
+  const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
+  const downloads = allDownloadsStore((state: any) => state.downloads);
+  useEffect(() => {
+    try {
+      initApp(downloads, setDownloads);
+    } catch (error) {
+      
+      console.error(error);
+    }
+  }, []);
   return (
     <PaperProvider>
       <Stack>
@@ -13,3 +25,8 @@ export default function RootLayout() {
     </PaperProvider>
   );
 }
+
+function initApp(downloads: any, setDownloads: any) {
+  setupDownloadStores(downloads, setDownloads);
+}
+

@@ -8,8 +8,8 @@ import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, Lis
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
-import { allDownloadsStore, isDownloadErrored, isDownloading, startDownload, useDownloadStore } from "../downloads/utils";
-import { chapterKey, fetchChapterUsing } from "../chapters/_layout";
+import { allDownloadsStore, deleteFile, removeFromStore, startDownload, useDownloadStore } from "../downloads/utils";
+import { chapterKey, fetchChapter } from "../chapters/_layout";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
@@ -229,11 +229,8 @@ function ContentListCard({ index, start, repo, content }: { index: number, start
     const id = `${start + index + 1}`;
     const key = chapterKey(repo, content, id);
     const downloads = allDownloadsStore((state: any) => state.downloads);
-    const downloadStore = useDownloadStore({
-        key,
-        downloads,
-        setDownloads: allDownloadsStore((state: any) => state.setDownloads),
-    });
+    const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
+    const downloadStore = useDownloadStore({ key, downloads, setDownloads });
     const store = downloadStore((state: any) => state.content);
     const setLoading = downloadStore((state: any) => state.setLoading);
     const setContent = downloadStore((state: any) => state.setContent);
@@ -241,10 +238,16 @@ function ContentListCard({ index, start, repo, content }: { index: number, start
     function handleDownload(): void {
         console.log('Download chapter');
         startDownload({
-            fetcher: () => fetchChapterUsing(key, repo),
+            fetcher: () => fetchChapter(repo, content, id),
             setLoading,
             setContent,
         });
+    }
+
+    function handleRemove(): void {
+        console.log('Remove chapter');
+        removeFromStore({ key, downloads, setDownloads });
+        setContent({ noStarted: true });
     }
 
     return (
@@ -253,28 +256,29 @@ function ContentListCard({ index, start, repo, content }: { index: number, start
                 key={index}
                 title={() => <Text>Chapter {id}</Text>}
                 right={_ => {
-                    if (store.noStarted) {
+                    if (store.data) {
+                        return <IconButton
+                            icon="check"
+                            mode="contained-tonal"
+                            style={{ marginLeft: 'auto' }}
+                            onPress={() => handleRemove()} />;
+                    } else if (store.noStarted) {
                         return <IconButton
                             icon="download-outline"
                             mode="contained-tonal"
                             style={{ marginLeft: 'auto' }}
                             onPress={() => handleDownload()} />;
                     } else if (store?.isLoading) {
-                        return <ActivityIndicator animating={true} size="small" />;
-                    } else if (store?.error) {
+                        return <View style={styles.loading}>
+                            <ActivityIndicator animating={true} size="small" />
+                        </View>;
+                    } else {
                         return <IconButton
                             icon="alert-circle-outline"
                             mode="contained-tonal"
                             style={{ marginLeft: 'auto' }}
                             onPress={() => handleDownload()} />;
-                    } else {
-                        return <IconButton
-                            icon="check"
-                            mode="contained-tonal"
-                            style={{ marginLeft: 'auto' }}
-                            onPress={() => handleDownload()} />;
                     }
-
                 }}
                 onPress={() => router.push(
                     {
@@ -297,6 +301,9 @@ const styles = StyleSheet.create({
     },
     listPadding: {
         padding: 16,
+    },
+    loading: {
+        margin: 6.0, paddingHorizontal: 8.0, paddingVertical: 8.0
     },
     errorText: {
         textAlign: 'center',
