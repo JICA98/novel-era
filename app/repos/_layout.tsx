@@ -43,16 +43,7 @@ const useContentStore = create((set, get: any) => ({
 }));
 
 export default function RepositorLayout() {
-    const id = useLocalSearchParams().repoId as string;
-    console.log(id);
-    const renderRepositories = (repos: Repo[]) => <RenderRepoView id={id} repos={repos} />;
-    return (
-        <UseRepositoryLayout props={{ renderRepositories }} />
-    );
-}
-
-function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Element {
-    const repo = repos.filter(repo => repo.id === id)[0];
+    const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
     const fetchData = useContentStore((state: any) => state.fetchData);
     const content = useContentStore((state: any) => state.content);
     let child;
@@ -80,7 +71,7 @@ function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Eleme
         child = (
             <FlatList
                 data={content.data}
-                renderItem={({ item }) => renderItem(id, item)}
+                renderItem={({ item }) => renderItem(repo, item)}
                 keyExtractor={(item, index) => index.toString()}
                 numColumns={2}
                 contentContainerStyle={styles.grid}
@@ -103,15 +94,15 @@ function RenderRepoView({ id, repos }: { id: string, repos: Repo[] }): JSX.Eleme
 }
 
 
-const renderItem = (id: string, item: Content) => (
+const renderItem = (repo: Repo, item: Content) => (
     <Card style={styles.card} onPress={() => console.log('Pressed')}>
         <Card.Cover source={{ uri: item.bookImage }} />
         <Card.Title title={item.title} />
         <Card.Actions>
             <Button onPress={() => {
                 return router.push({
-                    pathname: '/content/[contentId]',
-                    params: { repoId: id, contentId: item.bookId, content: JSON.stringify(item) }
+                    pathname: '/contents',
+                    params: { content: JSON.stringify(item), repo: JSON.stringify(repo) }
                 });
             }}>
                 View</Button>

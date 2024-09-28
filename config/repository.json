@@ -31,6 +31,14 @@
                     "selector": ".summary .content"
                 }
             },
+            "chapterSelector": {
+                "path": "/book/[bookId]/[chapterId]",
+                "page": "chapter",
+                "content": {
+                    "type": "css",
+                    "selector": "#chapter-container #content"
+                }
+            },
             "listSelector": {
                 "type": "css",
                 "path": "/genre-all/sort-new/status-all/all-novel",
