@@ -50,6 +50,7 @@ export interface Selector {
     selector: string;
     attribute: string;
     regex: RegExp;
+    filters: Selector[];
 }
 
 export interface ReposData {
@@ -85,7 +86,16 @@ export function processData(data: any, selector: Selector): string {
     if (selector.attribute) {
         content = content.getAttribute(selector.attribute);
     } else {
-        console.log(selector.type);
+        if (selector.filters) {
+            for (const filter of selector.filters) {
+                if (filter.selector) {
+                    content.querySelectorAll(filter.selector)
+                        .forEach((element: any) => {
+                            element.remove();
+                        });
+                }
+            }
+        }
         if (selector.type === SelectorType.html) {
             content = content.innerHTML;
         } else {
