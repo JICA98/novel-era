@@ -63,6 +63,8 @@ export interface FetchData<T> {
 }
 
 export enum SelectorType {
+    text = 'text',
+    html = 'html',
     css = 'css',
     attribute = 'attribute',
     image = 'image'
@@ -83,7 +85,12 @@ export function processData(data: any, selector: Selector): string {
     if (selector.attribute) {
         content = content.getAttribute(selector.attribute);
     } else {
-        content = content.textContent;
+        console.log(selector.type);
+        if (selector.type === SelectorType.html) {
+            content = content.innerHTML;
+        } else {
+            content = content.textContent;
+        }
     }
     if (selector.regex) {
         const match = new String(content).match(selector.regex);

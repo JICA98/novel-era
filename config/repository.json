@@ -23,7 +23,7 @@
                 "path": "/book/[bookId]",
                 "page": "home",
                 "latestChapterSelector": {
-                    "type": "html",
+                    "type": "text",
                     "selector": ".novel-info .header-stats span strong"
                 },
                 "summarySelector": {
@@ -35,7 +35,7 @@
                 "path": "/book/[bookId]/chapter-[chapterId]",
                 "page": "chapter",
                 "content": {
-                    "type": "text",
+                    "type": "html",
                     "selector": "#chapter-container #content"
                 }
             },
