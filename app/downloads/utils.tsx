@@ -69,12 +69,13 @@ export async function readFile(key: string) {
     try {
         const key64 = btoa(key);
         const uri = FileSystem.documentDirectory + '/' + key64;
-        console.log('Reading', uri);
+        // console.log('Reading', uri);
+        
         const data = await FileSystem.readAsStringAsync(uri);
         const parsed = JSON.parse(data ?? '{}');
         return parsed?.data;
     } catch (error) {
-        console.warn(error);
+        // console.warn(error);
         return null;
     }
 }

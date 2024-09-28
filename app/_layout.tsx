@@ -2,6 +2,11 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
+import * as p from "plimit-lit";
+
+export function pLimitLit(concurrency: number) {
+  return p.pLimit(concurrency);
+}
 
 export default function RootLayout() {
   const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
@@ -10,7 +15,7 @@ export default function RootLayout() {
     try {
       initApp(downloads, setDownloads);
     } catch (error) {
-      
+
       console.error(error);
     }
   }, []);

@@ -1,28 +1,25 @@
-import Epub, { Chapter } from 'epub-gen';
+import epub from 'epub-gen-memory/bundle';
+import type { Options, Content, Chapter, Font } from 'epub-gen-memory';
 
-/**
- * @param {string} title
- * @param {string} author
- * @param {string} cover
- * @param {string} content
- * @returns {Epub.Options} 
- * @example
- * epubOption('title', 'author', 'cover', 'content')
- ** */
-function epubOption(title: string, author: string, cover: string, content: Chapter[],): Epub.Options {
+function epubOption(title: string, author: string, cover: string): Options {
     return {
         title, // *Required, title of the book.
         author: author, // *Required, name of the author.
         cover: cover, // Url or File path, both ok.
-        content,
-        appendChapterTitles: true,
     };
 }
 
-async function saveAsEpub(title: string, content: any, cover: any, author: any) {
-    const name = `./epub/${title}.epub`;
-    const option = epubOption(title, author, cover, content);
+export async function saveAsEpub(
+    { title, author, content, cover }: {
+        title: string, content: string[], cover: string, author: string
+    }): Promise<Blob> {
+    const option = epubOption(title, author, cover);
 
-    const epub = (new Epub(option, name));
-    const result = await epub.promise;
+    return epub(option, content.map((content, index) => {
+        const chapter: Chapter = {
+            title: `Chapter ${index + 1}`,
+            content,
+        };
+        return chapter;
+    }));
 }

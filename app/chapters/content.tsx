@@ -38,6 +38,7 @@ export default function RenderPagedContent({ content }: { content: string }) {
                                 contentWidth={width}
                                 source={source}
                                 baseStyle={{ fontSize: 18 }}
+                                ignoredDomTags={['nf3e90']}
                             />
                             <View style={{ margin: 20 }} ></View>
                         </ScrollView>

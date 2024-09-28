@@ -7,7 +7,7 @@ import IDOMParser from "advanced-html-parser";
 import RenderPagedContent from "./content";
 import { allDownloadsStore, saveFile, useDownloadStore } from "../downloads/utils";
 
-interface ChapterData {
+export interface ChapterData {
     id: string;
     chapterContent: string;
     repo: Repo;

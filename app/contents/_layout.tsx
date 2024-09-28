@@ -8,9 +8,11 @@ import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, Lis
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
-import { allDownloadsStore, deleteFile, removeFromStore, startDownload, useDownloadStore } from "../downloads/utils";
-import { chapterKey, fetchChapter } from "../chapters/_layout";
+import { allDownloadsStore, deleteFile, readFile, removeFromStore, startDownload, useDownloadStore } from "../downloads/utils";
+import { ChapterData, chapterKey, fetchChapter } from "../chapters/_layout";
 import ExportDialog from "../exports/_layout";
+import { pLimitLit } from "../_layout";
+import { saveAsEpub } from "../exports/epubUtil";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
@@ -50,6 +52,8 @@ export default function ContentLayout() {
     const setContent = useContentStore((state: any) => state.setContent);
     const contentData: FetchData<HomeData> = useContentStore((state: any) => state.content);
     const setLoading = useContentStore((state: any) => state.setLoading);
+    const downloads = allDownloadsStore((state: any) => state.downloads);
+    const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
     const [exportsVisible, setExportsVisible] = useState(false);
 
     function handleContentFetch() {
@@ -94,212 +98,235 @@ export default function ContentLayout() {
                 visible={exportsVisible}
                 onDismiss={() => setExportsVisible(false)}
                 maxChapters={contentData.data?.latestChapter}
-                onExport={(range, format) => { }}
+                onExport={(range, format) => {
+                    console.log(range, format);
+                    const endRange = range[1];
+                    const startRange = range[0];
+                    const limit = pLimitLit(3);
+                    const promises: Promise<ChapterData>[] = Array.from({ length: endRange - startRange + 1 }).map((_, index) => {
+                        const id = (range[0] + index).toString();
+                        return limit(async () => {
+                            const key = chapterKey(repo, content, id);
+                            if (downloads.has(key)) {
+                                const stateData = await readFile(key);
+                                if (stateData?.chapterContent) {
+                                    console.log('Cached ', key);
+                                    return stateData.chapterContent;
+                                }
+                            }
+                            console.log('Downloading ', key);
+                            return await fetchChapter(repo, content, id);
+                        });
+                    });
+
+                    Promise.all(promises).then((data) => {
+                        console.log(data);
+                    }).catch((error) => {
+                        console.error(error);
+                    });
+                }}
             />
         </SafeAreaView>
     );
-}
 
-function MenuFunction({ setExportsVisible }: { setExportsVisible: React.Dispatch<React.SetStateAction<boolean>> }) {
-    const [visible, setVisible] = useState(false);
-    const openMenu = () => setVisible(true);
-    const closeMenu = () => setVisible(false);
-    return (
-        <View
-            style={{
-            }}>
-            <Menu
-                visible={visible}
-                onDismiss={closeMenu}
-                anchor={<Button onPress={openMenu}><Icon source="menu" size={18} ></Icon></Button>}>
-                <Menu.Item onPress={() => {
-                    setExportsVisible(true); closeMenu();
-                }} title="Export" />
-            </Menu>
-        </View>
-    );
-}
-
-function interpolateScrollY(scrollY: Animated.Value) {
-    const headerHeight = scrollY.interpolate({
-        inputRange: [0, HEADER_SCROLL_DISTANCE],
-        outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
-        extrapolate: 'clamp',
-    });
-
-    const titleOpacity = scrollY.interpolate({
-        inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
-        outputRange: [1, 0.5, 0],
-        extrapolate: 'clamp',
-    });
-
-    const titleTranslateY = scrollY.interpolate({
-        inputRange: [0, HEADER_SCROLL_DISTANCE],
-        outputRange: [0, -HEADER_SCROLL_DISTANCE / 2],
-        extrapolate: 'clamp',
-    });
-
-    const tabsMarginTop = scrollY.interpolate({
-        inputRange: [0, HEADER_SCROLL_DISTANCE],
-        outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
-        extrapolate: 'clamp',
-    });
-    return { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop };
-}
-
-function renderHeaderContent(scrollY: Animated.Value, content: Content, data: HomeData, repo: Repo) {
-    const { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop } = interpolateScrollY(scrollY);
-
-    function renderChapterScrollView(start: number, end: number) {
+    function MenuFunction({ setExportsVisible }: { setExportsVisible: React.Dispatch<React.SetStateAction<boolean>> }) {
+        const [visible, setVisible] = useState(false);
+        const openMenu = () => setVisible(true);
+        const closeMenu = () => setVisible(false);
         return (
-            <ScrollView
-                contentContainerStyle={styles.scrollViewContent}
-                onScroll={Animated.event(
-                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                    { useNativeDriver: false }
-                )}
-                scrollEventThrottle={16}
-            >
-                <View style={styles.contentContainer}>
-                    {Array.from({ length: (end - start) }).map((_, index) => (
-                        renderChapterCard(index, start, repo)
-                    ))}
-                </View>
-            </ScrollView>
+            <View
+                style={{
+                }}>
+                <Menu
+                    visible={visible}
+                    onDismiss={closeMenu}
+                    anchor={<Button onPress={openMenu}><Icon source="menu" size={18} ></Icon></Button>}>
+                    <Menu.Item onPress={() => {
+                        setExportsVisible(true); closeMenu();
+                    }} title="Export" />
+                </Menu>
+            </View>
         );
     }
 
-    function renderChapterCard(index: number, start: number, repo: Repo) {
-        return (
-            <ContentListCard
-                key={index}
-                index={index}
-                start={start}
-                repo={repo}
-                content={content}
-            />
-        );
-    }
-
-    const tabLength = Math.ceil(data.latestChapter / 120);
-
-    function renderTabs() {
-
-        return (
-            <Animated.View style={[styles.container, { marginTop: tabsMarginTop }]} >
-                <TabsProvider defaultIndex={0}>
-                    <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'}>
-                        {Array.from({ length: tabLength }).map((_, index) => {
-                            const start = index * 120;
-                            const end = Math.min((index + 1) * 120, data.latestChapter);
-                            return (
-                                <TabScreen key={index} label={`${start + 1} — ${end}`}>
-                                    {renderChapterScrollView(start, end)}
-                                </TabScreen>
-                            );
-                        })}
-                    </Tabs>
-                </TabsProvider>
-            </Animated.View>
-        );
-    }
-
-    return (
-        <View style={styles.container}>
-            <Animated.View style={[styles.header, { height: headerHeight }]}>
-                <ImageBackground
-                    source={{ uri: content.bookImage }} // Replace with your image URL
-                    style={[styles.imageBackground]}
-                >
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.gradient} />
-                    <Animated.View style={[styles.innerView, {
-                        opacity: titleOpacity,
-                        transform: [{ translateY: titleTranslateY }]
-                    }]}>
-                        <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
-                            {data.summary}
-                        </Text>
-                    </Animated.View>
-                </ImageBackground>
-            </Animated.View>
-            {renderTabs()}
-        </View >
-
-    );
-
-}
-
-
-function ContentListCard({ index, start, repo, content }: { index: number, start: number, repo: Repo, content: Content }) {
-    const id = `${start + index + 1}`;
-    const key = chapterKey(repo, content, id);
-    const downloads = allDownloadsStore((state: any) => state.downloads);
-    const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
-    const downloadStore = useDownloadStore({ key, downloads, setDownloads });
-    const store = downloadStore((state: any) => state.content);
-    const setLoading = downloadStore((state: any) => state.setLoading);
-    const setContent = downloadStore((state: any) => state.setContent);
-
-    function handleDownload(): void {
-        console.log('Download chapter');
-        startDownload({
-            fetcher: () => fetchChapter(repo, content, id),
-            setLoading,
-            setContent,
+    function interpolateScrollY(scrollY: Animated.Value) {
+        const headerHeight = scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+            extrapolate: 'clamp',
         });
+
+        const titleOpacity = scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+            outputRange: [1, 0.5, 0],
+            extrapolate: 'clamp',
+        });
+
+        const titleTranslateY = scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [0, -HEADER_SCROLL_DISTANCE / 2],
+            extrapolate: 'clamp',
+        });
+
+        const tabsMarginTop = scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+            extrapolate: 'clamp',
+        });
+        return { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop };
     }
 
-    function handleRemove(): void {
-        console.log('Remove chapter');
-        removeFromStore({ key, downloads, setDownloads });
-        setContent({ noStarted: true });
-    }
+    function renderHeaderContent(scrollY: Animated.Value, content: Content, data: HomeData, repo: Repo) {
+        const { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop } = interpolateScrollY(scrollY);
 
-    return (
-        <View key={index}>
-            <List.Item
-                key={index}
-                title={() => <Text>Chapter {id}</Text>}
-                right={_ => {
-                    if (store.data) {
-                        return <IconButton
-                            icon="check"
-                            mode="contained-tonal"
-                            style={{ marginLeft: 'auto' }}
-                            onPress={() => handleRemove()} />;
-                    } else if (store.noStarted) {
-                        return <IconButton
-                            icon="download-outline"
-                            mode="contained-tonal"
-                            style={{ marginLeft: 'auto' }}
-                            onPress={() => handleDownload()} />;
-                    } else if (store?.isLoading) {
-                        return <View style={styles.loading}>
-                            <ActivityIndicator animating={true} size="small" />
-                        </View>;
-                    } else {
-                        return <IconButton
-                            icon="alert-circle-outline"
-                            mode="contained-tonal"
-                            style={{ marginLeft: 'auto' }}
-                            onPress={() => handleDownload()} />;
-                    }
-                }}
-                onPress={() => router.push(
-                    {
-                        pathname: '/chapters',
-                        params: {
-                            id,
-                            repo: JSON.stringify(repo),
-                            content: JSON.stringify(content)
-                        }
-                    })}
-            />
-            <Divider />
-        </View>
-    );
+        function renderChapterScrollView(start: number, end: number) {
+            return (
+                <ScrollView
+                    contentContainerStyle={styles.scrollViewContent}
+                    onScroll={Animated.event(
+                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                        { useNativeDriver: false }
+                    )}
+                    scrollEventThrottle={16}
+                >
+                    <View style={styles.contentContainer}>
+                        {Array.from({ length: (end - start) }).map((_, index) => (
+                            renderChapterCard(index, start, repo)
+                        ))}
+                    </View>
+                </ScrollView>
+            );
+        }
+
+        function renderChapterCard(index: number, start: number, repo: Repo) {
+            return (
+                <ContentListCard
+                    key={index}
+                    index={index}
+                    start={start}
+                    repo={repo}
+                    content={content}
+                />
+            );
+        }
+
+        const tabLength = Math.ceil(data.latestChapter / 120);
+
+        function renderTabs() {
+
+            return (
+                <Animated.View style={[styles.container, { marginTop: tabsMarginTop }]} >
+                    <TabsProvider defaultIndex={0}>
+                        <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'}>
+                            {Array.from({ length: tabLength }).map((_, index) => {
+                                const start = index * 120;
+                                const end = Math.min((index + 1) * 120, data.latestChapter);
+                                return (
+                                    <TabScreen key={index} label={`${start + 1} — ${end}`}>
+                                        {renderChapterScrollView(start, end)}
+                                    </TabScreen>
+                                );
+                            })}
+                        </Tabs>
+                    </TabsProvider>
+                </Animated.View>
+            );
+        }
+
+        return (
+            <View style={styles.container}>
+                <Animated.View style={[styles.header, { height: headerHeight }]}>
+                    <ImageBackground
+                        source={{ uri: content.bookImage }} // Replace with your image URL
+                        style={[styles.imageBackground]}
+                    >
+                        <LinearGradient
+                            colors={['transparent', 'rgba(0,0,0,0.8)']}
+                            style={styles.gradient} />
+                        <Animated.View style={[styles.innerView, {
+                            opacity: titleOpacity,
+                            transform: [{ translateY: titleTranslateY }]
+                        }]}>
+                            <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
+                                {data.summary}
+                            </Text>
+                        </Animated.View>
+                    </ImageBackground>
+                </Animated.View>
+                {renderTabs()}
+            </View >
+
+        );
+
+
+        function ContentListCard({ index, start, repo, content }: { index: number, start: number, repo: Repo, content: Content }) {
+            const id = `${start + index + 1}`;
+            const key = chapterKey(repo, content, id);
+            const downloadStore = useDownloadStore({ key, downloads, setDownloads });
+            const store = downloadStore((state: any) => state.content);
+            const setLoading = downloadStore((state: any) => state.setLoading);
+            const setContent = downloadStore((state: any) => state.setContent);
+
+            function handleDownload(): void {
+                console.log('Download chapter');
+                startDownload({
+                    fetcher: () => fetchChapter(repo, content, id),
+                    setLoading,
+                    setContent,
+                });
+            }
+
+            function handleRemove(): void {
+                console.log('Remove chapter');
+                removeFromStore({ key, downloads, setDownloads });
+                setContent({ noStarted: true });
+            }
+
+            return (
+                <View key={index}>
+                    <List.Item
+                        key={index}
+                        title={() => <Text>Chapter {id}</Text>}
+                        right={_ => {
+                            if (store.data) {
+                                return <IconButton
+                                    icon="check"
+                                    mode="contained-tonal"
+                                    style={{ marginLeft: 'auto' }}
+                                    onPress={() => handleRemove()} />;
+                            } else if (store.noStarted) {
+                                return <IconButton
+                                    icon="download-outline"
+                                    mode="contained-tonal"
+                                    style={{ marginLeft: 'auto' }}
+                                    onPress={() => handleDownload()} />;
+                            } else if (store?.isLoading) {
+                                return <View style={styles.loading}>
+                                    <ActivityIndicator animating={true} size="small" />
+                                </View>;
+                            } else {
+                                return <IconButton
+                                    icon="alert-circle-outline"
+                                    mode="contained-tonal"
+                                    style={{ marginLeft: 'auto' }}
+                                    onPress={() => handleDownload()} />;
+                            }
+                        }}
+                        onPress={() => router.push(
+                            {
+                                pathname: '/chapters',
+                                params: {
+                                    id,
+                                    repo: JSON.stringify(repo),
+                                    content: JSON.stringify(content)
+                                }
+                            })}
+                    />
+                    <Divider />
+                </View>
+            );
+        }
+    }
 }
 
 const styles = StyleSheet.create({
