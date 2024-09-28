@@ -2,12 +2,14 @@ import UseRepositoryLayout from "@/app/_repos";
 import { Content, FetchData, processData, Repo } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Title } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
+import { allDownloadsStore, isDownloadErrored, isDownloading, startDownload, useDownloadStore } from "../downloads/utils";
+import { chapterKey, fetchChapterUsing } from "../chapters/_layout";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
@@ -34,28 +36,32 @@ async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeD
     }
 }
 
-const homeStore = create((set) => ({
-    content: { isLoading: true } as FetchData<{ latestChapter: string, summary: string }>,
-    fetchData: (repo: Repo, content: Content) => {
-        set({ content: { isLoading: true } });
-        fetchContentChapters(repo, content)
-            .then(data => set({ content: { data, isLoading: false } }))
-            .catch(error => set({ content: { error, isLoading: false } }));
-    },
+const useContentStore = create((set) => ({
+    content: { isLoading: true } as FetchData<HomeData>,
+    setContent: (content: FetchData<HomeData>) => set({ content }),
+    setLoading: () => set({ content: { isLoading: true } }),
 }));
 
 export default function ContentLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
     const content = JSON.parse(useLocalSearchParams().content as string) as Content;
     const scrollY = useRef(new Animated.Value(0)).current;
-    const fetchData = homeStore((state: any) => state.fetchData);
-    const contentData: FetchData<HomeData> = homeStore((state: any) => state.content);
+    const setContent = useContentStore((state: any) => state.setContent);
+    const contentData: FetchData<HomeData> = useContentStore((state: any) => state.content);
+    const setLoading = useContentStore((state: any) => state.setLoading);
+
+    function handleContentFetch() {
+        setLoading();
+        fetchContentChapters(repo, content)
+            .then(data => setContent({ data }))
+            .catch(error => setContent({ error }));
+    }
     useEffect(() => {
-        fetchData(repo, content);
+        handleContentFetch();
     }, []);
 
     let child;
-
+    const hasDataLoaded = !contentData.isLoading && contentData.data !== undefined && !contentData.error;
     if (contentData.isLoading) {
         child = (
             <View style={styles.listPadding}>
@@ -66,7 +72,7 @@ export default function ContentLayout() {
         child = (
             <View style={styles.listPadding}>
                 <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => fetchData(repo, content)} children={
+                <Button onPress={() => handleContentFetch()} children={
                     'Retry'
                 } />
             </View>
@@ -79,9 +85,31 @@ export default function ContentLayout() {
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={content.title} />
+                {hasDataLoaded && <MenuFunction />}
             </Appbar.Header>
             {child}
         </SafeAreaView>
+    );
+}
+
+function MenuFunction() {
+    const [visible, setVisible] = useState(false);
+    const openMenu = () => setVisible(true);
+    const closeMenu = () => setVisible(false);
+    return (
+        <View
+            style={{
+            }}>
+            <Menu
+                visible={visible}
+                onDismiss={closeMenu}
+                anchor={<Button onPress={openMenu}><Icon source="menu" size={18} ></Icon></Button>}>
+                <Menu.Item onPress={() => { }} title="Item 1" />
+                <Menu.Item onPress={() => { }} title="Item 2" />
+                <Divider />
+                <Menu.Item onPress={() => { }} title="Item 3" />
+            </Menu>
+        </View>
     );
 }
 
@@ -135,32 +163,14 @@ function renderHeaderContent(scrollY: Animated.Value, content: Content, data: Ho
     }
 
     function renderChapterCard(index: number, start: number, repo: Repo) {
-        function handleDownload(): void {
-        }
-
         return (
-            <View key={index}>
-                <List.Item
-                    key={index}
-                    title={() => <Text>Chapter {start + index + 1}</Text>}
-                    right={_ => <IconButton
-                        icon="download-outline"
-                        mode="contained-tonal"
-                        style={{ marginLeft: 'auto' }}
-                        onPress={() => handleDownload()}
-                    />}
-                    onPress={() => router.push(
-                        {
-                            pathname: '/chapters',
-                            params: {
-                                id: `${start + index + 1}`,
-                                repo: JSON.stringify(repo),
-                                content: JSON.stringify(content)
-                            }
-                        })}
-                />
-                <Divider />
-            </View>
+            <ContentListCard
+                key={index}
+                index={index}
+                start={start}
+                repo={repo}
+                content={content}
+            />
         );
     }
 
@@ -171,7 +181,7 @@ function renderHeaderContent(scrollY: Animated.Value, content: Content, data: Ho
         return (
             <Animated.View style={[styles.container, { marginTop: tabsMarginTop }]} >
                 <TabsProvider defaultIndex={0}>
-                    <Tabs mode="scrollable">
+                    <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'}>
                         {Array.from({ length: tabLength }).map((_, index) => {
                             const start = index * 120;
                             const end = Math.min((index + 1) * 120, data.latestChapter);
@@ -212,6 +222,73 @@ function renderHeaderContent(scrollY: Animated.Value, content: Content, data: Ho
 
     );
 
+}
+
+
+function ContentListCard({ index, start, repo, content }: { index: number, start: number, repo: Repo, content: Content }) {
+    const id = `${start + index + 1}`;
+    const key = chapterKey(repo, content, id);
+    const downloads = allDownloadsStore((state: any) => state.downloads);
+    const downloadStore = useDownloadStore({
+        key,
+        downloads,
+        setDownloads: allDownloadsStore((state: any) => state.setDownloads),
+    });
+    const store = downloadStore((state: any) => state.content);
+    const setLoading = downloadStore((state: any) => state.setLoading);
+    const setContent = downloadStore((state: any) => state.setContent);
+
+    function handleDownload(): void {
+        console.log('Download chapter');
+        startDownload({
+            fetcher: () => fetchChapterUsing(key, repo),
+            setLoading,
+            setContent,
+        });
+    }
+
+    return (
+        <View key={index}>
+            <List.Item
+                key={index}
+                title={() => <Text>Chapter {id}</Text>}
+                right={_ => {
+                    if (store.noStarted) {
+                        return <IconButton
+                            icon="download-outline"
+                            mode="contained-tonal"
+                            style={{ marginLeft: 'auto' }}
+                            onPress={() => handleDownload()} />;
+                    } else if (store?.isLoading) {
+                        return <ActivityIndicator animating={true} size="small" />;
+                    } else if (store?.error) {
+                        return <IconButton
+                            icon="alert-circle-outline"
+                            mode="contained-tonal"
+                            style={{ marginLeft: 'auto' }}
+                            onPress={() => handleDownload()} />;
+                    } else {
+                        return <IconButton
+                            icon="check"
+                            mode="contained-tonal"
+                            style={{ marginLeft: 'auto' }}
+                            onPress={() => handleDownload()} />;
+                    }
+
+                }}
+                onPress={() => router.push(
+                    {
+                        pathname: '/chapters',
+                        params: {
+                            id,
+                            repo: JSON.stringify(repo),
+                            content: JSON.stringify(content)
+                        }
+                    })}
+            />
+            <Divider />
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({

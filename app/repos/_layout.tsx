@@ -31,25 +31,30 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
     }
 }
 
-const useContentStore = create((set, get: any) => ({
+const useContentStore = create((set) => ({
     content: { isLoading: true } as FetchData<Content[]>,
-    fetchData: (repo: Repo) => {
-        let data = get();
-        set({ content: { isLoading: true } });
-        fetchContentList(repo)
-            .then(data => set({ content: { data, isLoading: false } }))
-            .catch(error => set({ content: { error, isLoading: false } }));
-    },
+    setContent: (content: FetchData<Content[]>) => set({ content }),
+    setLoading: () => set({ content: { isLoading: true } }),
 }));
 
 export default function RepositorLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
-    const fetchData = useContentStore((state: any) => state.fetchData);
+    const setContent = useContentStore((state: any) => state.setContent);
     const content = useContentStore((state: any) => state.content);
+    const setLoading = useContentStore((state: any) => state.setLoading);
     let child;
 
+    function fetchContent(cached = true) {
+        if (cached && content.data) {
+            return;
+        }
+        setLoading();
+        fetchContentList(repo)
+            .then(data => setContent({ data }))
+            .catch(error => setContent({ error }));
+    }
     useEffect(() => {
-        fetchData(repo);
+        fetchContent();
     }, []);
 
     if (content.isLoading) {
@@ -62,7 +67,7 @@ export default function RepositorLayout() {
         child = (
             <View style={styles.listPadding}>
                 <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => fetchContentList(repo)} children={
+                <Button onPress={() => fetchContent(false)} children={
                     'Retry'
                 } />
             </View>

@@ -7,17 +7,20 @@ import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Tit
 import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
 import RenderPagedContent from "./content";
+import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
 
 interface ChapterData {
     chapterContent: string;
 }
 
-async function fetchChapter(repo: Repo, content: Content, id: string): Promise<ChapterData> {
-    console.log('fetchChapter');
-    const url = repo.repoUrl + repo.chapterSelector.path.replace('[bookId]', content.bookId).replace('[chapterId]', id);
-    console.log(url);
+export function chapterKey(repo: Repo, content: Content, id: string) {
+    return repo.repoUrl + repo.chapterSelector.path.replace('[bookId]', content.bookId).replace('[chapterId]', id);
+}
+
+export async function fetchChapterUsing(key: string, repo: Repo): Promise<ChapterData> {
     try {
-        const response = await fetch(url);
+        console.log(key);
+        const response = await fetch(key);
         const html = await response.text();
         const dom = IDOMParser.parse(html).documentElement;
         const chapterContent = processData(dom, repo.chapterSelector.content);
@@ -28,28 +31,39 @@ async function fetchChapter(repo: Repo, content: Content, id: string): Promise<C
     }
 }
 
-const useChapterData = create((set) => ({
-    chapterContent: { isLoading: true } as FetchData<ChapterData>,
-    fetchData: (repo: Repo, content: Content, id: string) => {
-        set({ chapterContent: { isLoading: true } });
-        fetchChapter(repo, content, id)
-            .then(data => set({ chapterContent: { data, isLoading: false } }))
-            .catch(error => set({ chapterContent: { error, isLoading: false } }));
-    },
-}));
+async function fetchChapter(repo: Repo, content: Content, id: string): Promise<ChapterData> {
+    return fetchChapterUsing(chapterKey(repo, content, id), repo);
+}
+
 
 
 export default function ChapterLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
     const content = JSON.parse(useLocalSearchParams().content as string) as Content;
     const id = useLocalSearchParams().id as string;
-    const contentData: FetchData<ChapterData> = useChapterData((state: any) => state.chapterContent);
-    const fetchData = useChapterData((state: any) => state.fetchData);
-    const [isAppBarVisible, setIsAppBarVisible] = useState(true);
+    const key = chapterKey(repo, content, id);
+    const downloads = allDownloadsStore((state: any) => state.downloads);
+    const useChapterData = useDownloadStore({
+        key,
+        downloads,
+        setDownloads: allDownloadsStore((state: any) => state.setDownloads),
+    });
+    const contentData: FetchData<ChapterData> = useChapterData((state: any) => state.content);
+    const setContent = useChapterData((state: any) => state.setContent);
+    const setLoading = useChapterData((state: any) => state.setLoading);
+    const [focusedMode, setFocusedMode] = useState(false);
 
     useEffect(() => {
-        fetchData(repo, content, id);
+        fetchChapterData();
     }, []);
+
+    function fetchChapterData(cached = true) {
+        if (cached && contentData.data) { return; }
+        setLoading();
+        fetchChapter(repo, content, id)
+            .then(data => setContent({ data }))
+            .catch(error => setContent({ error }));
+    }
 
     let child;
 
@@ -63,7 +77,7 @@ export default function ChapterLayout() {
         child = (
             <View style={styles.listPadding}>
                 <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => fetchData(repo, content)} children={
+                <Button onPress={() => fetchChapterData()} children={
                     'Retry'
                 } />
             </View>
@@ -73,7 +87,7 @@ export default function ChapterLayout() {
     }
     return (
         <SafeAreaView style={styles.container}>
-            {isAppBarVisible && (
+            {!focusedMode && (
                 <Appbar.Header>
                     <Appbar.BackAction onPress={() => router.back()} />
                     <Appbar.Content title={`Chapter ${id}`} />
@@ -82,7 +96,7 @@ export default function ChapterLayout() {
             {child}
             <TouchableOpacity
                 style={styles.invisibleButton}
-                onPress={() => setIsAppBarVisible(!isAppBarVisible)}
+                onPress={() => setFocusedMode(!focusedMode)}
             />
         </SafeAreaView>
     );

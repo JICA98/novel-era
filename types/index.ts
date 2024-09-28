@@ -61,6 +61,7 @@ export interface FetchData<T> {
     data?: T;
     error?: any;
     isLoading: boolean;
+    noStarted?: boolean;
 }
 
 export enum SelectorType {
