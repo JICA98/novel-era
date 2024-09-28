@@ -1,7 +1,7 @@
 import { Content, FetchData, processData, Repo } from "@/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Dimensions, View, Text, SafeAreaView } from "react-native";
+import { Dimensions, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
 import PagerView from "react-native-pager-view";
 import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Title } from "react-native-paper";
 import { create } from "zustand";
@@ -45,6 +45,7 @@ export default function ChapterLayout() {
     const id = useLocalSearchParams().id as string;
     const contentData: FetchData<ChapterData> = useChapterData((state: any) => state.chapterContent);
     const fetchData = useChapterData((state: any) => state.fetchData);
+    const [isAppBarVisible, setIsAppBarVisible] = useState(true);
 
     useEffect(() => {
         fetchData(repo, content, id);
@@ -72,11 +73,17 @@ export default function ChapterLayout() {
     }
     return (
         <SafeAreaView style={styles.container}>
-            <Appbar.Header>
-                <Appbar.BackAction onPress={() => router.back()} />
-                <Appbar.Content title={`Chapter ${id}  —  ${content.title}`} />
-            </Appbar.Header>
+            {isAppBarVisible && (
+                <Appbar.Header>
+                    <Appbar.BackAction onPress={() => router.back()} />
+                    <Appbar.Content title={`Chapter ${id}`} />
+                </Appbar.Header>
+            )}
             {child}
+            <TouchableOpacity
+                style={styles.invisibleButton}
+                onPress={() => setIsAppBarVisible(!isAppBarVisible)}
+            />
         </SafeAreaView>
     );
 
@@ -114,6 +121,16 @@ const styles = {
     },
     content: {
         fontSize: 16,
+    },
+    invisibleButton: {
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        transform: [{ translateX: -25 }, { translateY: -25 }],
+        backgroundColor: 'transparent',
     },
 };
 

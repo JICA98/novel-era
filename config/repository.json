@@ -41,6 +41,10 @@
                         {
                             "type": "css",
                             "selector": ".box-notification"
+                        },
+                        {
+                            "type": "css",
+                            "selector": "h4"
                         }
                     ]
                 }
