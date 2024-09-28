@@ -13,21 +13,21 @@
             "repoBookUrl": "https://novelfire.net/book/${bookName}",
             "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",
             "bookImageSelector": {
-                "type": "css",
+                "type": "text",
                 "selector": ".novel-header .fixed-img img",
                 "attribute": "src",
                 "page": "home"
             },
             "homeSelector": {
-                "type": "css",
+                "type": "text",
                 "path": "/book/[bookId]",
                 "page": "home",
                 "latestChapterSelector": {
-                    "type": "css",
+                    "type": "html",
                     "selector": ".novel-info .header-stats span strong"
                 },
                 "summarySelector": {
-                    "type": "css",
+                    "type": "text",
                     "selector": ".summary .content"
                 }
             },
@@ -35,12 +35,12 @@
                 "path": "/book/[bookId]/chapter-[chapterId]",
                 "page": "chapter",
                 "content": {
-                    "type": "css",
+                    "type": "text",
                     "selector": "#chapter-container #content"
                 }
             },
             "listSelector": {
-                "type": "css",
+                "type": "text",
                 "path": "/genre-all/sort-new/status-all/all-novel",
                 "selector": "#list-novel .novel-item",
                 "page": "search",
@@ -51,12 +51,12 @@
                     "regex": "book/(.*)"
                 },
                 "bookLink": {
-                    "type": "css",
+                    "type": "text",
                     "selector": "a",
                     "attribute": "href"
                 },
                 "bookImage": {
-                    "type": "css",
+                    "type": "text",
                     "selector": ".novel-cover img",
                     "attribute": "data-src"
                 },

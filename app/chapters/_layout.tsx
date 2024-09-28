@@ -6,6 +6,7 @@ import PagerView from "react-native-pager-view";
 import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Title } from "react-native-paper";
 import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
+import RenderPagedContent from "./content";
 
 interface ChapterData {
     chapterContent: string;
@@ -19,7 +20,8 @@ async function fetchChapter(repo: Repo, content: Content, id: string): Promise<C
         const response = await fetch(url);
         const html = await response.text();
         const dom = IDOMParser.parse(html).documentElement;
-        return { chapterContent: processData(dom, repo.chapterSelector.content) };
+        const chapterContent = processData(dom, repo.chapterSelector.content);
+        return { chapterContent };
     } catch (error) {
         console.error(error);
         return { chapterContent: '' };
@@ -66,69 +68,20 @@ export default function ChapterLayout() {
             </View>
         );
     } else {
-        child = renderChapterContent(id, content, contentData.data);
+        child = <RenderPagedContent content={contentData.data.chapterContent} />;
     }
-    return (
-        <SafeAreaView style={styles.container}>
-            <Appbar.Header>
-                <Appbar.BackAction onPress={() => router.back()} />
-                <Appbar.Content title={content.title} />
-            </Appbar.Header>
-            {child}
-        </SafeAreaView>
-    );
-
-
-}
-
-export function renderChapterContent(id: string, content: Content, data: ChapterData) {
-    const [pages, setPages] = useState<string[]>([]);
-
-    useEffect(() => {
-        const splitContentIntoPages = (content: string, pageSize: number): string[] => {
-            const words = content.split(' ');
-            const pages = [];
-            let page = [];
-
-            for (const word of words) {
-                if ((page.join(' ') + ' ' + word).length > pageSize) {
-                    pages.push(page.join(' '));
-                    page = [];
-                }
-                page.push(word);
-            }
-
-            if (page.length > 0) {
-                pages.push(page.join(' '));
-            }
-
-            return pages;
-        };
-
-        const pageSize = 1000; // Adjust the page size as needed
-        const content = splitContentIntoPages(data.chapterContent, pageSize);
-        setPages(content);
-    }, []);
-
     return (
         <SafeAreaView style={styles.container}>
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={`Chapter ${id}  —  ${content.title}`} />
             </Appbar.Header>
-            <View style={styles.container}>
-                <PagerView style={styles.pagerView} initialPage={0}>
-                    {pages.map((page, index) => (
-                        <View key={index} >
-                            <Text >{page}</Text>
-                        </View>
-                    ))}
-                </PagerView>
-            </View>
+            {child}
         </SafeAreaView>
-
     );
+
 }
+
 
 const styles = {
     container: {
