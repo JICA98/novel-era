@@ -127,14 +127,14 @@ function renderHeaderContent(scrollY: Animated.Value, content: Content, data: Ho
             >
                 <View style={styles.contentContainer}>
                     {Array.from({ length: (end - start) }).map((_, index) => (
-                        renderChapterCard(index, start, repo, content)
+                        renderChapterCard(index, start, repo)
                     ))}
                 </View>
             </ScrollView>
         );
     }
 
-    function renderChapterCard(index: number, start: number, repo: Repo, item: Content) {
+    function renderChapterCard(index: number, start: number, repo: Repo) {
         function handleDownload(): void {
         }
 
@@ -154,7 +154,7 @@ function renderHeaderContent(scrollY: Animated.Value, content: Content, data: Ho
                             pathname: '/chapters',
                             params: {
                                 id: `${start + index + 1}`,
-                                repo: JSON.stringify(item),
+                                repo: JSON.stringify(repo),
                                 content: JSON.stringify(content)
                             }
                         })}

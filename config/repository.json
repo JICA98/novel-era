@@ -32,7 +32,7 @@
                 }
             },
             "chapterSelector": {
-                "path": "/book/[bookId]/[chapterId]",
+                "path": "/book/[bookId]/chapter-[chapterId]",
                 "page": "chapter",
                 "content": {
                     "type": "css",

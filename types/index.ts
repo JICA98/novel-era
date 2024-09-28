@@ -22,6 +22,12 @@ export interface Repo {
     bookImageSelector: BookImageSelector;
     listSelector: ListSelector;
     homeSelector: HomeSelector;
+    chapterSelector: ChapterSelector;
+}
+
+export interface ChapterSelector extends Selector {
+    path: string;
+    content: Selector;
 }
 
 export interface HomeSelector extends Selector {

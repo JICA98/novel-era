@@ -1,21 +1,32 @@
-import { Content, FetchData, Repo } from "@/types";
+import { Content, FetchData, processData, Repo } from "@/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Dimensions, View, Text, SafeAreaView } from "react-native";
 import PagerView from "react-native-pager-view";
-import { Appbar, Title } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Title } from "react-native-paper";
 import { create } from "zustand";
+import IDOMParser from "advanced-html-parser";
 
 interface ChapterData {
     chapterContent: string;
 }
 
 async function fetchChapter(repo: Repo, content: Content, id: string): Promise<ChapterData> {
-    const url = repo.repoUrl + content.bookLink.replace('[bookId]', id);
-    console
+    console.log('fetchChapter');
+    const url = repo.repoUrl + repo.chapterSelector.path.replace('[bookId]', content.bookId).replace('[chapterId]', id);
+    console.log(url);
+    try {
+        const response = await fetch(url);
+        const html = await response.text();
+        const dom = IDOMParser.parse(html).documentElement;
+        return { chapterContent: processData(dom, repo.chapterSelector.content) };
+    } catch (error) {
+        console.error(error);
+        return { chapterContent: '' };
+    }
 }
 
-create((set) => ({
+const useChapterData = create((set) => ({
     chapterContent: { isLoading: true } as FetchData<ChapterData>,
     fetchData: (repo: Repo, content: Content, id: string) => {
         set({ chapterContent: { isLoading: true } });
@@ -30,17 +41,72 @@ export default function ChapterLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
     const content = JSON.parse(useLocalSearchParams().content as string) as Content;
     const id = useLocalSearchParams().id as string;
+    const contentData: FetchData<ChapterData> = useChapterData((state: any) => state.chapterContent);
+    const fetchData = useChapterData((state: any) => state.fetchData);
 
+    useEffect(() => {
+        fetchData(repo, content, id);
+    }, []);
+
+    let child;
+
+    if (contentData.isLoading) {
+        child = (
+            <View style={styles.listPadding}>
+                <ActivityIndicator animating={true} size="large" />
+            </View>
+        );
+    } else if (contentData.error || contentData.data === undefined) {
+        child = (
+            <View style={styles.listPadding}>
+                <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
+                <Button onPress={() => fetchData(repo, content)} children={
+                    'Retry'
+                } />
+            </View>
+        );
+    } else {
+        child = renderChapterContent(id, content, contentData.data);
+    }
+    return (
+        <SafeAreaView style={styles.container}>
+            <Appbar.Header>
+                <Appbar.BackAction onPress={() => router.back()} />
+                <Appbar.Content title={content.title} />
+            </Appbar.Header>
+            {child}
+        </SafeAreaView>
+    );
+
+
+}
+
+export function renderChapterContent(id: string, content: Content, data: ChapterData) {
     const [pages, setPages] = useState<string[]>([]);
 
     useEffect(() => {
-        // Simulate fetching content and splitting it into pages
-        const content = [
-            "Page 1: This is the content of page 1.",
-            "Page 2: This is the content of page 2.",
-            "Page 3: This is the content of page 3.",
-            "Page 4: This is the content of page 4.",
-        ];
+        const splitContentIntoPages = (content: string, pageSize: number): string[] => {
+            const words = content.split(' ');
+            const pages = [];
+            let page = [];
+
+            for (const word of words) {
+                if ((page.join(' ') + ' ' + word).length > pageSize) {
+                    pages.push(page.join(' '));
+                    page = [];
+                }
+                page.push(word);
+            }
+
+            if (page.length > 0) {
+                pages.push(page.join(' '));
+            }
+
+            return pages;
+        };
+
+        const pageSize = 1000; // Adjust the page size as needed
+        const content = splitContentIntoPages(data.chapterContent, pageSize);
         setPages(content);
     }, []);
 
@@ -67,6 +133,13 @@ export default function ChapterLayout() {
 const styles = {
     container: {
         flex: 1,
+    },
+    listPadding: {
+        padding: 16,
+    },
+    errorText: {
+        textAlign: 'center',
+        margin: 16,
     },
     page: {
         justifyContent: 'center',
