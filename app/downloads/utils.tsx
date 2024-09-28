@@ -106,7 +106,7 @@ export async function setupDownloadStores(downloads: any, setDownloads: any) {
                 }
             }
         } catch (error) {
-            console.warn('Skipping path :', path, error);
+            // console.warn('Skipping path :', path, error);
         }
     }
 }

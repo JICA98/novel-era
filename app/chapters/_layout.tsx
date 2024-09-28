@@ -2,13 +2,10 @@ import { Content, FetchData, processData, Repo } from "@/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Dimensions, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
-import PagerView from "react-native-pager-view";
 import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Title } from "react-native-paper";
-import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
 import RenderPagedContent from "./content";
 import { allDownloadsStore, saveFile, useDownloadStore } from "../downloads/utils";
-import RNFetchBlob from 'rn-fetch-blob';
 
 interface ChapterData {
     id: string;

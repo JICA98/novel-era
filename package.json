@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
+    "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-navigation/native": "^6.0.2",
     "advanced-html-parser": "^1.1.0",
     "epub-gen": "^0.1.0",
@@ -48,7 +49,6 @@
     "react-native-screens": "3.31.1",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
-    "rn-fetch-blob": "^0.12.0",
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {

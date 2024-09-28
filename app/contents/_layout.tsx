@@ -10,6 +10,7 @@ import { create } from "zustand";
 import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
 import { allDownloadsStore, deleteFile, removeFromStore, startDownload, useDownloadStore } from "../downloads/utils";
 import { chapterKey, fetchChapter } from "../chapters/_layout";
+import ExportDialog from "../exports/_layout";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
@@ -49,6 +50,7 @@ export default function ContentLayout() {
     const setContent = useContentStore((state: any) => state.setContent);
     const contentData: FetchData<HomeData> = useContentStore((state: any) => state.content);
     const setLoading = useContentStore((state: any) => state.setLoading);
+    const [exportsVisible, setExportsVisible] = useState(false);
 
     function handleContentFetch() {
         setLoading();
@@ -85,14 +87,20 @@ export default function ContentLayout() {
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={content.title} />
-                {hasDataLoaded && <MenuFunction />}
+                {hasDataLoaded && <MenuFunction setExportsVisible={setExportsVisible} />}
             </Appbar.Header>
             {child}
+            <ExportDialog
+                visible={exportsVisible}
+                onDismiss={() => setExportsVisible(false)}
+                maxChapters={contentData.data?.latestChapter}
+                onExport={(range, format) => { }}
+            />
         </SafeAreaView>
     );
 }
 
-function MenuFunction() {
+function MenuFunction({ setExportsVisible }: { setExportsVisible: React.Dispatch<React.SetStateAction<boolean>> }) {
     const [visible, setVisible] = useState(false);
     const openMenu = () => setVisible(true);
     const closeMenu = () => setVisible(false);
@@ -104,10 +112,9 @@ function MenuFunction() {
                 visible={visible}
                 onDismiss={closeMenu}
                 anchor={<Button onPress={openMenu}><Icon source="menu" size={18} ></Icon></Button>}>
-                <Menu.Item onPress={() => { }} title="Item 1" />
-                <Menu.Item onPress={() => { }} title="Item 2" />
-                <Divider />
-                <Menu.Item onPress={() => { }} title="Item 3" />
+                <Menu.Item onPress={() => {
+                    setExportsVisible(true); closeMenu();
+                }} title="Export" />
             </Menu>
         </View>
     );

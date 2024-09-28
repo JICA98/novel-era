@@ -26,6 +26,11 @@
                     "type": "text",
                     "selector": ".novel-info .header-stats span strong"
                 },
+                "authorSelector": {
+                    "type": "text",
+                    "selector": ".novel-info .author",
+                    "regex": "Author: (.*)"
+                },
                 "summarySelector": {
                     "type": "text",
                     "selector": ".summary .content"
