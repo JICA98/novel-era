@@ -12,6 +12,39 @@
             "repoIcon": "https://novelfire.net/logo.svg?v=2",
             "repoBookUrl": "https://novelfire.net/book/${bookName}",
             "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",
+            "repoSearch": {
+                "type": "http",
+                "method": "GET",
+                "path": "/ajax/searchLive?inputContent=[text]",
+                "jsonPath": "$.html",
+                "selector": ".novel-list .novel-item",
+                "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "book/(.*)"
+                },
+                "rating": {
+                    "type": "attribute",
+                    "selector": ".novel-stats .info-rating",
+                    "attribute": "data-rating"
+                },
+                "bookLink": {
+                    "type": "text",
+                    "selector": "a",    
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".novel-cover img",
+                    "attribute": "data-src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": ".novel-title"
+                }
+            },
             "bookImageSelector": {
                 "type": "text",
                 "selector": ".novel-header .fixed-img img",

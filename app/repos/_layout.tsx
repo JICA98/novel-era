@@ -83,9 +83,49 @@ export default function RepositorLayout() {
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
                 ListFooterComponent={<View style={{ height: 120 }} />}
+                ListHeaderComponent={<View style={{ height: 20 }} />}
             />
         );
     }
+
+    function MenuFunction({ fetchContent }: { fetchContent: any }) {
+        const [visible, setVisible] = useState(false);
+        const openMenu = () => setVisible(true);
+        const closeMenu = () => setVisible(false);
+        return (
+            <View
+                style={{
+                }}>
+                <Menu
+                    visible={visible}
+                    onDismiss={closeMenu}
+                    anchorPosition="bottom"
+                    anchor={<Button onPress={openMenu}><FontAwesome color={theme.colors.onBackground} 
+                    name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
+                    <Menu.Item onPress={() => {
+                        fetchContent(false); closeMenu();
+                    }} title="Refresh" leadingIcon="refresh" />
+                </Menu>
+            </View>
+        );
+    }
+
+
+    const renderItem = (repo: Repo, item: Content) => (
+        <Card style={styles.card} onPress={() => {
+            return router.push({
+                pathname: '/contents',
+                params: { content: JSON.stringify(item), repo: JSON.stringify(repo) }
+            });
+        }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Card.Cover source={{ uri: item.bookImage }} style={{ width: 100, height: 100, marginRight: 8 }} />
+                <View style={{ flex: 1 }}>
+                    <Card.Title title={item.title} titleNumberOfLines={2} />
+                </View>
+            </View>
+        </Card>
+    );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -100,45 +140,8 @@ export default function RepositorLayout() {
 
         </SafeAreaView>
     );
+
 }
-
-function MenuFunction({ fetchContent }: { fetchContent: any }) {
-    const [visible, setVisible] = useState(false);
-    const openMenu = () => setVisible(true);
-    const closeMenu = () => setVisible(false);
-    return (
-        <View
-            style={{
-            }}>
-            <Menu
-                visible={visible}
-                onDismiss={closeMenu}
-                anchorPosition="bottom"
-                anchor={<Button onPress={openMenu}><FontAwesome name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
-                <Menu.Item onPress={() => {
-                    fetchContent(false); closeMenu();
-                }} title="Refresh" leadingIcon="refresh" />
-            </Menu>
-        </View>
-    );
-}
-
-
-const renderItem = (repo: Repo, item: Content) => (
-    <Card style={styles.card} onPress={() => {
-        return router.push({
-            pathname: '/contents',
-            params: { content: JSON.stringify(item), repo: JSON.stringify(repo) }
-        });
-    }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Card.Cover source={{ uri: item.bookImage }} style={{ width: 100, height: 100, marginRight: 8 }} />
-            <View style={{ flex: 1 }}>
-                <Card.Title title={item.title} titleNumberOfLines={2} />
-            </View>
-        </View>
-    </Card>
-);
 
 
 const styles = StyleSheet.create({
