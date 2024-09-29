@@ -97,6 +97,7 @@ export interface Content {
     bookImage: string;
     bookLink: string;
     bookId: string;
+    rating?: string;
 }
 
 export function processData(data: any, selector: Selector): string {
