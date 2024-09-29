@@ -19,19 +19,26 @@ export interface Repo {
         type: string;
         path: string;
     };
+    repoSearch: RepoSearch;
     bookImageSelector: BookImageSelector;
     listSelector: ListSelector;
     homeSelector: HomeSelector;
     chapterSelector: ChapterSelector;
 }
 
+export interface RepoSearch extends Selector {
+    bookImage: Selector;
+    title: Selector;
+    bookLink: Selector;
+    bookId: Selector;
+    rating: Selector;
+}
+
 export interface ChapterSelector extends Selector {
-    path: string;
     content: Selector;
 }
 
 export interface HomeSelector extends Selector {
-    path: string;
     latestChapterSelector: Selector;
     summarySelector: Selector;
     authorSelector: Selector;
@@ -59,6 +66,9 @@ export interface Selector {
     attribute: string;
     regex: RegExp;
     filters: Selector[];
+    method: 'GET' | 'POST';
+    path: string;
+    jsonPath: string;
 }
 
 export interface ReposData {
@@ -77,7 +87,8 @@ export enum SelectorType {
     html = 'html',
     css = 'css',
     attribute = 'attribute',
-    image = 'image'
+    image = 'image',
+    'http' = 'http',
 }
 
 export interface Content {
