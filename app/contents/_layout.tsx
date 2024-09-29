@@ -1,14 +1,14 @@
 import UseRepositoryLayout from "@/app/_repos";
-import { Content, FetchData, processData, Repo } from "@/types";
+import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title, Snackbar } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
-import { allDownloadsStore, deleteFile, readFile, removeFromStore, startDownload, useDownloadStore } from "../downloads/utils";
+import { allDownloadsStore, createDownloadStore, createStore, deleteFile, readFile, removeFromStore, moveToAlbum, startDownload, useDownloadStore } from "../downloads/utils";
 import { ChapterData, chapterKey, fetchChapter } from "../chapters/_layout";
 import ExportDialog from "../exports/_layout";
 import { pLimitLit } from "../_layout";
@@ -21,6 +21,7 @@ const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 interface HomeData {
     latestChapter: number;
     summary: string;
+    author: string;
 }
 
 async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeData> {
@@ -32,10 +33,11 @@ async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeD
         var dom = IDOMParser.parse(html).documentElement;
         const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
         const summary = processData(dom, repo.homeSelector.summarySelector);
-        return { latestChapter, summary };
+        const author = processData(dom, repo.homeSelector.authorSelector);
+        return { latestChapter, summary, author };
     } catch (error) {
         console.error(error);
-        return { latestChapter: 0, summary: '' };
+        return { latestChapter: 0, summary: '', author: '' };
     }
 }
 
@@ -54,7 +56,9 @@ export default function ContentLayout() {
     const setLoading = useContentStore((state: any) => state.setLoading);
     const downloads = allDownloadsStore((state: any) => state.downloads);
     const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
+    const homeData = contentData.data;
     const [exportsVisible, setExportsVisible] = useState(false);
+    const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
 
     function handleContentFetch() {
         setLoading();
@@ -84,7 +88,7 @@ export default function ContentLayout() {
             </View>
         );
     } else {
-        child = renderHeaderContent(scrollY, content, contentData.data, repo);
+        child = renderHeaderContent(scrollY);
     }
     return (
         <SafeAreaView style={styles.container}>
@@ -102,7 +106,7 @@ export default function ContentLayout() {
                     console.log(range, format);
                     const endRange = range[1];
                     const startRange = range[0];
-                    const limit = pLimitLit(3);
+                    const limit = pLimitLit(1);
                     const promises: Promise<ChapterData>[] = Array.from({ length: endRange - startRange + 1 }).map((_, index) => {
                         const id = (range[0] + index).toString();
                         return limit(async () => {
@@ -110,24 +114,62 @@ export default function ContentLayout() {
                             if (downloads.has(key)) {
                                 const stateData = await readFile(key);
                                 if (stateData?.chapterContent) {
-                                    console.log('Cached ', key);
-                                    return stateData.chapterContent;
+                                    return stateData;
                                 }
                             }
                             console.log('Downloading ', key);
-                            return await fetchChapter(repo, content, id);
+                            const chapterData = await fetchChapter(repo, content, id);
+                            if (chapterData.chapterContent) {
+                                const store = createStore(chapterData);
+                                downloads.set(key, store);
+                                setDownloads(downloads);
+                            }
+                            return chapterData;
                         });
                     });
 
-                    Promise.all(promises).then((data) => {
-                        console.log(data);
+                    Promise.all(promises).then(async (data) => {
+                        if (format === 'epub') {
+                            const uri = await saveAsEpub({
+                                author: homeData!.author,
+                                title: content.title,
+                                content: data,
+                                // cover: content.bookImage,
+                            });
+
+                            await moveToAlbum(uri, 'application/epub+zip');
+                            
+                            setSnackBarData({
+                                visible: true,
+                                message: `Exported as EPUB under ${uri}`,
+                                severity: 'success',
+                                action: {
+                                    label: 'Ok',
+                                    onPress: () => {
+                                        setSnackBarData({ visible: false });
+                                    }
+                                }
+                            });
+                        }
                     }).catch((error) => {
                         console.error(error);
                     });
                 }}
             />
+            <ShowSnackbar />
         </SafeAreaView>
     );
+
+    function ShowSnackbar() {
+        return (
+            <Snackbar
+                visible={snackBarData.visible}
+                onDismiss={() => setSnackBarData({ visible: false })}
+                action={snackBarData.action}>
+                {snackBarData.message}
+            </Snackbar>
+        );
+    }
 
     function MenuFunction({ setExportsVisible }: { setExportsVisible: React.Dispatch<React.SetStateAction<boolean>> }) {
         const [visible, setVisible] = useState(false);
@@ -176,7 +218,7 @@ export default function ContentLayout() {
         return { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop };
     }
 
-    function renderHeaderContent(scrollY: Animated.Value, content: Content, data: HomeData, repo: Repo) {
+    function renderHeaderContent(scrollY: Animated.Value) {
         const { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop } = interpolateScrollY(scrollY);
 
         function renderChapterScrollView(start: number, end: number) {
@@ -191,26 +233,24 @@ export default function ContentLayout() {
                 >
                     <View style={styles.contentContainer}>
                         {Array.from({ length: (end - start) }).map((_, index) => (
-                            renderChapterCard(index, start, repo)
+                            renderChapterCard(index, start)
                         ))}
                     </View>
                 </ScrollView>
             );
         }
 
-        function renderChapterCard(index: number, start: number, repo: Repo) {
+        function renderChapterCard(index: number, start: number) {
             return (
                 <ContentListCard
                     key={index}
                     index={index}
                     start={start}
-                    repo={repo}
-                    content={content}
                 />
             );
         }
 
-        const tabLength = Math.ceil(data.latestChapter / 120);
+        const tabLength = Math.ceil(homeData!.latestChapter / 120);
 
         function renderTabs() {
 
@@ -220,7 +260,7 @@ export default function ContentLayout() {
                         <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'}>
                             {Array.from({ length: tabLength }).map((_, index) => {
                                 const start = index * 120;
-                                const end = Math.min((index + 1) * 120, data.latestChapter);
+                                const end = Math.min((index + 1) * 120, homeData!.latestChapter);
                                 return (
                                     <TabScreen key={index} label={`${start + 1} — ${end}`}>
                                         {renderChapterScrollView(start, end)}
@@ -248,7 +288,7 @@ export default function ContentLayout() {
                             transform: [{ translateY: titleTranslateY }]
                         }]}>
                             <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
-                                {data.summary}
+                                {homeData?.summary}
                             </Text>
                         </Animated.View>
                     </ImageBackground>
@@ -259,11 +299,11 @@ export default function ContentLayout() {
         );
 
 
-        function ContentListCard({ index, start, repo, content }: { index: number, start: number, repo: Repo, content: Content }) {
+        function ContentListCard({ index, start }: { index: number, start: number }) {
             const id = `${start + index + 1}`;
             const key = chapterKey(repo, content, id);
             const downloadStore = useDownloadStore({ key, downloads, setDownloads });
-            const store = downloadStore((state: any) => state.content);
+            const storeContent = downloadStore((state: any) => state.content);
             const setLoading = downloadStore((state: any) => state.setLoading);
             const setContent = downloadStore((state: any) => state.setContent);
 
@@ -288,19 +328,19 @@ export default function ContentLayout() {
                         key={index}
                         title={() => <Text>Chapter {id}</Text>}
                         right={_ => {
-                            if (store.data) {
+                            if (storeContent.data) {
                                 return <IconButton
                                     icon="check"
                                     mode="contained-tonal"
                                     style={{ marginLeft: 'auto' }}
                                     onPress={() => handleRemove()} />;
-                            } else if (store.noStarted) {
+                            } else if (storeContent.noStarted) {
                                 return <IconButton
                                     icon="download-outline"
                                     mode="contained-tonal"
                                     style={{ marginLeft: 'auto' }}
                                     onPress={() => handleDownload()} />;
-                            } else if (store?.isLoading) {
+                            } else if (storeContent?.isLoading) {
                                 return <View style={styles.loading}>
                                     <ActivityIndicator animating={true} size="small" />
                                 </View>;

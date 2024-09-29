@@ -34,6 +34,14 @@ export interface HomeSelector extends Selector {
     path: string;
     latestChapterSelector: Selector;
     summarySelector: Selector;
+    authorSelector: Selector;
+}
+
+export interface SnackBarData {
+    visible: boolean;
+    message?: string;
+    severity?: 'success' | 'error';
+    action?: { label: string; onPress: () => void; },
 }
 
 export interface ListSelector extends Selector {

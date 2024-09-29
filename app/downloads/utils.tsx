@@ -1,6 +1,7 @@
 import { FetchData } from "@/types";
 import { create, StoreApi, UseBoundStore } from "zustand";
 import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 export const allDownloadsStore = create((set) => ({
     downloads: new Map<string, UseBoundStore<StoreApi<FetchData<any>>>>(),
@@ -17,7 +18,7 @@ export function startDownload({ fetcher, setLoading, setContent }: {
         .catch(error => setContent({ error }));
 }
 
-function createStore(data?: any) {
+export function createStore(data?: any) {
     return create<any>((set) => ({
         content: { noStarted: true, data } as FetchData<any>,
         setContent: (content: FetchData<any>) => set({ content }),
@@ -34,15 +35,24 @@ export function useDownloadStore({ key, downloads, setDownloads }:
     if (downloads.has(key)) {
         return downloads.get(key)!;
     } else {
-        const store = createStore();
-        downloads.set(key, store);
-        setDownloads(downloads);
-        return store;
+        return createDownloadStore({ downloads, key, setDownloads });
     }
 }
 
+export function createDownloadStore(
+    { downloads, key, setDownloads }: {
+        downloads: Map<string, UseBoundStore<StoreApi<FetchData<any>>>>,
+        key: string, setDownloads: any
+    }
+) {
+    const store = createStore();
+    downloads.set(key, store);
+    setDownloads(downloads);
+    return store;
+}
+
 export function removeFromStore({ key, downloads, setDownloads }: {
-    key: string, 
+    key: string,
     downloads: Map<string, UseBoundStore<StoreApi<FetchData<any>>>>
     setDownloads: any
 }) {
@@ -70,7 +80,7 @@ export async function readFile(key: string) {
         const key64 = btoa(key);
         const uri = FileSystem.documentDirectory + '/' + key64;
         // console.log('Reading', uri);
-        
+
         const data = await FileSystem.readAsStringAsync(uri);
         const parsed = JSON.parse(data ?? '{}');
         return parsed?.data;
@@ -104,10 +114,34 @@ export async function setupDownloadStores(downloads: any, setDownloads: any) {
                     const store = createStore(data);
                     downloads.set(key, store);
                     setDownloads(downloads);
+                    console.log('Loaded', key);
                 }
             }
         } catch (error) {
             // console.warn('Skipping path :', path, error);
         }
+    }
+}
+
+export async function moveToAlbum(fileName: string, mimeType: string): Promise<string> {
+    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+    if (!permissions.granted) {
+        throw new Error('Permission denied');
+    }
+
+    try {
+        const uri = permissions.directoryUri;
+        const base64String = await readFile(fileName);
+        await FileSystem.StorageAccessFramework.createFileAsync(uri, fileName, mimeType)
+            .then(async (uri) => {
+                await FileSystem.writeAsStringAsync(uri, base64String, { encoding: FileSystem.EncodingType.Base64 });
+            })
+            .catch((e) => {
+                console.log(e);
+            });
+        return uri + '/' + fileName;
+    } catch (e) {
+        console.error(e);
+        throw e;
     }
 }

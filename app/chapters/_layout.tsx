@@ -10,6 +10,7 @@ import { allDownloadsStore, saveFile, useDownloadStore } from "../downloads/util
 export interface ChapterData {
     id: string;
     chapterContent: string;
+    name: string;
     repo: Repo;
     content: Content;
 }
@@ -26,12 +27,13 @@ export async function fetchChapter(repo: Repo, content: Content, id: string): Pr
         const html = await response.text();
         const dom = IDOMParser.parse(html).documentElement;
         const contentData = processData(dom, repo.chapterSelector.content);
-        const chapterContent = { id, chapterContent: contentData, repo, content } as ChapterData;
+        const name = `Chapter ${id}`;
+        const chapterContent = { id, chapterContent: contentData, repo, content, name } as ChapterData;
         saveFile(key, chapterContent).then(() => console.log('Saved'));
         return chapterContent;
     } catch (error) {
         console.error(error);
-        return { chapterContent: '', repo, content } as ChapterData;
+        throw new Error('Failed to fetch chapter');
     }
 }
 
