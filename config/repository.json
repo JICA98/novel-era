@@ -9,7 +9,7 @@
                 "type": "iterative",
                 "path": "/book/[bookId]/chapters"
             },
-            "repoIcon": "https://novelfire.net/favicon.ico",
+            "repoIcon": "https://novelfire.net/logo.svg?v=1",
             "repoBookUrl": "https://novelfire.net/book/${bookName}",
             "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",
             "bookImageSelector": {

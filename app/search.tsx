@@ -1,7 +1,7 @@
 import { FetchData, Repo, ReposData } from "@/types";
 import { useEffect, useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
-import { ActivityIndicator, Button, List, TextInput, Title } from "react-native-paper";
+import { ActivityIndicator, Avatar, Button, List, TextInput, Title } from "react-native-paper";
 import { create } from "zustand";
 import { router } from 'expo-router';
 import UseRepositoryLayout from "./_repos";
@@ -43,7 +43,7 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                             key={item.id}
                             title={() => highlightText(item.name, searchQuery)}
                             description={item.repoUrl}
-                            left={props => <List.Icon {...props} icon="folder" />}
+                            left={props => <Avatar.Image size={48} source={{ uri: item.repoIcon }} />}
                             onPress={() => router.push({ pathname: '/repos', params: { repo: JSON.stringify(item) } })}
                         />
                     ))}
