@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Text, View, useWindowDimensions, ScrollView } from 'react-native';
 import PagerView from 'react-native-pager-view';
+import { useTheme } from 'react-native-paper';
 import RenderHtml from 'react-native-render-html';
 
 export default function RenderPagedContent({ content }: { content: string }) {
     const [pages, setPages] = useState<any[]>([]);
     const { width } = useWindowDimensions();
+    const theme = useTheme();
     // Function to split content into pages
     const splitContentIntoPages = (content: string) => {
         const words = content.split(' ');
@@ -37,7 +39,7 @@ export default function RenderPagedContent({ content }: { content: string }) {
                             <RenderHtml
                                 contentWidth={width}
                                 source={source}
-                                baseStyle={{ fontSize: 18 }}
+                                baseStyle={{ fontSize: 18, color: theme.colors.onBackground }}
                                 ignoredDomTags={['nf3e90']}
                             />
                             <View style={{ margin: 20 }} ></View>

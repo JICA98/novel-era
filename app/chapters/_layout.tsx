@@ -2,7 +2,7 @@ import { Content, FetchData, processData, Repo } from "@/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Dimensions, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
-import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, Title } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, PaperProvider, Title, useTheme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import RenderPagedContent from "./content";
 import { allDownloadsStore, saveFile, useDownloadStore } from "../downloads/utils";
@@ -52,6 +52,7 @@ export default function ChapterLayout() {
     const setContent = useChapterData((state: any) => state.setContent);
     const setLoading = useChapterData((state: any) => state.setLoading);
     const [focusedMode, setFocusedMode] = useState(false);
+    const theme = useTheme();
 
     useEffect(() => {
         fetchChapterData();
@@ -86,9 +87,9 @@ export default function ChapterLayout() {
         child = <RenderPagedContent content={contentData.data.chapterContent} />;
     }
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             {!focusedMode && (
-                <Appbar.Header>
+                <Appbar.Header elevated={true}>
                     <Appbar.BackAction onPress={() => router.back()} />
                     <Appbar.Content title={`Chapter ${id}`} />
                 </Appbar.Header>

@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title, Snackbar } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title, Snackbar, useTheme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
@@ -13,6 +13,7 @@ import { ChapterData, chapterKey, fetchChapter } from "../chapters/_layout";
 import ExportDialog from "../exports/_layout";
 import { pLimitLit } from "../_layout";
 import { saveAsEpub } from "../exports/epubUtil";
+import { FontAwesome } from "@expo/vector-icons";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
@@ -59,6 +60,7 @@ export default function ContentLayout() {
     const homeData = contentData.data;
     const [exportsVisible, setExportsVisible] = useState(false);
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
+    const theme = useTheme();
 
     function handleContentFetch() {
         setLoading();
@@ -91,7 +93,7 @@ export default function ContentLayout() {
         child = renderHeaderContent(scrollY);
     }
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={content.title} />
@@ -138,7 +140,7 @@ export default function ContentLayout() {
                             });
 
                             await moveToAlbum(uri, 'application/epub+zip');
-                            
+
                             setSnackBarData({
                                 visible: true,
                                 message: `Exported as EPUB under ${uri}`,
@@ -182,7 +184,8 @@ export default function ContentLayout() {
                 <Menu
                     visible={visible}
                     onDismiss={closeMenu}
-                    anchor={<Button onPress={openMenu}><Icon source="menu" size={18} ></Icon></Button>}>
+                    anchorPosition="bottom"
+                    anchor={<Button onPress={openMenu}><FontAwesome name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
                     <Menu.Item onPress={() => {
                         setExportsVisible(true); closeMenu();
                     }} title="Export" />
@@ -326,27 +329,31 @@ export default function ContentLayout() {
                 <View key={index}>
                     <List.Item
                         key={index}
-                        title={() => <Text>Chapter {id}</Text>}
+                        title={() => <Title style={styles.chapterTitle} >Chapter {id}</Title>}
                         right={_ => {
                             if (storeContent.data) {
                                 return <IconButton
                                     icon="check"
                                     mode="contained-tonal"
+                                    size={14}
                                     style={{ marginLeft: 'auto' }}
                                     onPress={() => handleRemove()} />;
                             } else if (storeContent.noStarted) {
                                 return <IconButton
                                     icon="download-outline"
+                                    size={14}
                                     mode="contained-tonal"
                                     style={{ marginLeft: 'auto' }}
                                     onPress={() => handleDownload()} />;
-                            } else if (storeContent?.isLoading) {
+                            } else 
+                            if (storeContent?.isLoading) {
                                 return <View style={styles.loading}>
                                     <ActivityIndicator animating={true} size="small" />
                                 </View>;
                             } else {
                                 return <IconButton
                                     icon="alert-circle-outline"
+                                    size={14}
                                     mode="contained-tonal"
                                     style={{ marginLeft: 'auto' }}
                                     onPress={() => handleDownload()} />;
@@ -377,7 +384,7 @@ const styles = StyleSheet.create({
         padding: 16,
     },
     loading: {
-        margin: 6.0, paddingHorizontal: 8.0, paddingVertical: 8.0
+        margin: 4.0, paddingHorizontal: 5.0, paddingVertical: 5.0
     },
     errorText: {
         textAlign: 'center',

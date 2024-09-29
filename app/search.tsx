@@ -43,7 +43,7 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                             key={item.id}
                             title={() => highlightText(item.name, searchQuery)}
                             description={item.repoUrl}
-                            left={props => <Avatar.Image size={48} source={{ uri: item.repoIcon }} />}
+                            left={_ => <Avatar.Image size={48} source={{ uri: item.repoIcon }} />}
                             onPress={() => router.push({ pathname: '/repos', params: { repo: JSON.stringify(item) } })}
                         />
                     ))}

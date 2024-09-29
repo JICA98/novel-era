@@ -1,11 +1,12 @@
-import { ActivityIndicator, Appbar, Button, Card, Title } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Card, Icon, Menu, Title, useTheme } from "react-native-paper";
 import { FlatList, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Content, FetchData, processData, Repo } from "@/types";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
+import { FontAwesome } from '@expo/vector-icons';
 
 async function fetchContentList(repo: Repo): Promise<Content[]> {
     try {
@@ -26,7 +27,7 @@ async function fetchContentList(repo: Repo): Promise<Content[]> {
         });
     } catch (error) {
         console.error(error);
-        return [];
+        throw new Error('Failed to fetch content');
     }
 }
 
@@ -41,6 +42,7 @@ export default function RepositorLayout() {
     const setContent = useContentStore((state: any) => state.setContent);
     const content = useContentStore((state: any) => state.content);
     const setLoading = useContentStore((state: any) => state.setLoading);
+    const theme = useTheme();
     let child;
 
     function fetchContent(cached = true) {
@@ -55,6 +57,7 @@ export default function RepositorLayout() {
     useEffect(() => {
         fetchContent();
     }, []);
+    const hasDataLoaded = content.data && !content.isLoading;
 
     if (content.isLoading) {
         child = (
@@ -73,28 +76,50 @@ export default function RepositorLayout() {
         );
     } else {
         child = (
-            <View style={{ flex: 1 }}>
-                <FlatList
-                    data={content.data}
-                    renderItem={({ item }) => renderItem(repo, item)}
-                    keyExtractor={(_, index) => index.toString()}
-                    contentContainerStyle={styles.grid}
-                    ListFooterComponent={<View style={{ height: 120 }} />}
-                />
-            </View>
+            <FlatList
+                data={content.data}
+                renderItem={({ item }) => renderItem(repo, item)}
+                keyExtractor={(_, index) => index.toString()}
+                contentContainerStyle={styles.grid}
+                style={{ flex: 1 }}
+                ListFooterComponent={<View style={{ height: 120 }} />}
+            />
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={repo.name} />
                 <Appbar.Action icon="magnify" onPress={() => { }} />
+                {hasDataLoaded && <MenuFunction fetchContent={fetchContent} />}
             </Appbar.Header>
 
             {child}
+
         </SafeAreaView>
+    );
+}
+
+function MenuFunction({ fetchContent }: { fetchContent: any }) {
+    const [visible, setVisible] = useState(false);
+    const openMenu = () => setVisible(true);
+    const closeMenu = () => setVisible(false);
+    return (
+        <View
+            style={{
+            }}>
+            <Menu
+                visible={visible}
+                onDismiss={closeMenu}
+                anchorPosition="bottom"
+                anchor={<Button onPress={openMenu}><FontAwesome name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
+                <Menu.Item onPress={() => {
+                    fetchContent(false); closeMenu();
+                }} title="Refresh" leadingIcon="refresh" />
+            </Menu>
+        </View>
     );
 }
 
@@ -109,7 +134,7 @@ const renderItem = (repo: Repo, item: Content) => (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Card.Cover source={{ uri: item.bookImage }} style={{ width: 100, height: 100, marginRight: 8 }} />
             <View style={{ flex: 1 }}>
-                <Card.Title title={item.title} />
+                <Card.Title title={item.title} titleNumberOfLines={2} />
             </View>
         </View>
     </Card>
@@ -128,11 +153,11 @@ const styles = StyleSheet.create({
         margin: 16,
     },
     grid: {
-        paddingHorizontal: 8,
+        paddingHorizontal: 2,
     },
     card: {
         flex: 1,
-        margin: 8,
+        margin: 2,
     },
     fab: {
         position: 'absolute',
