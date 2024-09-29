@@ -1,8 +1,7 @@
 import { ActivityIndicator, Appbar, Button, Card, Title } from "react-native-paper";
-import { FlatList, SafeAreaView, ScrollView, View } from "react-native";
+import { FlatList, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import UseRepositoryLayout from "../_repos";
 import { Content, FetchData, processData, Repo } from "@/types";
 import { useEffect } from "react";
 import { create } from "zustand";
@@ -74,13 +73,15 @@ export default function RepositorLayout() {
         );
     } else {
         child = (
-            <FlatList
-                data={content.data}
-                renderItem={({ item }) => renderItem(repo, item)}
-                keyExtractor={(item, index) => index.toString()}
-                numColumns={2}
-                contentContainerStyle={styles.grid}
-            />
+            <View style={{ flex: 1 }}>
+                <FlatList
+                    data={content.data}
+                    renderItem={({ item }) => renderItem(repo, item)}
+                    keyExtractor={(_, index) => index.toString()}
+                    contentContainerStyle={styles.grid}
+                    ListFooterComponent={<View style={{ height: 120 }} />}
+                />
+            </View>
         );
     }
 
@@ -93,26 +94,25 @@ export default function RepositorLayout() {
             </Appbar.Header>
 
             {child}
-
         </SafeAreaView>
     );
 }
 
 
 const renderItem = (repo: Repo, item: Content) => (
-    <Card style={styles.card} onPress={() => console.log('Pressed')}>
-        <Card.Cover source={{ uri: item.bookImage }} />
-        <Card.Title title={item.title} />
-        <Card.Actions>
-            <Button onPress={() => {
-                return router.push({
-                    pathname: '/contents',
-                    params: { content: JSON.stringify(item), repo: JSON.stringify(repo) }
-                });
-            }}>
-                View</Button>
-        </Card.Actions>
-    </Card >
+    <Card style={styles.card} onPress={() => {
+        return router.push({
+            pathname: '/contents',
+            params: { content: JSON.stringify(item), repo: JSON.stringify(repo) }
+        });
+    }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Card.Cover source={{ uri: item.bookImage }} style={{ width: 100, height: 100, marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+                <Card.Title title={item.title} />
+            </View>
+        </View>
+    </Card>
 );
 
 
