@@ -9,6 +9,7 @@ export interface BookImageSelector {
 
 export interface Repo {
     name: string;
+    idName: string;
     id: string;
     repoUrl: string;
     repoType: string;

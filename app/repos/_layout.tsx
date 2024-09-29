@@ -2,27 +2,36 @@ import { ActivityIndicator, Appbar, Button, Card, Icon, Menu, Title, useTheme } 
 import { FlatList, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Content, FetchData, processData, Repo } from "@/types";
+import { Content, FetchData, processData, Repo, Selector, SelectorType } from "@/types";
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
+import { Searchbar } from 'react-native-paper';
 import { FontAwesome } from '@expo/vector-icons';
+import jsonpath from 'jsonpath';
 
-async function fetchContentList(repo: Repo): Promise<Content[]> {
+async function fetchContentList({ repo, searchQuery }: { repo: Repo, searchQuery?: string }): Promise<Content[]> {
     try {
-        const url = repo.repoUrl + repo.listSelector.path;
+        const selector = searchQuery ? repo.repoSearch : repo.listSelector;
+        const url = repo.repoUrl + selector.path.replace('[text]', searchQuery || '');
         console.log(url);
         const response = await fetch(url);
-        const html = await response.text();
-
+        let html = '';
+        if (selector.type === SelectorType.http) {
+            const json = await response.json();
+            html = jsonpath.query(json, selector.jsonPath)[0];
+        } else {
+            html = await response.text();
+        }
         var dom = IDOMParser.parse(html).documentElement;
-        const list = dom.querySelectorAll(repo.listSelector.selector);
+        const list = dom.querySelectorAll(selector.selector);
 
         return Array.from(list).map((item) => {
-            const title = processData(item, repo.listSelector.title);
-            const bookImage = processData(item, repo.listSelector.bookImage);
-            const bookLink = processData(item, repo.listSelector.bookLink);
-            const bookId = processData(item, repo.listSelector.bookId);
+            const title = processData(item, selector.title);
+            const bookImage = processData(item, selector.bookImage);
+            const bookLink = processData(item, selector.bookLink);
+            const bookId = processData(item, selector.bookId);
+            // const rating = processData(item, selector.rating);
             return { title, bookImage, bookLink, bookId };
         });
     } catch (error) {
@@ -42,20 +51,22 @@ export default function RepositorLayout() {
     const setContent = useContentStore((state: any) => state.setContent);
     const content = useContentStore((state: any) => state.content);
     const setLoading = useContentStore((state: any) => state.setLoading);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchBarVisible, setSearchBarVisible] = useState(false);
     const theme = useTheme();
     let child;
 
-    function fetchContent(cached = true) {
+    function fetchContent({ cached, searchQuery }: { cached: boolean, searchQuery?: string }) {
         if (cached && content.data) {
             return;
         }
         setLoading();
-        fetchContentList(repo)
+        fetchContentList({ repo, searchQuery })
             .then(data => setContent({ data }))
             .catch(error => setContent({ error }));
     }
     useEffect(() => {
-        fetchContent();
+        fetchContent({ cached: false });
     }, []);
     const hasDataLoaded = content.data && !content.isLoading;
 
@@ -69,7 +80,7 @@ export default function RepositorLayout() {
         child = (
             <View style={styles.listPadding}>
                 <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => fetchContent(false)} children={
+                <Button onPress={() => fetchContent({ cached: false })} children={
                     'Retry'
                 } />
             </View>
@@ -100,8 +111,8 @@ export default function RepositorLayout() {
                     visible={visible}
                     onDismiss={closeMenu}
                     anchorPosition="bottom"
-                    anchor={<Button onPress={openMenu}><FontAwesome color={theme.colors.onBackground} 
-                    name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
+                    anchor={<Button onPress={openMenu}><FontAwesome color={theme.colors.onBackground}
+                        name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
                     <Menu.Item onPress={() => {
                         fetchContent(false); closeMenu();
                     }} title="Refresh" leadingIcon="refresh" />
@@ -132,9 +143,20 @@ export default function RepositorLayout() {
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={repo.name} />
-                <Appbar.Action icon="magnify" onPress={() => { }} />
+                <Appbar.Action icon={(searchBarVisible && !content.isLoading) ? 'close' : 'magnify'} onPress={() => setSearchBarVisible(!searchBarVisible)} />
                 {hasDataLoaded && <MenuFunction fetchContent={fetchContent} />}
             </Appbar.Header>
+
+            {searchBarVisible && !content.isLoading && <View style={styles.searchBar}>
+                <Searchbar
+                    placeholder="Search"
+                    onChangeText={setSearchQuery}
+                    value={searchQuery}
+                    onEndEditing={() => searchQuery && fetchContent({ cached: false, searchQuery })}
+                    traileringIcon={searchQuery.length ? 'close' : undefined}
+                    onTraileringIconPress={() => setSearchQuery('')}
+                />
+            </View>}
 
             {child}
 
@@ -147,6 +169,9 @@ export default function RepositorLayout() {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
+    },
+    searchBar: {
+        padding: 16,
     },
     listPadding: {
         padding: 16,
