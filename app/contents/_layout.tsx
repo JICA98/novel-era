@@ -15,6 +15,9 @@ import { pLimitLit } from "../_layout";
 import { saveAsEpub } from "../exports/epubUtil";
 import { FontAwesome } from "@expo/vector-icons";
 import { MenuFunction } from "../components/menu";
+import { ChapterCard } from "./chapterCard";
+import { useWindowDimensions } from 'react-native';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
@@ -63,7 +66,15 @@ export default function ContentLayout() {
     const [exportsVisible, setExportsVisible] = useState(false);
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
     const theme = useTheme();
-    const [tabIndex, setTabIndex] = useState(0)
+    const [tabIndex, setTabIndex] = useState(0);
+    const tabLength = Math.ceil((homeData?.latestChapter ?? 1) / PAGE_SIZE);
+    const layout = useWindowDimensions();
+
+    const [index, setIndex] = React.useState(0);
+    const routes = Array.from({ length: tabLength }).map((_, i) => ({
+        key: `tab${i}`,
+        title: `${i * PAGE_SIZE + 1} — ${Math.min((i + 1) * PAGE_SIZE, homeData?.latestChapter ?? 0)}`,
+    }));
 
     function handleContentFetch() {
         setLoading();
@@ -229,22 +240,40 @@ export default function ContentLayout() {
             );
         }
 
+
         function renderChapterCard(index: number, start: number) {
             return (
-                <ContentListCard
-                    key={index}
+                <ChapterCard
                     index={index}
-                    start={start}
+                    props={{
+                        index, start, repo, content
+                    }}
                 />
             );
         }
 
-        const tabLength = Math.ceil(homeData!.latestChapter / PAGE_SIZE);
+        const renderScene = ({ route }: { route: { key: string } }) => {
+            const tabIndex = parseInt(route.key.replace('tab', ''), 10);
+            const start = tabIndex * PAGE_SIZE;
+            const end = Math.min((tabIndex + 1) * PAGE_SIZE, homeData?.latestChapter ?? 0);
+            return renderChapterScrollView(start, end);
+        };
 
         function renderTabs() {
             return (
                 <Animated.View style={[styles.container, { marginTop: tabsMarginTop }]} >
-                    <TabsProvider defaultIndex={0} onChangeIndex={setTabIndex}>
+                    <TabView
+                        lazy
+                        navigationState={{ index, routes }}
+                        renderScene={renderScene}
+                        onIndexChange={setIndex}
+                        initialLayout={{ width: layout.width }}
+                        overScrollMode={'auto'}
+                        renderTabBar={
+                            props => <TabBar {...props} scrollEnabled />
+                        }
+                    />
+                    {/* <TabsProvider defaultIndex={0} onChangeIndex={setTabIndex}>
                         <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'} disableSwipe showLeadingSpace={false}>
                             {Array.from({ length: tabLength }).map((_, index) => {
                                 if (tabIndex === index) {
@@ -266,7 +295,7 @@ export default function ContentLayout() {
                                 }
                             })}
                         </Tabs>
-                    </TabsProvider>
+                    </TabsProvider> */}
                 </Animated.View>
             );
         }
@@ -296,78 +325,6 @@ export default function ContentLayout() {
 
         );
 
-
-        function ContentListCard({ index, start }: { index: number, start: number }) {
-            const id = `${start + index + 1}`;
-            const key = chapterKey(repo, content, id);
-            const downloadStore = useDownloadStore({ key, downloads, setDownloads });
-            const storeContent = downloadStore((state: any) => state.content);
-            const setLoading = downloadStore((state: any) => state.setLoading);
-            const setContent = downloadStore((state: any) => state.setContent);
-
-            function handleDownload(): void {
-                console.log('Download chapter');
-                startDownload({
-                    fetcher: () => fetchChapter(repo, content, id),
-                    setLoading,
-                    setContent,
-                });
-            }
-
-            function handleRemove(): void {
-                console.log('Remove chapter');
-                removeFromStore({ key, downloads, setDownloads });
-                setContent({ noStarted: true });
-            }
-
-            return (
-                <View key={index}>
-                    <List.Item
-                        key={index}
-                        title={() => <Title style={styles.chapterTitle} >Chapter {id}</Title>}
-                        right={_ => {
-                            if (storeContent.data) {
-                                return <IconButton
-                                    icon="check"
-                                    mode="contained-tonal"
-                                    size={14}
-                                    style={{ marginLeft: 'auto' }}
-                                    onPress={() => handleRemove()} />;
-                            } else if (storeContent.noStarted) {
-                                return <IconButton
-                                    icon="download-outline"
-                                    size={14}
-                                    mode="contained-tonal"
-                                    style={{ marginLeft: 'auto' }}
-                                    onPress={() => handleDownload()} />;
-                            } else
-                                if (storeContent?.isLoading) {
-                                    return <View style={styles.loading}>
-                                        <ActivityIndicator animating={true} size="small" />
-                                    </View>;
-                                } else {
-                                    return <IconButton
-                                        icon="alert-circle-outline"
-                                        size={14}
-                                        mode="contained-tonal"
-                                        style={{ marginLeft: 'auto' }}
-                                        onPress={() => handleDownload()} />;
-                                }
-                        }}
-                        onPress={() => router.push(
-                            {
-                                pathname: '/chapters',
-                                params: {
-                                    id,
-                                    repo: JSON.stringify(repo),
-                                    content: JSON.stringify(content)
-                                }
-                            })}
-                    />
-                    <Divider />
-                </View>
-            );
-        }
     }
 }
 
@@ -422,7 +379,7 @@ const styles = StyleSheet.create({
     },
     scrollViewContent: {
         paddingTop: 10,
-        paddingBottom: PAGE_SIZE,
+        paddingBottom: 120,
     },
     contentContainer: {
         paddingHorizontal: 16,
