@@ -2,7 +2,7 @@ import UseRepositoryLayout from "@/app/_repos";
 import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
 import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title, Snackbar, useTheme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
@@ -14,10 +14,12 @@ import ExportDialog from "../exports/_layout";
 import { pLimitLit } from "../_layout";
 import { saveAsEpub } from "../exports/epubUtil";
 import { FontAwesome } from "@expo/vector-icons";
+import { MenuFunction } from "../components/menu";
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+const PAGE_SIZE = 40;
 
 interface HomeData {
     latestChapter: number;
@@ -61,6 +63,7 @@ export default function ContentLayout() {
     const [exportsVisible, setExportsVisible] = useState(false);
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
     const theme = useTheme();
+    const [tabIndex, setTabIndex] = useState(0)
 
     function handleContentFetch() {
         setLoading();
@@ -97,7 +100,11 @@ export default function ContentLayout() {
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={content.title} />
-                {hasDataLoaded && <MenuFunction setExportsVisible={setExportsVisible} />}
+                {hasDataLoaded && <MenuFunction
+                    children={[
+                        { title: 'Export', onPress: () => setExportsVisible(true) },
+                    ]}
+                />}
             </Appbar.Header>
             {child}
             <ExportDialog
@@ -173,27 +180,6 @@ export default function ContentLayout() {
         );
     }
 
-    function MenuFunction({ setExportsVisible }: { setExportsVisible: React.Dispatch<React.SetStateAction<boolean>> }) {
-        const [visible, setVisible] = useState(false);
-        const openMenu = () => setVisible(true);
-        const closeMenu = () => setVisible(false);
-        return (
-            <View
-                style={{
-                }}>
-                <Menu
-                    visible={visible}
-                    onDismiss={closeMenu}
-                    anchorPosition="bottom"
-                    anchor={<Button onPress={openMenu}><FontAwesome name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
-                    <Menu.Item onPress={() => {
-                        setExportsVisible(true); closeMenu();
-                    }} title="Export" />
-                </Menu>
-            </View>
-        );
-    }
-
     function interpolateScrollY(scrollY: Animated.Value) {
         const headerHeight = scrollY.interpolate({
             inputRange: [0, HEADER_SCROLL_DISTANCE],
@@ -253,22 +239,31 @@ export default function ContentLayout() {
             );
         }
 
-        const tabLength = Math.ceil(homeData!.latestChapter / 120);
+        const tabLength = Math.ceil(homeData!.latestChapter / PAGE_SIZE);
 
         function renderTabs() {
-
             return (
                 <Animated.View style={[styles.container, { marginTop: tabsMarginTop }]} >
-                    <TabsProvider defaultIndex={0}>
-                        <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'}>
+                    <TabsProvider defaultIndex={0} onChangeIndex={setTabIndex}>
+                        <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'} disableSwipe showLeadingSpace={false}>
                             {Array.from({ length: tabLength }).map((_, index) => {
-                                const start = index * 120;
-                                const end = Math.min((index + 1) * 120, homeData!.latestChapter);
-                                return (
-                                    <TabScreen key={index} label={`${start + 1} — ${end}`}>
-                                        {renderChapterScrollView(start, end)}
-                                    </TabScreen>
-                                );
+                                if (tabIndex === index) {
+                                    const start = index * PAGE_SIZE;
+                                    const end = Math.min((index + 1) * PAGE_SIZE, homeData!.latestChapter);
+                                    return (
+                                        <TabScreen key={index} label={`${start + 1} — ${end}`}>
+                                            {renderChapterScrollView(start, end)}
+                                        </TabScreen>
+                                    );
+                                } else {
+                                    const start = index * PAGE_SIZE;
+                                    const end = Math.min((index + 1) * PAGE_SIZE, homeData!.latestChapter);
+                                    return (
+                                        <TabScreen key={index} label={`${start + 1} — ${end}`}>
+                                            <View />
+                                        </TabScreen>
+                                    );
+                                }
                             })}
                         </Tabs>
                     </TabsProvider>
@@ -345,19 +340,19 @@ export default function ContentLayout() {
                                     mode="contained-tonal"
                                     style={{ marginLeft: 'auto' }}
                                     onPress={() => handleDownload()} />;
-                            } else 
-                            if (storeContent?.isLoading) {
-                                return <View style={styles.loading}>
-                                    <ActivityIndicator animating={true} size="small" />
-                                </View>;
-                            } else {
-                                return <IconButton
-                                    icon="alert-circle-outline"
-                                    size={14}
-                                    mode="contained-tonal"
-                                    style={{ marginLeft: 'auto' }}
-                                    onPress={() => handleDownload()} />;
-                            }
+                            } else
+                                if (storeContent?.isLoading) {
+                                    return <View style={styles.loading}>
+                                        <ActivityIndicator animating={true} size="small" />
+                                    </View>;
+                                } else {
+                                    return <IconButton
+                                        icon="alert-circle-outline"
+                                        size={14}
+                                        mode="contained-tonal"
+                                        style={{ marginLeft: 'auto' }}
+                                        onPress={() => handleDownload()} />;
+                                }
                         }}
                         onPress={() => router.push(
                             {
@@ -427,7 +422,7 @@ const styles = StyleSheet.create({
     },
     scrollViewContent: {
         paddingTop: 10,
-        paddingBottom: 120,
+        paddingBottom: PAGE_SIZE,
     },
     contentContainer: {
         paddingHorizontal: 16,

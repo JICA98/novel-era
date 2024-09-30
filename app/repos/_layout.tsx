@@ -9,6 +9,7 @@ import IDOMParser from "advanced-html-parser";
 import { Searchbar } from 'react-native-paper';
 import { FontAwesome } from '@expo/vector-icons';
 import jsonpath from 'jsonpath';
+import { MenuFunction } from "../components/menu";
 
 async function fetchContentList({ repo, searchQuery }: { repo: Repo, searchQuery?: string }): Promise<Content[]> {
     try {
@@ -99,28 +100,6 @@ export default function RepositorLayout() {
         );
     }
 
-    function MenuFunction({ fetchContent }: { fetchContent: any }) {
-        const [visible, setVisible] = useState(false);
-        const openMenu = () => setVisible(true);
-        const closeMenu = () => setVisible(false);
-        return (
-            <View
-                style={{
-                }}>
-                <Menu
-                    visible={visible}
-                    onDismiss={closeMenu}
-                    anchorPosition="bottom"
-                    anchor={<Button onPress={openMenu}><FontAwesome color={theme.colors.onBackground}
-                        name="ellipsis-v" size={18} ></FontAwesome ></Button>}>
-                    <Menu.Item onPress={() => {
-                        fetchContent(false); closeMenu();
-                    }} title="Refresh" leadingIcon="refresh" />
-                </Menu>
-            </View>
-        );
-    }
-
 
     const renderItem = (repo: Repo, item: Content) => (
         <Card style={styles.card} onPress={() => {
@@ -143,8 +122,13 @@ export default function RepositorLayout() {
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
                 <Appbar.Content title={repo.name} />
-                <Appbar.Action icon={(searchBarVisible && !content.isLoading) ? 'close' : 'magnify'} onPress={() => setSearchBarVisible(!searchBarVisible)} />
-                {hasDataLoaded && <MenuFunction fetchContent={fetchContent} />}
+                {!content.isLoading &&
+                    <Appbar.Action icon={searchBarVisible ? 'close' : 'magnify'} onPress={() => setSearchBarVisible(!searchBarVisible)} />}
+                {hasDataLoaded && <MenuFunction
+                    children={[
+                        { title: 'Refresh', leadingIcon: 'refresh', onPress: () => fetchContent({ cached: false }) },
+                    ]}
+                />}
             </Appbar.Header>
 
             {searchBarVisible && !content.isLoading && <View style={styles.searchBar}>
