@@ -22,19 +22,32 @@ export const TabBar: React.FC<TabBarProps> = ({ tabs, selectedIndex, onTabPress 
   const colors = useTheme().colors;
   return (
     <View style={[styles.tabBarContainer, { backgroundColor: colors.backdrop }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
         {tabs.map((tab, index) => (
           <TouchableOpacity
             key={index}
-            style={[{
-              borderBottomColor: colors.primary,
-              borderBottomWidth: selectedIndex === index ? 2 : 0,
-            }, styles.tabItem]}
+            style={[
+              {
+                borderBottomColor: colors.primary,
+                borderBottomWidth: selectedIndex === index ? 2 : 0,
+              },
+              styles.tabItem,
+            ]}
             onPress={() => onTabPress(index)}
           >
-            <Text style={[{
-              color: colors.onBackground,
-            }, styles.tabText, selectedIndex === index && styles.selectedTabText]}>
+            <Text
+              style={[
+                {
+                  color: colors.onBackground,
+                },
+                styles.tabText,
+                selectedIndex === index && styles.selectedTabText,
+              ]}
+            >
               {tab.title}
             </Text>
           </TouchableOpacity>
@@ -83,6 +96,10 @@ const styles = StyleSheet.create({
   tabBarContainer: {
     flexDirection: 'row',
     position: 'relative',
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   tabItem: {
     padding: 16,

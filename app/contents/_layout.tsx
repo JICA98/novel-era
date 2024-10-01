@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { ActivityIndicator, Appbar, Button, Title, Snackbar, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Title, Snackbar, useTheme, MD3Theme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
@@ -94,23 +94,7 @@ export default function ContentLayout() {
             { leadingIcon: 'export', title: 'Export', onPress: () => setExportsVisible(true) },
         ]} />;
         return <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            {tabBar && (<Animated.View
-                style={[
-                    styles.header,
-                    {
-                        height: 80,
-                        zIndex: 10000,
-                        position: 'absolute',
-                        backgroundColor: scrollY.interpolate({
-                            inputRange: [0, HEADER_MAX_HEIGHT],
-                            outputRange: ['transparent', theme.colors.background],
-                            extrapolate: 'clamp',
-                        }),
-                    },
-                ]}
-            >
-                {appBar}
-            </Animated.View>)}
+            {tabBar && (createAnimatedHeader(scrollY, theme, appBar))}
             {!tabBar && (appBar)}
             <Animated.ScrollView
                 style={[styles.scrollViewContent, { paddingBottom: 0 }]}
@@ -165,6 +149,7 @@ export default function ContentLayout() {
                 title: `${tabIndex * PAGE_SIZE + 1} — ${Math.min((tabIndex + 1) * PAGE_SIZE, content?.latestChapter ?? 0)}`,
                 content: (
                     <ScrollView>
+                        <View style={{ height: 15 }} />
                         {Array.from({ length: (end - start) }).map((_, index) => (
                             <View key={index} style={styles.contentContainer}>
                                 <ChapterCard
@@ -174,6 +159,7 @@ export default function ContentLayout() {
                                     }} />
                             </View>
                         ))}
+                        <View style={{ height: 100 }} />
                     </ScrollView>
                 )
             };
@@ -291,3 +277,23 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 });
+
+function createAnimatedHeader(scrollY: Animated.Value, theme: MD3Theme, appBar: React.JSX.Element): React.ReactNode {
+    return <Animated.View
+        style={[
+            styles.header,
+            {
+                height: 80,
+                zIndex: 10000,
+                position: 'absolute',
+                backgroundColor: scrollY.interpolate({
+                    inputRange: [0, HEADER_MAX_HEIGHT],
+                    outputRange: ['transparent', theme.colors.background],
+                    extrapolate: 'clamp',
+                }),
+            },
+        ]}
+    >
+        {appBar}
+    </Animated.View>;
+}
