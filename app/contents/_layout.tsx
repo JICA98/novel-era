@@ -1,6 +1,6 @@
 import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
 import { ActivityIndicator, Appbar, Button, Title, Snackbar, useTheme } from "react-native-paper";
@@ -8,16 +8,14 @@ import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
 import ExportDialog from "../exports/_layout";
-import { MenuFunction } from "../components/menu";
 import { ChapterCard } from "./chapterCard";
-import { useWindowDimensions } from 'react-native';
 import { exportChapters } from "../exports/exportUtils";
-import { Tab, TabView } from "../tabs/tabs";
+import { Tab, TabBar } from "../components/tabs";
+import { AppBar } from "../components/appbar";
 
 
-const HEADER_MAX_HEIGHT = 240;
-const HEADER_MIN_HEIGHT = 0;
-const PAGE_SIZE = 40;
+const HEADER_MAX_HEIGHT = 280;
+const PAGE_SIZE = 80;
 
 async function fetchContentChapters(repo: Repo, content: Content): Promise<Content> {
     const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
@@ -56,13 +54,7 @@ export default function ContentLayout() {
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
     const theme = useTheme();
     const tabLength = Math.ceil((content?.latestChapter ?? 1) / PAGE_SIZE);
-    const layout = useWindowDimensions();
-
-    const [index, setIndex] = React.useState(0);
-    const routes = Array.from({ length: tabLength }).map((_, i) => ({
-        key: `tab${i}`,
-        title: `${i * PAGE_SIZE + 1} — ${Math.min((i + 1) * PAGE_SIZE, content?.latestChapter ?? 0)}`,
-    }));
+    const [selectedIndex, setSelectedIndex] = useState(0);
 
     function handleContentFetch() {
         setLoading();
@@ -75,7 +67,6 @@ export default function ContentLayout() {
     }, []);
 
     let child;
-    const hasDataLoaded = !contentData.isLoading && contentData.data !== undefined && !contentData.error;
     if (contentData.isLoading) {
         child = (
             <View style={styles.listPadding}>
@@ -92,34 +83,81 @@ export default function ContentLayout() {
             </View>
         );
     } else {
+        return renderContentTabs();
+    }
+    return (
+        renderBaseLayout({ child })
+    );
 
-        const Header = () => {
-            return (
-                <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                    <Appbar.Header>
-                        <Appbar.BackAction onPress={() => router.back()} />
-                        <Appbar.Content title={_content.title} />
-                        {hasDataLoaded && <MenuFunction
-                            children={[
-                                { title: 'Export', onPress: () => setExportsVisible(true) },
-                            ]}
-                        />}
-                    </Appbar.Header>
+    function renderBaseLayout({ child, tabBar }: { child?: React.ReactNode; tabBar?: React.ReactNode } = {}) {
+        const appBar = <AppBar title={_content.title} transparent actions={[
+            { leadingIcon: 'export', title: 'Export', onPress: () => setExportsVisible(true) },
+        ]} />;
+        return <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            {tabBar && (<Animated.View
+                style={[
+                    styles.header,
+                    {
+                        height: 80,
+                        zIndex: 10000,
+                        position: 'absolute',
+                        backgroundColor: scrollY.interpolate({
+                            inputRange: [0, HEADER_MAX_HEIGHT],
+                            outputRange: ['transparent', theme.colors.background],
+                            extrapolate: 'clamp',
+                        }),
+                    },
+                ]}
+            >
+                {appBar}
+            </Animated.View>)}
+            {!tabBar && (appBar)}
+            <Animated.ScrollView
+                style={[styles.scrollViewContent, { paddingBottom: 0 }]}
+                scrollEventThrottle={16}
+                onScroll={Animated.event(
+                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                    { useNativeDriver: false }
+                )}
+            >
+                {child}
+            </Animated.ScrollView>
+            <Animated.View
+                style={[
+                    {
+                        height: scrollY.interpolate({
+                            inputRange: [-60, 60],
+                            outputRange: [-60, 60],
+                            extrapolate: 'clamp',
+                        }),
+                    },
+                    {
+                        transform: [
+                            {
+                                translateY: scrollY.interpolate({
+                                    inputRange: [0, HEADER_MAX_HEIGHT],
+                                    outputRange: [HEADER_MAX_HEIGHT, 0],
+                                    extrapolate: 'clamp',
+                                }),
+                            },
+                        ],
+                    },
+                ]}
+            >
+                {tabBar}
+            </Animated.View>
+            <ExportDialog
+                visible={exportsVisible}
+                onDismiss={() => setExportsVisible(false)}
+                maxChapters={contentData.data?.latestChapter}
+                onExport={(range, format) => {
+                    exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
+                }} />
+            <ShowSnackbar />
+        </SafeAreaView>;
+    }
 
-                    <ExportDialog
-                        visible={exportsVisible}
-                        onDismiss={() => setExportsVisible(false)}
-                        maxChapters={contentData.data?.latestChapter}
-                        onExport={(range, format) => {
-                            exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
-                        }}
-                    />
-                    <ShowSnackbar />
-                </SafeAreaView>
-
-            );
-        };
-
+    function renderContentTabs() {
         const tabs: Tab[] = Array.from({ length: tabLength }).map((_, tabIndex) => {
             const start = tabIndex * PAGE_SIZE;
             const end = Math.min((tabIndex + 1) * PAGE_SIZE, content?.latestChapter ?? 0);
@@ -141,6 +179,11 @@ export default function ContentLayout() {
             };
         });
 
+        const tabBar = (<TabBar
+            tabs={tabs}
+            selectedIndex={selectedIndex}
+            onTabPress={setSelectedIndex} />);
+
         child = (
             <ScrollView style={styles.container}>
                 <View style={{ height: HEADER_MAX_HEIGHT }}>
@@ -159,33 +202,13 @@ export default function ContentLayout() {
                         </View>
                     </ImageBackground>
                 </View>
-                <TabView tabs={tabs} />
-            </ScrollView >
+                {tabBar}
+                {tabs[selectedIndex].content}
+            </ScrollView>
         );
+
+        return renderBaseLayout({ child, tabBar });
     }
-    return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <Appbar.Header>
-                <Appbar.BackAction onPress={() => router.back()} />
-                <Appbar.Content title={_content.title} />
-                {hasDataLoaded && <MenuFunction
-                    children={[
-                        { title: 'Export', onPress: () => setExportsVisible(true) },
-                    ]}
-                />}
-            </Appbar.Header>
-            {child}
-            <ExportDialog
-                visible={exportsVisible}
-                onDismiss={() => setExportsVisible(false)}
-                maxChapters={contentData.data?.latestChapter}
-                onExport={(range, format) => {
-                    exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
-                }}
-            />
-            <ShowSnackbar />
-        </SafeAreaView>
-    );
 
     function ShowSnackbar() {
         return (
@@ -220,23 +243,21 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'white',
-        elevation: 3,
     },
     appbar: {
-        backgroundColor: 'transparent',
         justifyContent: 'center',
     },
     imageBackground: {
         flex: 1,
         justifyContent: 'flex-end',
+        // opacity: 0.8,
     },
     gradient: {
         position: 'absolute',
         left: 0,
         right: 0,
         bottom: 0,
-        height: 100,
+        height: HEADER_MAX_HEIGHT,
     },
     innerView: {
         padding: 16,
@@ -265,7 +286,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
     },
     chapterTitle: {
         fontSize: 16,
