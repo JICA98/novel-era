@@ -98,6 +98,9 @@ export interface Content {
     bookLink: string;
     bookId: string;
     rating?: string;
+    latestChapter?: number;
+    summary?: string;
+    author?: string;
 }
 
 export function processData(data: any, selector: Selector): string {

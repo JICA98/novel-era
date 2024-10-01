@@ -1,36 +1,27 @@
-import UseRepositoryLayout from "@/app/_repos";
 import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { ActivityIndicator, Appbar, Button, Card, Divider, Icon, IconButton, List, Menu, Title, Snackbar, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar, Button, Title, Snackbar, useTheme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
-import { Tabs, TabScreen, TabsProvider } from 'react-native-paper-tabs';
-import { allDownloadsStore, createDownloadStore, createStore, deleteFile, readFile, removeFromStore, moveToAlbum, startDownload, useDownloadStore } from "../downloads/utils";
-import { ChapterData, chapterKey, fetchChapter } from "../chapters/_layout";
+import { allDownloadsStore } from "../downloads/utils";
+import { ChapterData } from "../chapters/_layout";
 import ExportDialog from "../exports/_layout";
-import { pLimitLit } from "../_layout";
-import { saveAsEpub } from "../exports/epubUtil";
-import { FontAwesome } from "@expo/vector-icons";
 import { MenuFunction } from "../components/menu";
 import { ChapterCard } from "./chapterCard";
 import { useWindowDimensions } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
+import { exportChapters } from "../exports/exportUtils";
+
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 const PAGE_SIZE = 40;
 
-interface HomeData {
-    latestChapter: number;
-    summary: string;
-    author: string;
-}
-
-async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeData> {
+async function fetchContentChapters(repo: Repo, content: Content): Promise<Content> {
     const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
     console.log(url);
     try {
@@ -40,45 +31,44 @@ async function fetchContentChapters(repo: Repo, content: Content): Promise<HomeD
         const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
         const summary = processData(dom, repo.homeSelector.summarySelector);
         const author = processData(dom, repo.homeSelector.authorSelector);
-        return { latestChapter, summary, author };
+        return { ...content, latestChapter, summary, author };
     } catch (error) {
         console.error(error);
-        return { latestChapter: 0, summary: '', author: '' };
+        throw error;
     }
 }
 
 const useContentStore = create((set) => ({
-    content: { isLoading: true } as FetchData<HomeData>,
-    setContent: (content: FetchData<HomeData>) => set({ content }),
+    content: { isLoading: true } as FetchData<Content>,
+    setContent: (content: FetchData<Content>) => set({ content }),
     setLoading: () => set({ content: { isLoading: true } }),
 }));
 
 export default function ContentLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
-    const content = JSON.parse(useLocalSearchParams().content as string) as Content;
+    const _content = JSON.parse(useLocalSearchParams().content as string) as Content;
     const scrollY = useRef(new Animated.Value(0)).current;
     const setContent = useContentStore((state: any) => state.setContent);
-    const contentData: FetchData<HomeData> = useContentStore((state: any) => state.content);
+    const contentData: FetchData<Content> = useContentStore((state: any) => state.content);
     const setLoading = useContentStore((state: any) => state.setLoading);
     const downloads = allDownloadsStore((state: any) => state.downloads);
     const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
-    const homeData = contentData.data;
+    const content = contentData.data;
     const [exportsVisible, setExportsVisible] = useState(false);
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
     const theme = useTheme();
-    const [tabIndex, setTabIndex] = useState(0);
-    const tabLength = Math.ceil((homeData?.latestChapter ?? 1) / PAGE_SIZE);
+    const tabLength = Math.ceil((content?.latestChapter ?? 1) / PAGE_SIZE);
     const layout = useWindowDimensions();
 
     const [index, setIndex] = React.useState(0);
     const routes = Array.from({ length: tabLength }).map((_, i) => ({
         key: `tab${i}`,
-        title: `${i * PAGE_SIZE + 1} — ${Math.min((i + 1) * PAGE_SIZE, homeData?.latestChapter ?? 0)}`,
+        title: `${i * PAGE_SIZE + 1} — ${Math.min((i + 1) * PAGE_SIZE, content?.latestChapter ?? 0)}`,
     }));
 
     function handleContentFetch() {
         setLoading();
-        fetchContentChapters(repo, content)
+        fetchContentChapters(repo, _content)
             .then(data => setContent({ data }))
             .catch(error => setContent({ error }));
     }
@@ -104,76 +94,77 @@ export default function ContentLayout() {
             </View>
         );
     } else {
-        child = renderHeaderContent(scrollY);
+
+        const renderScene = ({ route }: { route: { key: string } }) => {
+            const tabIndex = parseInt(route.key.replace('tab', ''), 10);
+            const start = tabIndex * PAGE_SIZE;
+            const end = Math.min((tabIndex + 1) * PAGE_SIZE, content?.latestChapter ?? 0);
+            return (
+                <ScrollView nestedScrollEnabled = {true}
+                >
+                    <View style={styles.contentContainer}>
+                        {Array.from({ length: (end - start) }).map((_, index) => (
+                            <ChapterCard
+                                index={index}
+                                props={{
+                                    index, start, repo, content: content!
+                                }}
+                            />
+                        ))}
+                    </View>
+                </ScrollView>
+            );
+        };
+        child = (
+            <View style={styles.container}>
+                <TabView
+                    lazy
+                    navigationState={{ index, routes }}
+                    renderScene={renderScene}
+                    onIndexChange={setIndex}
+                    initialLayout={{ width: layout.width }}
+                    overScrollMode={'auto'}
+                    renderTabBar={
+                        props => <TabBar {...props} scrollEnabled />
+                    }
+                />
+            </View >
+        );
     }
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <Appbar.Header>
                 <Appbar.BackAction onPress={() => router.back()} />
-                <Appbar.Content title={content.title} />
+                <Appbar.Content title={_content.title} />
                 {hasDataLoaded && <MenuFunction
                     children={[
                         { title: 'Export', onPress: () => setExportsVisible(true) },
                     ]}
                 />}
             </Appbar.Header>
-            {child}
+            <ScrollView nestedScrollEnabled = {true} >
+                {/* Header Image */}
+                <ImageBackground
+                    source={{ uri: content?.bookImage }}
+                    style={styles.imageBackground}
+                >
+                    <LinearGradient
+                        colors={['transparent', 'rgba(0,0,0,0.8)']}
+                        style={styles.gradient}
+                    />
+                    <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
+                        {content?.summary}
+                    </Text>
+                </ImageBackground>
+
+                {child}
+            </ScrollView>
             <ExportDialog
                 visible={exportsVisible}
                 onDismiss={() => setExportsVisible(false)}
                 maxChapters={contentData.data?.latestChapter}
                 onExport={(range, format) => {
-                    console.log(range, format);
-                    const endRange = range[1];
-                    const startRange = range[0];
-                    const limit = pLimitLit(1);
-                    const promises: Promise<ChapterData>[] = Array.from({ length: endRange - startRange + 1 }).map((_, index) => {
-                        const id = (range[0] + index).toString();
-                        return limit(async () => {
-                            const key = chapterKey(repo, content, id);
-                            if (downloads.has(key)) {
-                                const stateData = await readFile(key);
-                                if (stateData?.chapterContent) {
-                                    return stateData;
-                                }
-                            }
-                            console.log('Downloading ', key);
-                            const chapterData = await fetchChapter(repo, content, id);
-                            if (chapterData.chapterContent) {
-                                const store = createStore(chapterData);
-                                downloads.set(key, store);
-                                setDownloads(downloads);
-                            }
-                            return chapterData;
-                        });
-                    });
-
-                    Promise.all(promises).then(async (data) => {
-                        if (format === 'epub') {
-                            const uri = await saveAsEpub({
-                                author: homeData!.author,
-                                title: content.title,
-                                content: data,
-                                // cover: content.bookImage,
-                            });
-
-                            await moveToAlbum(uri, 'application/epub+zip');
-
-                            setSnackBarData({
-                                visible: true,
-                                message: `Exported as EPUB under ${uri}`,
-                                severity: 'success',
-                                action: {
-                                    label: 'Ok',
-                                    onPress: () => {
-                                        setSnackBarData({ visible: false });
-                                    }
-                                }
-                            });
-                        }
-                    }).catch((error) => {
-                        console.error(error);
-                    });
+                    exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
                 }}
             />
             <ShowSnackbar />
@@ -189,142 +180,6 @@ export default function ContentLayout() {
                 {snackBarData.message}
             </Snackbar>
         );
-    }
-
-    function interpolateScrollY(scrollY: Animated.Value) {
-        const headerHeight = scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
-            extrapolate: 'clamp',
-        });
-
-        const titleOpacity = scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
-            outputRange: [1, 0.5, 0],
-            extrapolate: 'clamp',
-        });
-
-        const titleTranslateY = scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [0, -HEADER_SCROLL_DISTANCE / 2],
-            extrapolate: 'clamp',
-        });
-
-        const tabsMarginTop = scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
-            extrapolate: 'clamp',
-        });
-        return { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop };
-    }
-
-    function renderHeaderContent(scrollY: Animated.Value) {
-        const { headerHeight, titleOpacity, titleTranslateY, tabsMarginTop } = interpolateScrollY(scrollY);
-
-        function renderChapterScrollView(start: number, end: number) {
-            return (
-                <ScrollView
-                    contentContainerStyle={styles.scrollViewContent}
-                    onScroll={Animated.event(
-                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                        { useNativeDriver: false }
-                    )}
-                    scrollEventThrottle={16}
-                >
-                    <View style={styles.contentContainer}>
-                        {Array.from({ length: (end - start) }).map((_, index) => (
-                            renderChapterCard(index, start)
-                        ))}
-                    </View>
-                </ScrollView>
-            );
-        }
-
-
-        function renderChapterCard(index: number, start: number) {
-            return (
-                <ChapterCard
-                    index={index}
-                    props={{
-                        index, start, repo, content
-                    }}
-                />
-            );
-        }
-
-        const renderScene = ({ route }: { route: { key: string } }) => {
-            const tabIndex = parseInt(route.key.replace('tab', ''), 10);
-            const start = tabIndex * PAGE_SIZE;
-            const end = Math.min((tabIndex + 1) * PAGE_SIZE, homeData?.latestChapter ?? 0);
-            return renderChapterScrollView(start, end);
-        };
-
-        function renderTabs() {
-            return (
-                <Animated.View style={[styles.container, { marginTop: tabsMarginTop }]} >
-                    <TabView
-                        lazy
-                        navigationState={{ index, routes }}
-                        renderScene={renderScene}
-                        onIndexChange={setIndex}
-                        initialLayout={{ width: layout.width }}
-                        overScrollMode={'auto'}
-                        renderTabBar={
-                            props => <TabBar {...props} scrollEnabled />
-                        }
-                    />
-                    {/* <TabsProvider defaultIndex={0} onChangeIndex={setTabIndex}>
-                        <Tabs mode={tabLength === 1 ? 'fixed' : 'scrollable'} disableSwipe showLeadingSpace={false}>
-                            {Array.from({ length: tabLength }).map((_, index) => {
-                                if (tabIndex === index) {
-                                    const start = index * PAGE_SIZE;
-                                    const end = Math.min((index + 1) * PAGE_SIZE, homeData!.latestChapter);
-                                    return (
-                                        <TabScreen key={index} label={`${start + 1} — ${end}`}>
-                                            {renderChapterScrollView(start, end)}
-                                        </TabScreen>
-                                    );
-                                } else {
-                                    const start = index * PAGE_SIZE;
-                                    const end = Math.min((index + 1) * PAGE_SIZE, homeData!.latestChapter);
-                                    return (
-                                        <TabScreen key={index} label={`${start + 1} — ${end}`}>
-                                            <View />
-                                        </TabScreen>
-                                    );
-                                }
-                            })}
-                        </Tabs>
-                    </TabsProvider> */}
-                </Animated.View>
-            );
-        }
-
-        return (
-            <View style={styles.container}>
-                <Animated.View style={[styles.header, { height: headerHeight }]}>
-                    <ImageBackground
-                        source={{ uri: content.bookImage }} // Replace with your image URL
-                        style={[styles.imageBackground]}
-                    >
-                        <LinearGradient
-                            colors={['transparent', 'rgba(0,0,0,0.8)']}
-                            style={styles.gradient} />
-                        <Animated.View style={[styles.innerView, {
-                            opacity: titleOpacity,
-                            transform: [{ translateY: titleTranslateY }]
-                        }]}>
-                            <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
-                                {homeData?.summary}
-                            </Text>
-                        </Animated.View>
-                    </ImageBackground>
-                </Animated.View>
-                {renderTabs()}
-            </View >
-
-        );
-
     }
 }
 
@@ -342,13 +197,14 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         margin: 16,
     },
+    childContainer: {
+        paddingVertical: 16,
+    },
     header: {
-        position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         backgroundColor: 'white',
-        zIndex: -11,
         elevation: 3,
     },
     appbar: {
