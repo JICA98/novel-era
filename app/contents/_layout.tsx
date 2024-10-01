@@ -7,18 +7,16 @@ import { ActivityIndicator, Appbar, Button, Title, Snackbar, useTheme } from "re
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
-import { ChapterData } from "../chapters/_layout";
 import ExportDialog from "../exports/_layout";
 import { MenuFunction } from "../components/menu";
 import { ChapterCard } from "./chapterCard";
 import { useWindowDimensions } from 'react-native';
-import { TabView, TabBar } from 'react-native-tab-view';
 import { exportChapters } from "../exports/exportUtils";
+import { Tab, TabView } from "../tabs/tabs";
 
 
 const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 0;
-const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 const PAGE_SIZE = 40;
 
 async function fetchContentChapters(repo: Repo, content: Content): Promise<Content> {
@@ -95,40 +93,74 @@ export default function ContentLayout() {
         );
     } else {
 
-        const renderScene = ({ route }: { route: { key: string } }) => {
-            const tabIndex = parseInt(route.key.replace('tab', ''), 10);
-            const start = tabIndex * PAGE_SIZE;
-            const end = Math.min((tabIndex + 1) * PAGE_SIZE, content?.latestChapter ?? 0);
+        const Header = () => {
             return (
-                <ScrollView nestedScrollEnabled = {true}
-                >
-                    <View style={styles.contentContainer}>
-                        {Array.from({ length: (end - start) }).map((_, index) => (
-                            <ChapterCard
-                                index={index}
-                                props={{
-                                    index, start, repo, content: content!
-                                }}
-                            />
-                        ))}
-                    </View>
-                </ScrollView>
+                <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                    <Appbar.Header>
+                        <Appbar.BackAction onPress={() => router.back()} />
+                        <Appbar.Content title={_content.title} />
+                        {hasDataLoaded && <MenuFunction
+                            children={[
+                                { title: 'Export', onPress: () => setExportsVisible(true) },
+                            ]}
+                        />}
+                    </Appbar.Header>
+
+                    <ExportDialog
+                        visible={exportsVisible}
+                        onDismiss={() => setExportsVisible(false)}
+                        maxChapters={contentData.data?.latestChapter}
+                        onExport={(range, format) => {
+                            exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
+                        }}
+                    />
+                    <ShowSnackbar />
+                </SafeAreaView>
+
             );
         };
+
+        const tabs: Tab[] = Array.from({ length: tabLength }).map((_, tabIndex) => {
+            const start = tabIndex * PAGE_SIZE;
+            const end = Math.min((tabIndex + 1) * PAGE_SIZE, content?.latestChapter ?? 0);
+            return {
+                title: `${tabIndex * PAGE_SIZE + 1} — ${Math.min((tabIndex + 1) * PAGE_SIZE, content?.latestChapter ?? 0)}`,
+                content: (
+                    <ScrollView>
+                        {Array.from({ length: (end - start) }).map((_, index) => (
+                            <View key={index} style={styles.contentContainer}>
+                                <ChapterCard
+                                    index={index}
+                                    props={{
+                                        index, start, repo, content: content!
+                                    }} />
+                            </View>
+                        ))}
+                    </ScrollView>
+                )
+            };
+        });
+
         child = (
-            <View style={styles.container}>
-                <TabView
-                    lazy
-                    navigationState={{ index, routes }}
-                    renderScene={renderScene}
-                    onIndexChange={setIndex}
-                    initialLayout={{ width: layout.width }}
-                    overScrollMode={'auto'}
-                    renderTabBar={
-                        props => <TabBar {...props} scrollEnabled />
-                    }
-                />
-            </View >
+            <ScrollView style={styles.container}>
+                <View style={{ height: HEADER_MAX_HEIGHT }}>
+                    <ImageBackground
+                        source={{ uri: content?.bookImage }}
+                        style={styles.imageBackground}
+                    >
+                        <LinearGradient
+                            colors={['transparent', 'rgba(0,0,0,0.8)']}
+                            style={styles.gradient}
+                        />
+                        <View style={{ padding: 16 }}>
+                            <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
+                                {content?.summary}
+                            </Text>
+                        </View>
+                    </ImageBackground>
+                </View>
+                <TabView tabs={tabs} />
+            </ScrollView >
         );
     }
     return (
@@ -142,23 +174,7 @@ export default function ContentLayout() {
                     ]}
                 />}
             </Appbar.Header>
-            <ScrollView nestedScrollEnabled = {true} >
-                {/* Header Image */}
-                <ImageBackground
-                    source={{ uri: content?.bookImage }}
-                    style={styles.imageBackground}
-                >
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.gradient}
-                    />
-                    <Text style={styles.title} numberOfLines={8} ellipsizeMode="tail">
-                        {content?.summary}
-                    </Text>
-                </ImageBackground>
-
-                {child}
-            </ScrollView>
+            {child}
             <ExportDialog
                 visible={exportsVisible}
                 onDismiss={() => setExportsVisible(false)}
