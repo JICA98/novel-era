@@ -1,9 +1,10 @@
 import { Content, Repo } from "@/types";
-import { chapterKey, fetchChapter, RenderChapterProps } from "../chapters/_layout";
 import { router } from "expo-router";
 import { View, StyleSheet } from "react-native";
-import { List, Title, IconButton, Divider, useTheme, ActivityIndicator } from "react-native-paper";
+import { List, Title, IconButton, Divider, ActivityIndicator } from "react-native-paper";
 import { useDownloadStore, startDownload, removeFromStore, allDownloadsStore } from "../downloads/utils";
+import { chapterKey, RenderChapterProps, fetchChapter } from "../chapters/common";
+import { useNovelTrackerStore, novelTrackerStore, ChapterTracker } from "../favorites/tracker";
 
 interface ChapterCardProps {
     index: number;
@@ -27,6 +28,15 @@ export function ChapterCard({ index, props }: { index: React.Key, props: Chapter
         focusedMode: false, id, content, repo,
         data: storeContent.data?.chapterContent ?? ''
     };
+    const useTracker = useNovelTrackerStore({
+        chapterId: chapterProps.id,
+        repoId: props.repo.id,
+        novelId: props.content.bookId,
+        allTrackers: novelTrackerStore((state: any) => state.content),
+        setAllTrackers: novelTrackerStore((state: any) => state.setContent),
+    });
+    const tracker = useTracker((state: any) => state.content) as ChapterTracker;
+    const completed = tracker.status === 'read';
 
     function handleDownload(): void {
         console.log('Download chapter');
@@ -43,40 +53,56 @@ export function ChapterCard({ index, props }: { index: React.Key, props: Chapter
         setContent({ noStarted: true });
     }
 
+    function downloadIcon() {
+        if (storeContent.data) {
+            return <IconButton
+                icon="check"
+                mode="contained-tonal"
+                size={14}
+                style={{ marginRight: 'auto' }}
+                onPress={() => handleRemove()} />;
+        } else if (storeContent.noStarted) {
+            return <IconButton
+                icon="download-outline"
+                size={14}
+                mode="contained-tonal"
+                style={{ marginRight: 'auto' }}
+                onPress={() => handleDownload()} />;
+        } else if (storeContent?.isLoading) {
+            return <View style={styles.loading}>
+                <ActivityIndicator animating={true} size="small" />
+            </View>;
+        } else {
+            return <IconButton
+                icon="alert-circle-outline"
+                size={14}
+                mode="contained-tonal"
+                style={{ marginRight: 'auto' }}
+                onPress={() => handleDownload()} />;
+        }
+    }
+
+    function percentageDesc() {
+        if (!completed && tracker.chapterProgress) {
+            const percentage = (Math.min(tracker.chapterProgress, 1) * 100).toFixed(0);
+            return (<View style={styles.container}>
+                <Title style={{ fontSize: 13, opacity: .8 }}>
+                    {percentage}/100
+                </Title>
+            </View>);
+        }
+    }
+
     return (
         <View key={index}>
             <List.Item
                 key={index}
-                title={() => <Title style={styles.chapterTitle} >Chapter {id}</Title>}
-                right={_ => {
-                    if (storeContent.data) {
-                        return <IconButton
-                            icon="check"
-                            mode="contained-tonal"
-                            size={14}
-                            style={{ marginLeft: 'auto' }}
-                            onPress={() => handleRemove()} />;
-                    } else if (storeContent.noStarted) {
-                        return <IconButton
-                            icon="download-outline"
-                            size={14}
-                            mode="contained-tonal"
-                            style={{ marginLeft: 'auto' }}
-                            onPress={() => handleDownload()} />;
-                    } else
-                        if (storeContent?.isLoading) {
-                            return <View style={styles.loading}>
-                                <ActivityIndicator animating={true} size="small" />
-                            </View>;
-                        } else {
-                            return <IconButton
-                                icon="alert-circle-outline"
-                                size={14}
-                                mode="contained-tonal"
-                                style={{ marginLeft: 'auto' }}
-                                onPress={() => handleDownload()} />;
-                        }
-                }}
+                right={() => downloadIcon()}
+                title={() => <View>
+                    <Title style={[styles.chapterTitle]} >Chapter {id}</Title>
+                </View>}
+                style={{ opacity: completed ? .5 : 1 }}
+                description={percentageDesc}
                 onPress={() => router.push(
                     {
                         pathname: '/chapters',

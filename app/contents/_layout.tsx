@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
-import { ActivityIndicator, Appbar, Button, Title, Snackbar, useTheme, MD3Theme } from "react-native-paper";
+import { ActivityIndicator, Button, Title, Snackbar, useTheme, MD3Theme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
