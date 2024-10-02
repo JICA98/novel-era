@@ -1,5 +1,5 @@
 import { Content, Repo } from "@/types";
-import { chapterKey, fetchChapter } from "../chapters/_layout";
+import { chapterKey, fetchChapter, RenderChapterProps } from "../chapters/_layout";
 import { router } from "expo-router";
 import { View, StyleSheet } from "react-native";
 import { List, Title, IconButton, Divider, useTheme, ActivityIndicator } from "react-native-paper";
@@ -23,6 +23,10 @@ export function ChapterCard({ index, props }: { index: React.Key, props: Chapter
     const storeContent = downloadStore((state: any) => state.content);
     const setLoading = downloadStore((state: any) => state.setLoading);
     const setContent = downloadStore((state: any) => state.setContent);
+    const chapterProps: RenderChapterProps = {
+        focusedMode: false, id, content, repo,
+        data: storeContent.data?.chapterContent ?? ''
+    };
 
     function handleDownload(): void {
         console.log('Download chapter');
@@ -77,9 +81,7 @@ export function ChapterCard({ index, props }: { index: React.Key, props: Chapter
                     {
                         pathname: '/chapters',
                         params: {
-                            id,
-                            repo: JSON.stringify(repo),
-                            content: JSON.stringify(content)
+                            props: JSON.stringify(chapterProps),
                         }
                     })}
             />

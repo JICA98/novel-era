@@ -37,7 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="repos" options={{ headerShown: false }} />
         <Stack.Screen name="contents" options={{ headerShown: false }} />
-        <Stack.Screen name="chapters" options={{ headerShown: false }} />
+        <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
       </Stack>
     </PaperProvider>
   );
@@ -47,3 +47,14 @@ function initApp(downloads: any, setDownloads: any) {
   setupDownloadStores(downloads, setDownloads);
 }
 
+const ignoredWarnings = [
+  'There is no custom renderer',
+  '[xmldom warning]',
+];
+const consoleWarn = console.warn;
+console.warn = (message: string) => {
+  if (ignoredWarnings.some((warning) => message.includes(warning))) {
+    return;
+  }
+  consoleWarn(message);
+}

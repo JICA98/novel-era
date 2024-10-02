@@ -1,11 +1,12 @@
 import { Content, FetchData, processData, Repo } from "@/types";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
-import { Dimensions, View, Text, SafeAreaView, TouchableOpacity } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Dimensions, View, Text, SafeAreaView, TouchableOpacity, StatusBar } from "react-native";
 import { ActivityIndicator, Appbar, Button, Card, Divider, IconButton, List, PaperProvider, Title, useTheme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
-import RenderPagedContent from "./content";
 import { allDownloadsStore, saveFile, useDownloadStore } from "../downloads/utils";
+import { AppBar } from "../components/appbar";
+import { RenderPagedContent } from "./content";
 
 export interface ChapterData {
     id: string;
@@ -13,6 +14,16 @@ export interface ChapterData {
     name: string;
     repo: Repo;
     content: Content;
+}
+
+export interface RenderChapterProps {
+    focusedMode: boolean;
+    id: string;
+    content: Content;
+    data: string;
+    repo: Repo,
+    continueReading?: boolean;
+    fromPrevious?: boolean;
 }
 
 export function chapterKey(repo: Repo, content: Content, id: string) {
@@ -37,12 +48,25 @@ export async function fetchChapter(repo: Repo, content: Content, id: string): Pr
     }
 }
 
-export default function ChapterLayout() {
-    const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
-    const content = JSON.parse(useLocalSearchParams().content as string) as Content;
-    const id = useLocalSearchParams().id as string;
-    const key = chapterKey(repo, content, id);
+export function navigateToNextChapter(props: RenderChapterProps, add = 1) {
+    router.replace({
+        pathname: '/chapters',
+        params: {
+            props: JSON.stringify({
+                ...props,
+                id: (parseInt(props.id) + add).toString(),
+                continueReading: true,
+                fromPrevious: add === -1,
+            }),
+        }
+    });
+}
+
+const ChapterLayout: React.FC = () => {
+    const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
     const downloads = allDownloadsStore((state: any) => state.downloads);
+    const props: RenderChapterProps = { ..._props };
+    const key = chapterKey(props.repo, props.content, props.id);
     const useChapterData = useDownloadStore({
         key,
         downloads,
@@ -51,7 +75,7 @@ export default function ChapterLayout() {
     const contentData: FetchData<ChapterData> = useChapterData((state: any) => state.content);
     const setContent = useChapterData((state: any) => state.setContent);
     const setLoading = useChapterData((state: any) => state.setLoading);
-    const [focusedMode, setFocusedMode] = useState(false);
+    const [focusedMode, setFocusedMode] = useState(props.focusedMode);
     const theme = useTheme();
 
     useEffect(() => {
@@ -61,7 +85,7 @@ export default function ChapterLayout() {
     function fetchChapterData(cached = true) {
         if (cached && contentData.data) { return; }
         setLoading();
-        fetchChapter(repo, content, id)
+        fetchChapter(props.repo, props.content, props.id)
             .then(data => setContent({ data }))
             .catch(error => setContent({ error }));
     }
@@ -84,16 +108,28 @@ export default function ChapterLayout() {
             </View>
         );
     } else {
-        child = <RenderPagedContent content={contentData.data.chapterContent} />;
+        child = <RenderPagedContent
+            fromPrevious={props.fromPrevious}
+            data={contentData.data.chapterContent}
+            focusedMode={focusedMode}
+            continueReading={props.continueReading}
+            id={props.id} content={props.content} repo={props.repo}
+        />;
     }
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             {!focusedMode && (
-                <Appbar.Header elevated={true}>
-                    <Appbar.BackAction onPress={() => router.back()} />
-                    <Appbar.Content title={`Chapter ${id}`} />
-                </Appbar.Header>
+                <AppBar title={`Chapter ${props.id}`} actions={[
+                    {
+                        leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () =>
+                            navigateToNextChapter(props)
+                    },
+                    {
+                        title: 'Focus Mode', onPress: () => setFocusedMode(true)
+                    },
+                ]}></AppBar>
             )}
+            {focusedMode && (<StatusBar hidden />)}
             {child}
             <TouchableOpacity
                 style={styles.invisibleButton}
@@ -149,3 +185,4 @@ const styles = {
     },
 };
 
+export default ChapterLayout;
