@@ -2,6 +2,7 @@ import * as React from 'react';
 import { BottomNavigation, Text } from 'react-native-paper';
 import { create } from 'zustand'
 import SearchLayout from './search';
+import Recents from './recents';
 
 export const indexes = {
     favorites: 0,
@@ -14,7 +15,7 @@ const FavoritesRoute = () => <Text>Favorites</Text>;
 
 const SearchRoute = () => <SearchLayout />;
 
-const RecentsRoute = () => <Text>Recents</Text>;
+const RecentsRoute = () => <Recents />;
 
 const SettingsRoute = () => <Text>Settings</Text>;
 

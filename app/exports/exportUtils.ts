@@ -1,5 +1,5 @@
 import { Repo, Content, SnackBarData } from "@/types";
-import { ChapterData, chapterKey, fetchChapter } from "../chapters/_layout";
+import { ChapterData, chapterKey, fetchChapter } from "../chapters/common";
 import { readFile, moveToAlbum, createStore } from "../downloads/utils";
 import { saveAsEpub } from "./epubUtil";
 import { pLimitLit } from "../_layout";

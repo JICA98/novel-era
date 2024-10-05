@@ -14,8 +14,8 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const chapterId = props.id;
     const useTracker = useNovelTrackerStore({
         chapterId: props.id,
-        repoId: props.repo.id,
-        novelId: props.content.bookId,
+        repo: props.repo,
+        content: props.content,
         allTrackers: novelTrackerStore((state: any) => state.content),
         setAllTrackers: novelTrackerStore((state: any) => state.setContent),
     });
@@ -64,10 +64,12 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
             console.log('Chapter tracker not found', chapterId);
             return;
         }
+        const currentTimestamp = Date.now();
+        console.log('Updating progress', currentTimestamp);
         const newChapterTracker: ChapterTracker = {
             ...tracker,
             chapterProgress: progress,
-            lastRead: new Date(),
+            lastRead: currentTimestamp,
             status: progress >= 1 ? 'read' : 'reading',
         };
         setTracker(newChapterTracker);
@@ -103,7 +105,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                                 }
                             }}>
                             <View style={{ margin: props.focusedMode ? 40 : 20 }} ></View>
-                            {(props.id !== `1` && props.continueReading) && (
+                            {(props.id !== `1` && props.continueReading && props.enableNextPrev) && (
                                 prevChapBtn
                             )}
                             <RenderHtml
@@ -113,7 +115,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                                 ignoredDomTags={['nf3e90', 'nf5865']}
                             />
                             <View style={{ margin: 20 }} ></View>
-                            {(props.id !== props.content.latestChapter?.toString()) && (
+                            {(props.id !== props.content.latestChapter?.toString() && props.enableNextPrev) && (
                                 nextChapBtn
                             )}
                         </ScrollView>

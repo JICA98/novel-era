@@ -1,4 +1,4 @@
-import { FetchData } from "@/types";
+import { Content, FetchData, Repo } from "@/types";
 import { Chapter } from "epub-gen";
 import { create, StoreApi, UseBoundStore } from "zustand";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -23,12 +23,13 @@ const getData = async (key: string) => {
 };
 
 export interface ChapterTracker {
-    repoId: string;
-    novelId: string;
+    repo: Repo;
+    novel: Content;
+    chapterName?: string;
     chapterId: string;
     chapterProgress: number;
     status: 'read' | 'unread' | 'reading';
-    lastRead: Date;
+    lastRead: number;
 }
 
 export const novelTrackerStore = create((set) => ({
@@ -42,7 +43,7 @@ export function updateNovelTracker({ chapterTrackers, setAllTracker, allTracker 
     setAllTracker: any
 }) {
     chapterTrackers.forEach((tracker) => {
-        const key = trackerKey(tracker.repoId, tracker.novelId, tracker.chapterId);
+        const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
         allTracker.set(key, createNovelStore(tracker));
         storeData(key, tracker).then(() => console.log('Saved'));
     });
@@ -57,31 +58,31 @@ export function createNovelStore(tracker: ChapterTracker) {
 }
 
 export function useNovelTrackerStore({
-    repoId, novelId, chapterId,
+    repo, content, chapterId,
     allTrackers, setAllTrackers
 }: {
-    repoId: string, novelId: string, chapterId: string, setAllTrackers: any,
+    repo: Repo, content: Content, chapterId: string, setAllTrackers: any,
     allTrackers: Map<string, UseBoundStore<StoreApi<ChapterTracker>>>
 }) {
-    const key = trackerKey(repoId, novelId, chapterId);
+    const key = trackerKey(repo.id, content.bookId, chapterId);
     if (allTrackers && allTrackers.has(key)) {
         return allTrackers.get(key)!;
     } else {
-        const tracker = createNovelStore(createChapter(repoId, novelId, chapterId));
+        const tracker = createNovelStore(createChapter(repo, content, chapterId));
         allTrackers.set(key, tracker);
         setAllTrackers(allTrackers);
         return tracker;
     }
 }
 
-export function createChapter(repoId: string, novelId: string, chapterId: string): ChapterTracker {
+export function createChapter(repo: Repo, novel: Content, chapterId: string): ChapterTracker {
     return {
-        repoId,
-        novelId,
+        repo,
+        novel,
         chapterId,
         chapterProgress: 0,
-        status: 'reading',
-        lastRead: new Date(),
+        status: 'unread',
+        lastRead: Date.now(),
     };
 }
 
@@ -89,31 +90,30 @@ export function trackerKey(repoId: string, novelId: string, chapterId: string): 
     return `trackerv1-${repoId}-${novelId}-${chapterId}`;
 }
 
-export async function getTrackerByKey(repoId: string, novelId: string, chapterId: string): Promise<ChapterTracker> {
-    const key = trackerKey(repoId, novelId, chapterId);
-    const tracker = await getData(key);
-    if (tracker) {
-        return tracker;
-    } else {
-        return createChapter(repoId, novelId, chapterId);
+export async function setupTrackingStores(allTrackers: any, setAllTrackers: any) {
+    const trackers = await getAllTrackersAsync();
+    for (const key in trackers) {
+        allTrackers.set(key, createNovelStore(trackers[key]));
     }
+    setAllTrackers(allTrackers);
 }
 
-export async function setupTrackingStores(allTrackers: any, setAllTrackers: any) {
+export async function getAllTrackersAsync() {
     const allKeys = await AsyncStorage.getAllKeys();
+    const trackers = {} as Record<string, ChapterTracker>;
     for (let i = 0; i < allKeys.length; i++) {
         const key = allKeys[i];
         if (key.startsWith('trackerv1-')) {
             const tracker = await getData(key);
             if (tracker) {
-                allTrackers.set(key, createNovelStore(tracker));
+                trackers[key] = tracker;
             }
         }
     }
-    setAllTrackers(allTrackers);
+    return trackers;
 }
 
 export async function saveTracker(tracker: ChapterTracker) {
-    const key = trackerKey(tracker.repoId, tracker.novelId, tracker.chapterId);
+    const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
     await storeData(key, tracker);
 }

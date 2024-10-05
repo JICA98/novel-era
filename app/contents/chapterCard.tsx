@@ -7,16 +7,16 @@ import { chapterKey, RenderChapterProps, fetchChapter } from "../chapters/common
 import { useNovelTrackerStore, novelTrackerStore, ChapterTracker } from "../favorites/tracker";
 
 interface ChapterCardProps {
-    index: number;
-    start: number;
+    chapterId: string;
     repo: Repo;
     content: Content;
+    enableNextPrev: boolean;
 }
 
-export function ChapterCard({ index, props }: { index: React.Key, props: ChapterCardProps }) {
+export function ChapterCard({ props }: { props: ChapterCardProps }) {
     const repo = props.repo;
     const content = props.content;
-    const id = `${props.start + props.index + 1}`;
+    const id = props.chapterId;
     const key = chapterKey(repo, content, id);
     const downloads = allDownloadsStore((state: any) => state.downloads);
     const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
@@ -26,12 +26,13 @@ export function ChapterCard({ index, props }: { index: React.Key, props: Chapter
     const setContent = downloadStore((state: any) => state.setContent);
     const chapterProps: RenderChapterProps = {
         focusedMode: false, id, content, repo,
+        enableNextPrev: props.enableNextPrev,
         data: storeContent.data?.chapterContent ?? ''
     };
     const useTracker = useNovelTrackerStore({
         chapterId: chapterProps.id,
-        repoId: props.repo.id,
-        novelId: props.content.bookId,
+        repo: props.repo,
+        content: props.content,
         allTrackers: novelTrackerStore((state: any) => state.content),
         setAllTrackers: novelTrackerStore((state: any) => state.setContent),
     });
@@ -94,9 +95,9 @@ export function ChapterCard({ index, props }: { index: React.Key, props: Chapter
     }
 
     return (
-        <View key={index}>
+        <View key={id}>
             <List.Item
-                key={index}
+                key={id}
                 right={() => downloadIcon()}
                 title={() => <View>
                     <Title style={[styles.chapterTitle]} >Chapter {id}</Title>

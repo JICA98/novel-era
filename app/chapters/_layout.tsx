@@ -59,21 +59,24 @@ const ChapterLayout: React.FC = () => {
             data={contentData.data.chapterContent}
             focusedMode={focusedMode}
             continueReading={props.continueReading}
+            enableNextPrev={props.enableNextPrev}
             id={props.id} content={props.content} repo={props.repo}
         />;
+    }
+    const chapterActions = [
+        {
+            leadingIcon: 'crop-free', title: 'Focus Mode', onPress: () => setFocusedMode(true)
+        },
+    ];
+    if (props.enableNextPrev) {
+        chapterActions.push({
+            leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () => navigateToNextChapter(props)
+        },);
     }
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             {!focusedMode && (
-                <AppBar title={`Chapter ${props.id}`} actions={[
-                    {
-                        leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () =>
-                            navigateToNextChapter(props)
-                    },
-                    {
-                        title: 'Focus Mode', onPress: () => setFocusedMode(true)
-                    },
-                ]}></AppBar>
+                <AppBar title={`Chapter ${props.id}`} actions={chapterActions}></AppBar>
             )}
             {focusedMode && (<StatusBar hidden />)}
             {child}

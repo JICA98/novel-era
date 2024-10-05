@@ -2,7 +2,7 @@ import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground } from "react-native";
+import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl } from "react-native";
 import { ActivityIndicator, Button, Title, Snackbar, useTheme, MD3Theme } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
@@ -99,6 +99,7 @@ export default function ContentLayout() {
             <Animated.ScrollView
                 style={[styles.scrollViewContent, { paddingBottom: 0 }]}
                 scrollEventThrottle={16}
+                refreshControl={<RefreshControl refreshing={false} onRefresh={() => handleContentFetch()} />}
                 onScroll={Animated.event(
                     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
                     { useNativeDriver: false }
@@ -153,9 +154,9 @@ export default function ContentLayout() {
                         {Array.from({ length: (end - start) }).map((_, index) => (
                             <View key={index} style={styles.contentContainer}>
                                 <ChapterCard
-                                    index={index}
                                     props={{
-                                        index, start, repo, content: content!
+                                        repo, content: content!, chapterId: `${start + index + 1}`,
+                                        enableNextPrev: true,
                                     }} />
                             </View>
                         ))}

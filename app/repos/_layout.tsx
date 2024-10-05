@@ -1,5 +1,5 @@
 import { ActivityIndicator, Appbar, Button, Card, Icon, Menu, Title, useTheme } from "react-native-paper";
-import { FlatList, SafeAreaView, View } from "react-native";
+import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Content, FetchData, processData, Repo, Selector, SelectorType } from "@/types";
@@ -10,6 +10,8 @@ import { Searchbar } from 'react-native-paper';
 import { FontAwesome } from '@expo/vector-icons';
 import jsonpath from 'jsonpath';
 import { MenuFunction } from "../components/menu";
+import { Refresh } from "../components/refresh";
+import BookItem from "./bookItem";
 
 async function fetchContentList({ repo, searchQuery }: { repo: Repo, searchQuery?: string }): Promise<Content[]> {
     try {
@@ -90,32 +92,16 @@ export default function RepositorLayout() {
         child = (
             <FlatList
                 data={content.data}
-                renderItem={({ item }) => renderItem(repo, item)}
+                renderItem={({ item }) => (<BookItem repo={repo} item={item} />)}
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
                 ListFooterComponent={<View style={{ height: 120 }} />}
                 ListHeaderComponent={<View style={{ height: 20 }} />}
+                refreshControl={<RefreshControl refreshing={content.isLoading} onRefresh={() => fetchContent({ cached: false })} />}
             />
         );
     }
-
-
-    const renderItem = (repo: Repo, item: Content) => (
-        <Card style={styles.card} onPress={() => {
-            return router.push({
-                pathname: '/contents',
-                params: { content: JSON.stringify(item), repo: JSON.stringify(repo) }
-            });
-        }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Card.Cover source={{ uri: item.bookImage }} style={{ width: 100, height: 100, marginRight: 8 }} />
-                <View style={{ flex: 1 }}>
-                    <Card.Title title={item.title} titleNumberOfLines={2} />
-                </View>
-            </View>
-        </Card>
-    );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -166,10 +152,6 @@ const styles = StyleSheet.create({
     },
     grid: {
         paddingHorizontal: 2,
-    },
-    card: {
-        flex: 1,
-        margin: 2,
     },
     fab: {
         position: 'absolute',
