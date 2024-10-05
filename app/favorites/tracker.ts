@@ -32,23 +32,23 @@ export interface ChapterTracker {
     lastRead: number;
 }
 
+export interface NovelTracker {
+    repo: Repo;
+    novel: Content;
+    added: number;
+    updated: number;
+    favorite: boolean;
+}
+
 export const chapterTrackerStore = create((set) => ({
     content: new Map<string, UseBoundStore<StoreApi<ChapterTracker>>>(),
     setContent: (content: Map<string, UseBoundStore<StoreApi<ChapterTracker>>>) => set({ content }),
 }));
 
-export function updateChapterTrackers({ chapterTrackers, setAllTracker, allTracker }: {
-    allTracker: Map<string, UseBoundStore<StoreApi<ChapterTracker>>>,
-    chapterTrackers: ChapterTracker[],
-    setAllTracker: any
-}) {
-    chapterTrackers.forEach((tracker) => {
-        const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
-        allTracker.set(key, createChapterTrackerStore(tracker));
-        storeData(key, tracker).then(() => console.log('Saved'));
-    });
-    setAllTracker(allTracker);
-}
+export const noveFavoriteStore = create((set) => ({
+    content: new Map<string, NovelTracker>(),
+    setContent: (content: Map<string, NovelTracker>) => set({ content }),
+}));
 
 export function createChapterTrackerStore(tracker: ChapterTracker) {
     return create<any>((set) => ({
@@ -75,6 +75,23 @@ export function getOrCreateTrackerStore({
     }
 }
 
+export function getOrCreateNovelTrackerStore({
+    repo, content, setAllTrackers, allTrackers
+}: {
+    repo: Repo, content: Content, setAllTrackers: any,
+    allTrackers: Map<string, NovelTracker>
+}) {
+    const key = novelKey(repo.id, content.bookId);
+    if (allTrackers && allTrackers.has(key)) {
+        return allTrackers.get(key)!;
+    } else {
+        const tracker = createNovel(repo, content);
+        allTrackers.set(key, tracker);
+        setAllTrackers(allTrackers);
+        return tracker;
+    }
+}
+
 export function createChapter(repo: Repo, novel: Content, chapterId: string): ChapterTracker {
     return {
         repo,
@@ -86,8 +103,22 @@ export function createChapter(repo: Repo, novel: Content, chapterId: string): Ch
     };
 }
 
+export function createNovel(repo: Repo, novel: Content): NovelTracker {
+    return {
+        repo,
+        novel,
+        added: Date.now(),
+        updated: Date.now(),
+        favorite: false,
+    };
+}
+
 export function trackerKey(repoId: string, novelId: string, chapterId: string): string {
     return `trackerv1-${repoId}-${novelId}-${chapterId}`;
+}
+
+export function novelKey(repoId: string, novelId: string): string {
+    return `favoritev1-${repoId}-${novelId}`;
 }
 
 export async function setupTrackingStores(allTrackers: any, setAllTrackers: any) {
@@ -99,11 +130,15 @@ export async function setupTrackingStores(allTrackers: any, setAllTrackers: any)
 }
 
 export async function getAllTrackersAsync() {
+    return await getDataByKeyPrefix<ChapterTracker>('trackerv1-');
+}
+
+async function getDataByKeyPrefix<T>(prefix: string) {
     const allKeys = await AsyncStorage.getAllKeys();
-    const trackers = {} as Record<string, ChapterTracker>;
+    const trackers = {} as Record<string, T>;
     for (let i = 0; i < allKeys.length; i++) {
         const key = allKeys[i];
-        if (key.startsWith('trackerv1-')) {
+        if (key.startsWith(prefix)) {
             const tracker = await getData(key);
             if (tracker) {
                 trackers[key] = tracker;
@@ -111,6 +146,18 @@ export async function getAllTrackersAsync() {
         }
     }
     return trackers;
+}
+
+export async function setupFavoriteStores(allTrackers: any, setAllTrackers: any) {
+    const trackers = await getFavoriteTrackersAsync();
+    for (const key in trackers) {
+        allTrackers.set(key, trackers[key]);
+    }
+    setAllTrackers(allTrackers);
+}
+
+export async function getFavoriteTrackersAsync() {
+    return await getDataByKeyPrefix<NovelTracker>('favoritev1-');
 }
 
 export async function saveTracker(tracker: ChapterTracker) {

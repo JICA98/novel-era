@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl } from "react-native";
-import { ActivityIndicator, Button, Title, Snackbar, useTheme, MD3Theme } from "react-native-paper";
+import { ActivityIndicator, Button, Title, Snackbar, useTheme, MD3Theme, SegmentedButtons } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
@@ -12,9 +12,11 @@ import { ChapterCard } from "./chapterCard";
 import { exportChapters } from "../exports/exportUtils";
 import { Tab, TabBar } from "../components/tabs";
 import { AppBar } from "../components/appbar";
+import { getOrCreateNovelTrackerStore, noveFavoriteStore, novelKey, NovelTracker } from "../favorites/tracker";
+import { FAB } from 'react-native-paper';
 
 
-const HEADER_MAX_HEIGHT = 280;
+const HEADER_MAX_HEIGHT = 320;
 const PAGE_SIZE = 80;
 
 async function fetchContentChapters(repo: Repo, content: Content): Promise<Content> {
@@ -55,6 +57,14 @@ export default function ContentLayout() {
     const theme = useTheme();
     const tabLength = Math.ceil((content?.latestChapter ?? 1) / PAGE_SIZE);
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
+    const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
+    const novelTracker = getOrCreateNovelTrackerStore({
+        repo,
+        content: _content,
+        allTrackers: allNovelTrackerStore,
+        setAllTrackers: setAllNovelTracker,
+    });
 
     function handleContentFetch() {
         setLoading();
@@ -138,6 +148,21 @@ export default function ContentLayout() {
                 onExport={(range, format) => {
                     exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
                 }} />
+            <FAB
+                style={{
+                    position: 'absolute',
+                    margin: 16,
+                    right: 0,
+                    bottom: 0,
+                }}
+                icon={novelTracker.favorite ? 'heart' : 'heart-outline'}
+                onPress={() => {
+                    const key = novelKey(repo.id, _content.bookId);
+                    const updatedTracker: NovelTracker = { ...novelTracker, favorite: !novelTracker.favorite };
+                    allNovelTrackerStore.set(key, updatedTracker);
+                    setAllNovelTracker(allNovelTrackerStore);
+                }}
+            />
             <ShowSnackbar />
         </SafeAreaView>;
     }

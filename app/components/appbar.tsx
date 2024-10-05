@@ -17,9 +17,22 @@ interface AppBarProps {
 // Define the AppBar component
 export const AppBar: React.FC<AppBarProps> = ({ title, actions, transparent }) => {
     const { colors } = useTheme();
+    const surfaceVariantColor = colors.surfaceVariant;
+    // Function to convert hex color to RGBA with 50% transparency
+    const hexToRgba = (hex: string, alpha: any) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
 
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+    const transparentSurfaceVariant = hexToRgba(surfaceVariantColor, 0.9);
+    console.log(transparentSurfaceVariant);
     return (
-        <View style={[styles.appBarContainer, { backgroundColor: transparent ? 'transparent' : colors.surfaceVariant }]}>
+        <View style={[styles.appBarContainer, {
+            backgroundColor:
+                transparent ? transparentSurfaceVariant : surfaceVariantColor
+        }]}>
             <IconButton icon="arrow-left" size={24} onPress={router.back} />
             <Text style={[transparent ? styles.titleTransparent : styles.title,
             { color: colors.onBackground }]} numberOfLines={1} ellipsizeMode="tail">
@@ -53,6 +66,6 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 20,
         textAlign: 'center',
-        
+
     },
 });

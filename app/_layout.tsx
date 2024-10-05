@@ -1,9 +1,11 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { PaperProvider, DefaultTheme, MD3DarkTheme } from "react-native-paper";
+import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 import * as p from "plimit-lit";
 import { chapterTrackerStore, setupTrackingStores } from "./favorites/tracker";
+import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
+import { useColorScheme } from "react-native";
 
 export const darkTheme = {
   ...MD3DarkTheme,
@@ -26,16 +28,21 @@ export default function RootLayout() {
   const downloads = allDownloadsStore((state: any) => state.downloads);
   const allTrackers = chapterTrackerStore((state: any) => state.content);
   const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
+  const colorScheme = useColorScheme();
+  const { theme } = useMaterial3Theme();
+  const paperTheme =
+    colorScheme === 'dark'
+      ? { ...MD3DarkTheme, colors: theme.dark }
+      : { ...MD3LightTheme, colors: theme.light };
   useEffect(() => {
     try {
       initApp(downloads, setDownloads, allTrackers, setAllTrackers);
     } catch (error) {
-
       console.error(error);
     }
   }, []);
   return (
-    <PaperProvider theme={darkTheme}>
+    <PaperProvider theme={paperTheme}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="repos" options={{ headerShown: false }} />
