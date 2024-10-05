@@ -1,10 +1,11 @@
 import { FetchData, Repo, ReposData } from "@/types";
 import { useEffect, useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
-import { ActivityIndicator, Avatar, Button, List, TextInput, Title } from "react-native-paper";
+import { ActivityIndicator, Avatar, Button, List, TextInput, Title, useTheme } from "react-native-paper";
 import { create } from "zustand";
 import { router } from 'expo-router';
 import UseRepositoryLayout from "./_repos";
+import { MD3Colors } from "react-native-paper/lib/typescript/types";
 
 
 export default function SearchLayout() {
@@ -17,6 +18,7 @@ export default function SearchLayout() {
 function SearchBarLayout({ repos }: { repos: Repo[] }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRepos, setFilteredRepos] = useState<Repo[]>(repos);
+    const colors = useTheme().colors;
     const handleSearch = (query: string) => {
         setSearchQuery(query);
         if (repos) {
@@ -41,7 +43,7 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                     {filteredRepos.map((item) => (
                         <List.Item
                             key={item.id}
-                            title={() => highlightText(item.name, searchQuery)}
+                            title={() => highlightText(item.name, searchQuery, colors)}
                             description={item.repoUrl}
                             left={_ => <Avatar.Image size={48} source={{ uri: `https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/assets/${item.idName}-logo.png` }} />}
                             onPress={() => router.push({ pathname: '/repos', params: { repo: JSON.stringify(item) } })}
@@ -53,7 +55,7 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
     );
 }
 
-const highlightText = (text: string, highlight: string) => {
+const highlightText = (text: string, highlight: string, colors: MD3Colors) => {
     if (!highlight.trim()) {
         return <Text>{text}</Text>;
     }
@@ -63,7 +65,7 @@ const highlightText = (text: string, highlight: string) => {
         <Text>
             {parts.map((part, index) =>
                 part.toLowerCase() === highlight.toLowerCase() ? (
-                    <Text key={index} style={styles.highlight}>
+                    <Text key={index} style={[styles.highlight, { color: colors.onSurface }]}>
                         {part}
                     </Text>
                 ) : (

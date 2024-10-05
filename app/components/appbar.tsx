@@ -26,8 +26,7 @@ export const AppBar: React.FC<AppBarProps> = ({ title, actions, transparent }) =
 
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     };
-    const transparentSurfaceVariant = hexToRgba(surfaceVariantColor, 0.9);
-    console.log(transparentSurfaceVariant);
+    const transparentSurfaceVariant = hexToRgba(surfaceVariantColor, 0.4);
     return (
         <View style={[styles.appBarContainer, {
             backgroundColor:

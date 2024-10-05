@@ -46,14 +46,21 @@ export const chapterTrackerStore = create((set) => ({
 }));
 
 export const noveFavoriteStore = create((set) => ({
-    content: new Map<string, NovelTracker>(),
-    setContent: (content: Map<string, NovelTracker>) => set({ content }),
+    content: new Map<string, UseBoundStore<StoreApi<NovelTracker>>>(),
+    setContent: (content: Map<string, UseBoundStore<StoreApi<NovelTracker>>>) => set({ content }),
 }));
 
 export function createChapterTrackerStore(tracker: ChapterTracker) {
     return create<any>((set) => ({
         content: tracker,
         setContent: (content: ChapterTracker) => set({ content }),
+    }));
+}
+
+export function createNovelTrackerStore(tracker: NovelTracker) {
+    return create<any>((set) => ({
+        content: tracker,
+        setContent: (content: NovelTracker) => set({ content }),
     }));
 }
 
@@ -79,17 +86,30 @@ export function getOrCreateNovelTrackerStore({
     repo, content, setAllTrackers, allTrackers
 }: {
     repo: Repo, content: Content, setAllTrackers: any,
-    allTrackers: Map<string, NovelTracker>
+    allTrackers: Map<string, UseBoundStore<StoreApi<NovelTracker>>>
 }) {
     const key = novelKey(repo.id, content.bookId);
     if (allTrackers && allTrackers.has(key)) {
         return allTrackers.get(key)!;
     } else {
-        const tracker = createNovel(repo, content);
+        const tracker = createNovelTrackerStore(createNovel(repo, content));
         allTrackers.set(key, tracker);
         setAllTrackers(allTrackers);
         return tracker;
     }
+}
+
+export function inverseFavoriteTracker({ novelTracker, repo, content, allNovelTrackerStore, setAllNovelTracker, setNovelTracker }: {
+    novelTracker: NovelTracker,
+    repo: Repo, content: Content,
+    allNovelTrackerStore: Map<string, UseBoundStore<StoreApi<NovelTracker>>>,
+    setAllNovelTracker: any, setNovelTracker: any
+}) {
+    const key = novelKey(repo.id, content.bookId);
+    const updatedTracker: NovelTracker = { ...novelTracker, favorite: !novelTracker.favorite, updated: Date.now() };
+    setNovelTracker(updatedTracker);
+    allNovelTrackerStore.set(key, createNovelTrackerStore(updatedTracker));
+    setAllNovelTracker(allNovelTrackerStore);
 }
 
 export function createChapter(repo: Repo, novel: Content, chapterId: string): ChapterTracker {

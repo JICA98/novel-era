@@ -12,7 +12,7 @@ import { ChapterCard } from "./chapterCard";
 import { exportChapters } from "../exports/exportUtils";
 import { Tab, TabBar } from "../components/tabs";
 import { AppBar } from "../components/appbar";
-import { getOrCreateNovelTrackerStore, noveFavoriteStore, novelKey, NovelTracker } from "../favorites/tracker";
+import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, novelKey, NovelTracker } from "../favorites/tracker";
 import { FAB } from 'react-native-paper';
 
 
@@ -59,12 +59,14 @@ export default function ContentLayout() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
     const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
-    const novelTracker = getOrCreateNovelTrackerStore({
+    const novelTrackerStore = getOrCreateNovelTrackerStore({
         repo,
         content: _content,
         allTrackers: allNovelTrackerStore,
         setAllTrackers: setAllNovelTracker,
     });
+    const novelTracker = novelTrackerStore((state: any) => state.content) as NovelTracker;
+    const setNovelTracker = novelTrackerStore((state: any) => state.setContent);
 
     function handleContentFetch() {
         setLoading();
@@ -77,6 +79,7 @@ export default function ContentLayout() {
     }, []);
 
     let child;
+    const hasDataLoaded = !contentData.isLoading && contentData.data;
     if (contentData.isLoading) {
         child = (
             <View style={styles.listPadding}>
@@ -117,6 +120,7 @@ export default function ContentLayout() {
             >
                 {child}
             </Animated.ScrollView>
+            {hasDataLoaded && animateFavoriteFAB()}
             <Animated.View
                 style={[
                     {
@@ -148,6 +152,17 @@ export default function ContentLayout() {
                 onExport={(range, format) => {
                     exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
                 }} />
+            <ShowSnackbar />
+        </SafeAreaView>;
+    }
+
+    function animateFavoriteFAB() {
+        const additionalMargin = scrollY.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 1],
+            extrapolate: 'clamp',
+        });
+        return <Animated.View style={{ marginBottom: additionalMargin }}>
             <FAB
                 style={{
                     position: 'absolute',
@@ -157,14 +172,17 @@ export default function ContentLayout() {
                 }}
                 icon={novelTracker.favorite ? 'heart' : 'heart-outline'}
                 onPress={() => {
-                    const key = novelKey(repo.id, _content.bookId);
-                    const updatedTracker: NovelTracker = { ...novelTracker, favorite: !novelTracker.favorite };
-                    allNovelTrackerStore.set(key, updatedTracker);
-                    setAllNovelTracker(allNovelTrackerStore);
-                }}
-            />
-            <ShowSnackbar />
-        </SafeAreaView>;
+                    if (content === undefined) return;
+                    inverseFavoriteTracker({
+                        repo,
+                        content,
+                        allNovelTrackerStore,
+                        setAllNovelTracker,
+                        novelTracker,
+                        setNovelTracker,
+                    });
+                }} />
+        </Animated.View>;
     }
 
     function renderContentTabs() {
