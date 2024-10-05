@@ -3,6 +3,7 @@ import { BottomNavigation, Text } from 'react-native-paper';
 import { create } from 'zustand'
 import SearchLayout from './search';
 import Recents from './recents';
+import FavoriteScreen from './favorites/_layout';
 
 export const indexes = {
     favorites: 0,
@@ -11,7 +12,7 @@ export const indexes = {
     settings: 3
 }
 
-const FavoritesRoute = () => <Text>Favorites</Text>;
+const FavoritesRoute = () => <FavoriteScreen />;
 
 const SearchRoute = () => <SearchLayout />;
 

@@ -110,6 +110,7 @@ export function inverseFavoriteTracker({ novelTracker, repo, content, allNovelTr
     setNovelTracker(updatedTracker);
     allNovelTrackerStore.set(key, createNovelTrackerStore(updatedTracker));
     setAllNovelTracker(allNovelTrackerStore);
+    saveNovelTracker(updatedTracker).then(() => {});
 }
 
 export function createChapter(repo: Repo, novel: Content, chapterId: string): ChapterTracker {
@@ -171,7 +172,7 @@ async function getDataByKeyPrefix<T>(prefix: string) {
 export async function setupFavoriteStores(allTrackers: any, setAllTrackers: any) {
     const trackers = await getFavoriteTrackersAsync();
     for (const key in trackers) {
-        allTrackers.set(key, trackers[key]);
+        allTrackers.set(key, createNovelTrackerStore(trackers[key]));
     }
     setAllTrackers(allTrackers);
 }
@@ -182,5 +183,10 @@ export async function getFavoriteTrackersAsync() {
 
 export async function saveTracker(tracker: ChapterTracker) {
     const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
+    await storeData(key, tracker);
+}
+
+export async function saveNovelTracker(tracker: NovelTracker) {
+    const key = novelKey(tracker.repo.id, tracker.novel.bookId);
     await storeData(key, tracker);
 }

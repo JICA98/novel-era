@@ -3,21 +3,9 @@ import { useEffect } from "react";
 import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 import * as p from "plimit-lit";
-import { chapterTrackerStore, setupTrackingStores } from "./favorites/tracker";
+import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "./favorites/tracker";
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
 import { useColorScheme } from "react-native";
-
-export const darkTheme = {
-  ...MD3DarkTheme,
-  colors: {
-    ...MD3DarkTheme.colors,
-    background: '#121212',
-    surface: '#121212',
-    text: '#ffffff',
-    primary: '#bb86fc',
-    accent: '#03dac6',
-  },
-};
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
@@ -30,13 +18,17 @@ export default function RootLayout() {
   const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
   const colorScheme = useColorScheme();
   const { theme } = useMaterial3Theme();
+  const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
+  const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
   const paperTheme =
     colorScheme === 'dark'
       ? { ...MD3DarkTheme, colors: theme.dark }
       : { ...MD3LightTheme, colors: theme.light };
   useEffect(() => {
     try {
-      initApp(downloads, setDownloads, allTrackers, setAllTrackers);
+      setupDownloadStores(downloads, setDownloads);
+      setupTrackingStores(allTrackers, setAllTrackers);
+      setupFavoriteStores(allNovelTrackerStore, setAllNovelTracker);
     } catch (error) {
       console.error(error);
     }
@@ -51,11 +43,6 @@ export default function RootLayout() {
       </Stack>
     </PaperProvider>
   );
-}
-
-function initApp(downloads: any, setDownloads: any, allTrackers: any, setAllTrackers: any) {
-  setupDownloadStores(downloads, setDownloads);
-  setupTrackingStores(allTrackers, setAllTrackers);
 }
 
 const ignoredWarnings = [
