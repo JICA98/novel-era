@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { PaperProvider, DefaultTheme, MD3DarkTheme } from "react-native-paper";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 import * as p from "plimit-lit";
-import { novelTrackerStore, setupTrackingStores } from "./favorites/tracker";
+import { chapterTrackerStore, setupTrackingStores } from "./favorites/tracker";
 
 export const darkTheme = {
   ...MD3DarkTheme,
@@ -24,8 +24,8 @@ export function pLimitLit(concurrency: number) {
 export default function RootLayout() {
   const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
   const downloads = allDownloadsStore((state: any) => state.downloads);
-  const allTrackers = novelTrackerStore((state: any) => state.content);
-  const setAllTrackers = novelTrackerStore((state: any) => state.setContent);
+  const allTrackers = chapterTrackerStore((state: any) => state.content);
+  const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
   useEffect(() => {
     try {
       initApp(downloads, setDownloads, allTrackers, setAllTrackers);

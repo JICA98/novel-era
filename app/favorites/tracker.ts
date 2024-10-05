@@ -32,32 +32,32 @@ export interface ChapterTracker {
     lastRead: number;
 }
 
-export const novelTrackerStore = create((set) => ({
+export const chapterTrackerStore = create((set) => ({
     content: new Map<string, UseBoundStore<StoreApi<ChapterTracker>>>(),
     setContent: (content: Map<string, UseBoundStore<StoreApi<ChapterTracker>>>) => set({ content }),
 }));
 
-export function updateNovelTracker({ chapterTrackers, setAllTracker, allTracker }: {
+export function updateChapterTrackers({ chapterTrackers, setAllTracker, allTracker }: {
     allTracker: Map<string, UseBoundStore<StoreApi<ChapterTracker>>>,
     chapterTrackers: ChapterTracker[],
     setAllTracker: any
 }) {
     chapterTrackers.forEach((tracker) => {
         const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
-        allTracker.set(key, createNovelStore(tracker));
+        allTracker.set(key, createChapterTrackerStore(tracker));
         storeData(key, tracker).then(() => console.log('Saved'));
     });
     setAllTracker(allTracker);
 }
 
-export function createNovelStore(tracker: ChapterTracker) {
+export function createChapterTrackerStore(tracker: ChapterTracker) {
     return create<any>((set) => ({
         content: tracker,
         setContent: (content: ChapterTracker) => set({ content }),
     }));
 }
 
-export function useNovelTrackerStore({
+export function getOrCreateTrackerStore({
     repo, content, chapterId,
     allTrackers, setAllTrackers
 }: {
@@ -68,7 +68,7 @@ export function useNovelTrackerStore({
     if (allTrackers && allTrackers.has(key)) {
         return allTrackers.get(key)!;
     } else {
-        const tracker = createNovelStore(createChapter(repo, content, chapterId));
+        const tracker = createChapterTrackerStore(createChapter(repo, content, chapterId));
         allTrackers.set(key, tracker);
         setAllTrackers(allTrackers);
         return tracker;
@@ -93,7 +93,7 @@ export function trackerKey(repoId: string, novelId: string, chapterId: string): 
 export async function setupTrackingStores(allTrackers: any, setAllTrackers: any) {
     const trackers = await getAllTrackersAsync();
     for (const key in trackers) {
-        allTrackers.set(key, createNovelStore(trackers[key]));
+        allTrackers.set(key, createChapterTrackerStore(trackers[key]));
     }
     setAllTrackers(allTrackers);
 }

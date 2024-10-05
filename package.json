@@ -16,6 +16,7 @@
     "preset": "jest-expo"
   },
   "dependencies": {
+    "@andordavoti/react-native-timeago": "^0.0.14",
     "@cd-z/react-native-epub-creator": "^3.0.0",
     "@expo/vector-icons": "^14.0.2",
     "@ptomasroos/react-native-multi-slider": "^2.2.2",
@@ -59,6 +60,7 @@
     "react-native-tab-view": "^3.5.2",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.10",
+    "timeago.js": "^4.0.0-beta.3",
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {

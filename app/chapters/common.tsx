@@ -2,6 +2,8 @@ import { Content, processData, Repo } from "@/types";
 import { router } from "expo-router";
 import IDOMParser from "advanced-html-parser";
 import { saveFile } from "../downloads/utils";
+import { View } from "react-native";
+import TimeAgo from '@andordavoti/react-native-timeago';
 
 export interface ChapterData {
     id: string;
@@ -58,26 +60,7 @@ export function navigateToNextChapter(props: RenderChapterProps, add = 1) {
     });
 }
 
-export const timeAgo = (timeInMillis: number): string => {
-    if (!timeInMillis) return '';
-    const lastRead = new Date(timeInMillis);
-    const now = Date.now();
-    const diff = now - lastRead.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) {
-        return 'Today';
-    }
-    if (days === 1) {
-        return 'Yesterday';
-    }
-    if (days < 7) {
-        return `${days} days ago`;
-    }
-    if (days < 30) {
-        return `${Math.floor(days / 7)} weeks ago`;
-    }
-    if (days < 365) {
-        return `${Math.floor(days / 30)} months ago`;
-    }
-    return `${Math.floor(days / 365)} years ago`;
+export const timeAgo = (timeInMillis: number): JSX.Element => {
+    if (!timeInMillis) return <View />;
+    return <TimeAgo dateTo={new Date(timeInMillis)} />;;
 };

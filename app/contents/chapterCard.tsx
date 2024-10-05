@@ -4,7 +4,7 @@ import { View, StyleSheet } from "react-native";
 import { List, Title, IconButton, Divider, ActivityIndicator } from "react-native-paper";
 import { useDownloadStore, startDownload, removeFromStore, allDownloadsStore } from "../downloads/utils";
 import { chapterKey, RenderChapterProps, fetchChapter } from "../chapters/common";
-import { useNovelTrackerStore, novelTrackerStore, ChapterTracker } from "../favorites/tracker";
+import { getOrCreateTrackerStore, chapterTrackerStore, ChapterTracker } from "../favorites/tracker";
 
 interface ChapterCardProps {
     chapterId: string;
@@ -29,12 +29,12 @@ export function ChapterCard({ props }: { props: ChapterCardProps }) {
         enableNextPrev: props.enableNextPrev,
         data: storeContent.data?.chapterContent ?? ''
     };
-    const useTracker = useNovelTrackerStore({
+    const useTracker = getOrCreateTrackerStore({
         chapterId: chapterProps.id,
         repo: props.repo,
         content: props.content,
-        allTrackers: novelTrackerStore((state: any) => state.content),
-        setAllTrackers: novelTrackerStore((state: any) => state.setContent),
+        allTrackers: chapterTrackerStore((state: any) => state.content),
+        setAllTrackers: chapterTrackerStore((state: any) => state.setContent),
     });
     const tracker = useTracker((state: any) => state.content) as ChapterTracker;
     const completed = tracker.status === 'read';

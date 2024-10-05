@@ -4,7 +4,7 @@ import PagerView from 'react-native-pager-view';
 import { IconButton, useTheme } from 'react-native-paper';
 import RenderHtml from 'react-native-render-html';
 import { RenderChapterProps, navigateToNextChapter } from './common';
-import { ChapterTracker, novelTrackerStore, saveTracker, useNovelTrackerStore } from '../favorites/tracker';
+import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../favorites/tracker';
 
 export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderChapterProps) => {
     const [pages, setPages] = useState<any[]>([]);
@@ -12,12 +12,12 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const theme = useTheme();
     const scrollViewRef = useRef<ScrollView>(null);
     const chapterId = props.id;
-    const useTracker = useNovelTrackerStore({
+    const useTracker = getOrCreateTrackerStore({
         chapterId: props.id,
         repo: props.repo,
         content: props.content,
-        allTrackers: novelTrackerStore((state: any) => state.content),
-        setAllTrackers: novelTrackerStore((state: any) => state.setContent),
+        allTrackers: chapterTrackerStore((state: any) => state.content),
+        setAllTrackers: chapterTrackerStore((state: any) => state.setContent),
     });
     const tracker = useTracker((state: any) => state.content) as ChapterTracker;
     const setTracker = useTracker((state: any) => state.setContent) as (_: ChapterTracker) => void;
