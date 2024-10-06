@@ -1,6 +1,6 @@
 import React from "react";
 import { Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
-import { AnimatedFAB, Appbar, FAB, Title } from "react-native-paper";
+import { AnimatedFAB, Appbar, Avatar, FAB, Icon, Title } from "react-native-paper";
 import { StyleSheet } from 'react-native';
 import { Stack } from "expo-router";
 import MyBottom, { indexes, useBottomIndexStore } from "./bottom";
@@ -21,15 +21,13 @@ export default function Index() {
     return (
         <SafeAreaView style={styles.container}>
             <Appbar.Header>
-                <Appbar.Content title="Novel Era" />
+                <Appbar.Content title={<View style={{ flexDirection: 'row', }}>
+                    <Avatar.Image size={32}
+                        source={require('../assets/images/icon.png')} />
+                    <Title style={{ marginHorizontal: 10 }}>Novel Era</Title>
+                </View>} />
             </Appbar.Header>
             <MyBottom />
-            {index === indexes.search && (<FAB
-                icon="plus"
-                style={styles.fab}
-                onPress={() => console.log('Pressed')}
-            />)}
-
         </SafeAreaView>
     );
 }
