@@ -71,6 +71,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
             chapterProgress: progress,
             lastRead: currentTimestamp,
             status: progress >= 1 ? 'read' : 'reading',
+            hideHistory: false,
         };
         setTracker(newChapterTracker);
         saveTracker(newChapterTracker).then(() => console.log('Saved'));

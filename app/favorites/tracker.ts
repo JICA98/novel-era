@@ -30,6 +30,7 @@ export interface ChapterTracker {
     chapterProgress: number;
     status: 'read' | 'unread' | 'reading';
     lastRead: number;
+    hideHistory?: boolean;
 }
 
 export interface NovelTracker {

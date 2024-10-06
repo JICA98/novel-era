@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, RefreshControl, Dimensions } from 'react-native';
+import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { getFavoriteTrackersAsync, NovelTracker } from './tracker'; // Adjust the import path as needed
 import BookItem from '../repos/bookItem';
+import { emptyFavoritePlaceholder } from '../placeholders';
 
 const FavoriteScreen = () => {
     const [favoriteTrackers, setFavoriteTrackers] = useState<NovelTracker[]>([]);
@@ -28,6 +29,7 @@ const FavoriteScreen = () => {
                 data={favoriteTrackers}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.novel.bookId}
+                ListEmptyComponent={emptyFavoritePlaceholder}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={fetchFavoriteTrackers} />
                 }
