@@ -31,7 +31,7 @@
                 },
                 "bookLink": {
                     "type": "text",
-                    "selector": "a",    
+                    "selector": "a",
                     "attribute": "href"
                 },
                 "bookImage": {
@@ -105,6 +105,108 @@
                     "type": "attribute",
                     "selector": "a",
                     "attribute": "title"
+                }
+            }
+        },
+        {
+            "name": "Pandanovel",
+            "idName": "pandanovel",
+            "id": "2",
+            "repoUrl": "https://www.pandanovel.com",
+            "repoType": "novel",
+            "repoChapterType": {
+                "type": "iterative",
+                "path": "/book/[bookId]/chapters"
+            },
+            "repoIcon": "https://www.pandanovel.com/favicon.ico",
+            "repoSearch": {
+                "type": "http",
+                "method": "GET",
+                "path": "/search?keyword=[text]",
+                "jsonPath": "$",
+                "selector": ".novel-item",
+                "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "book/(.*)"
+                },
+                "bookLink": {
+                    "type": "text",
+                    "selector": "a",
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".novel-cover img",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": ".novel-title"
+                }
+            },
+            "homeSelector": {
+                "type": "text",
+                "path": "/book/[bookId]",
+                "page": "home",
+                "latestChapterSelector": {
+                    "type": "text",
+                    "selector": ".novel-info .header-stats span strong"
+                },
+                "authorSelector": {
+                    "type": "text",
+                    "selector": ".novel-info .author",
+                    "regex": "Author: (.*)"
+                },
+                "summarySelector": {
+                    "type": "text",
+                    "selector": ".summary .content"
+                }
+            },
+            "chapterSelector": {
+                "path": "/book/[bookId]/chapter-[chapterId]",
+                "page": "chapter",
+                "content": {
+                    "type": "html",
+                    "selector": "#chapter-container .chapter-content",
+                    "filters": [
+                        {
+                            "type": "css",
+                            "selector": ".box-notification"
+                        },
+                        {
+                            "type": "css",
+                            "selector": "h4"
+                        }
+                    ]
+                }
+            },
+            "listSelector": {
+                "type": "text",
+                "path": "/all-novels",
+                "selector": ".novel-item",
+                "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "book/(.*)"
+                },
+                "bookLink": {
+                    "type": "text",
+                    "selector": "a",
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".novel-cover img",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": ".novel-title"
                 }
             }
         }
