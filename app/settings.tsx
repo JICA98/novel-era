@@ -57,7 +57,7 @@ const ThemeSelectionAccordion = ({ userPref, setUserPref }: {
                         value={theme}
                     >
                         <List.Item
-                            title="Default Theme"
+                            title="System Theme"
                             onPress={() => handleThemeChange(ThemeOptions.System)}
                             left={(props) => <List.Icon {...props} icon="white-balance-auto" />}
                             right={() => <RadioButton value={ThemeOptions.System} />}
