@@ -14,14 +14,11 @@ export interface Repo {
     repoUrl: string;
     repoType: string;
     repoIcon: string;
-    repoBookUrl: string;
-    repoAllChaptersUrl: string;
     repoChapterType: {
         type: string;
         path: string;
     };
     repoSearch: RepoSearch;
-    bookImageSelector: BookImageSelector;
     listSelector: ListSelector;
     homeSelector: HomeSelector;
     chapterSelector: ChapterSelector;

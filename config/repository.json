@@ -11,8 +11,6 @@
                 "path": "/book/[bookId]/chapters"
             },
             "repoIcon": "https://novelfire.net/logo.svg?v=2",
-            "repoBookUrl": "https://novelfire.net/book/${bookName}",
-            "repoAllChaptersUrl": "https://novelfire.net/book/${bookName}/chapters",
             "repoSearch": {
                 "type": "http",
                 "method": "GET",
@@ -45,12 +43,6 @@
                     "type": "text",
                     "selector": ".novel-title"
                 }
-            },
-            "bookImageSelector": {
-                "type": "text",
-                "selector": ".novel-header .fixed-img img",
-                "attribute": "src",
-                "page": "home"
             },
             "homeSelector": {
                 "type": "text",
