@@ -112,13 +112,13 @@
             "name": "Pandanovel",
             "idName": "pandanovel",
             "id": "2",
-            "repoUrl": "https://www.pandanovel.com",
+            "repoUrl": "https://pandanovel.co",
             "repoType": "novel",
             "repoChapterType": {
                 "type": "iterative",
                 "path": "/book/[bookId]/chapters"
             },
-            "repoIcon": "https://www.pandanovel.com/favicon.ico",
+            "repoIcon": "https://pandanovel.co/favicon.ico",
             "repoSearch": {
                 "type": "http",
                 "method": "GET",

@@ -6,7 +6,7 @@ import { create } from "zustand";
 import { StyleSheet } from 'react-native';
 import { errorPlaceholder } from "./placeholders";
 
-const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
+const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/configs/config/repository.json';
 
 interface FetchData<T> {
     data?: T;
