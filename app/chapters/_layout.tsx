@@ -7,6 +7,7 @@ import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
 import { AppBar } from "../components/appbar";
 import { RenderPagedContent } from "./content";
 import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNextChapter } from "./common";
+import { errorPlaceholder } from "../placeholders";
 
 const ChapterLayout: React.FC = () => {
     const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
@@ -37,7 +38,7 @@ const ChapterLayout: React.FC = () => {
     }
 
     let child;
-
+    const hasDataLoaded = contentData.data && !contentData.isLoading;
     if (contentData.isLoading) {
         child = (
             <View style={styles.listPadding}>
@@ -45,14 +46,7 @@ const ChapterLayout: React.FC = () => {
             </View>
         );
     } else if (contentData.error || contentData.data === undefined) {
-        child = (
-            <View style={styles.listPadding}>
-                <Title>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => fetchChapterData()} children={
-                    'Retry'
-                } />
-            </View>
-        );
+        child = errorPlaceholder({ onRetry: () => fetchChapterData(false) });
     } else {
         child = <RenderPagedContent
             fromPrevious={props.fromPrevious}
@@ -76,14 +70,14 @@ const ChapterLayout: React.FC = () => {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
             {!focusedMode && (
-                <AppBar title={`Chapter ${props.id}`} actions={chapterActions}></AppBar>
+                <AppBar title={`Chapter ${props.id}`} actions={hasDataLoaded ? chapterActions : []}></AppBar>
             )}
             {focusedMode && (<StatusBar hidden />)}
             {child}
-            <TouchableOpacity
+            {hasDataLoaded && (<TouchableOpacity
                 style={styles.invisibleButton}
                 onPress={() => setFocusedMode(!focusedMode)}
-            />
+            />)}
         </SafeAreaView>
     );
 
@@ -127,8 +121,8 @@ const styles = {
         position: 'absolute',
         top: '50%',
         left: '50%',
-        width: 150,
-        height: 150,
+        width: 110,
+        height: 110,
         borderRadius: 25,
         transform: [{ translateX: -50 }, { translateY: -50 }],
         backgroundColor: 'transparent',

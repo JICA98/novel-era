@@ -2,7 +2,7 @@ import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl } from "react-native";
+import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl, StatusBar } from "react-native";
 import { ActivityIndicator, Button, Title, Snackbar, useTheme, MD3Theme, SegmentedButtons } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
@@ -14,6 +14,7 @@ import { Tab, TabBar } from "../components/tabs";
 import { AppBar } from "../components/appbar";
 import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, novelKey, NovelTracker } from "../favorites/tracker";
 import { FAB } from 'react-native-paper';
+import { errorPlaceholder } from "../placeholders";
 
 
 const HEADER_MAX_HEIGHT = 320;
@@ -87,14 +88,7 @@ export default function ContentLayout() {
             </View>
         );
     } else if (contentData.error || contentData.data === undefined) {
-        child = (
-            <View style={styles.listPadding}>
-                <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => handleContentFetch()} children={
-                    'Retry'
-                } />
-            </View>
-        );
+        child = errorPlaceholder({ onRetry: handleContentFetch });
     } else {
         return renderContentTabs();
     }
@@ -145,13 +139,13 @@ export default function ContentLayout() {
             >
                 {tabBar}
             </Animated.View>
-            <ExportDialog
+            {hasDataLoaded && (<ExportDialog
                 visible={exportsVisible}
                 onDismiss={() => setExportsVisible(false)}
                 maxChapters={contentData.data?.latestChapter}
                 onExport={(range, format) => {
                     exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
-                }} />
+                }} />)}
             <ShowSnackbar />
         </SafeAreaView>;
     }
@@ -220,6 +214,7 @@ export default function ContentLayout() {
                     <ImageBackground
                         source={{ uri: content?.bookImage }}
                         style={styles.imageBackground}
+                        imageStyle={{ opacity: 0.6, marginTop: -0, paddingTop: 0 }}
                     >
                         <LinearGradient
                             colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -301,7 +296,7 @@ const styles = StyleSheet.create({
         textShadowRadius: 10,
     },
     scrollViewContent: {
-        paddingTop: 10,
+        paddingTop: 0,
         paddingBottom: 120,
     },
     contentContainer: {

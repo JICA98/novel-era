@@ -6,6 +6,7 @@ import { create } from "zustand";
 import { router } from 'expo-router';
 import UseRepositoryLayout from "./_repos";
 import { MD3Colors } from "react-native-paper/lib/typescript/types";
+import { emptyPlaceholder as emptyStatePlaceholder } from "./placeholders";
 
 
 export default function SearchLayout() {
@@ -30,14 +31,14 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
     };
     return (
         <View style={styles.container}>
-            <TextInput
+            {<TextInput
                 style={styles.searchBar}
                 placeholder="Search Repositories"
                 value={searchQuery}
                 onChangeText={handleSearch}
-            />
+            />}
             {filteredRepos.length === 0 ? (
-                <Title style={styles.nothingFound}>Nothing found</Title>
+                emptyStatePlaceholder('No repositories found')
             ) : (
                 <List.Section>
                     {filteredRepos.map((item) => (
@@ -45,7 +46,9 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                             key={item.id}
                             title={() => highlightText(item.name, searchQuery, colors)}
                             description={item.repoUrl}
-                            left={_ => <Avatar.Image size={48} source={{ uri: `https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/assets/${item.idName}-logo.png` }} />}
+                            style={styles.repoItem}
+                            left={_ => <Avatar.Image size={48}
+                                source={{ uri: `https://picsum.photos/seed/${item.idName}/100/100` }} />}
                             onPress={() => router.push({ pathname: '/repos', params: { repo: JSON.stringify(item) } })}
                         />
                     ))}
@@ -57,22 +60,22 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
 
 const highlightText = (text: string, highlight: string, colors: MD3Colors) => {
     if (!highlight.trim()) {
-        return <Text>{text}</Text>;
+        return <Title>{text}</Title>;
     }
     const regex = new RegExp(`(${highlight})`, 'gi');
     const parts = text.split(regex);
     return (
-        <Text>
+        <Title>
             {parts.map((part, index) =>
                 part.toLowerCase() === highlight.toLowerCase() ? (
-                    <Text key={index} style={[styles.highlight, { color: colors.onSurface }]}>
+                    <Text key={index} style={[styles.highlight]}>
                         {part}
                     </Text>
                 ) : (
                     part
                 )
             )}
-        </Text>
+        </Title>
     );
 };
 
@@ -83,7 +86,6 @@ const styles = StyleSheet.create({
     },
     searchBar: {
         height: 40,
-        borderColor: 'gray',
         borderWidth: 1,
         borderRadius: 5,
         paddingLeft: 8,
@@ -91,8 +93,6 @@ const styles = StyleSheet.create({
     },
     repoItem: {
         padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
     },
     repoName: {
         fontSize: 16,

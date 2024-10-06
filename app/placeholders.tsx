@@ -1,5 +1,5 @@
 import { ImageBackground, View, StyleSheet } from "react-native";
-import { Title } from "react-native-paper";
+import { Button, Title } from "react-native-paper";
 
 const styles = StyleSheet.create({
     container: {
@@ -24,7 +24,7 @@ export const emptyFavoritePlaceholder = (
     </View>
 );
 
-export const emptyRecentsPlaceholder = (message: string) => (
+export const emptyPlaceholder = (message: string) => (
     <View style={[styles.container, { marginTop: 100, marginHorizontal: 20 }]}>
         <ImageBackground
             source={require('../assets/images/inbox.png')}
@@ -32,5 +32,17 @@ export const emptyRecentsPlaceholder = (message: string) => (
             resizeMode="contain"
         />
         <Title style={{ textAlign: 'center', marginTop: 20, fontSize: 16 }}>{message}</Title>
+    </View>
+);
+
+export const errorPlaceholder = ({ message, onRetry }: { message?: string, onRetry: () => void }) => (
+    <View style={[styles.container, { marginTop: 100, marginHorizontal: 20 }]}>
+        <ImageBackground
+            source={require('../assets/images/no-comment.png')}
+            style={styles.emptyImage}
+            resizeMode="contain"
+        />
+        <Title style={{ textAlign: 'center', marginTop: 20, fontSize: 16 }}>{message ?? 'Something wrong happenend, try again?'}</Title>
+        {onRetry && <Button mode="contained" onPress={onRetry} style={{ marginTop: 20 }}>Retry</Button>}
     </View>
 );

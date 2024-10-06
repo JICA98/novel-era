@@ -12,6 +12,7 @@ import jsonpath from 'jsonpath';
 import { MenuFunction } from "../components/menu";
 import { Refresh } from "../components/refresh";
 import BookItem from "./bookItem";
+import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
 
 async function fetchContentList({ repo, searchQuery }: { repo: Repo, searchQuery?: string }): Promise<Content[]> {
     try {
@@ -80,14 +81,7 @@ export default function RepositorLayout() {
             </View>
         );
     } else if (content.error) {
-        child = (
-            <View style={styles.listPadding}>
-                <Title style={styles.errorText}>Failed to fetch content. Please try again.</Title>
-                <Button onPress={() => fetchContent({ cached: false })} children={
-                    'Retry'
-                } />
-            </View>
-        );
+        child = errorPlaceholder({ onRetry: () => fetchContent({ cached: false }) });
     } else {
         child = (
             <FlatList
@@ -96,6 +90,7 @@ export default function RepositorLayout() {
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
+                ListEmptyComponent={emptyPlaceholder('No content found')}
                 ListFooterComponent={<View style={{ height: 120 }} />}
                 ListHeaderComponent={<View style={{ height: 20 }} />}
                 refreshControl={<RefreshControl refreshing={content.isLoading} onRefresh={() => fetchContent({ cached: false })} />}

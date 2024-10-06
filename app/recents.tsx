@@ -6,7 +6,7 @@ import { ChapterCard } from "./contents/chapterCard";
 import { timeAgo, RenderChapterProps } from "./chapters/common";
 import { router } from "expo-router";
 import Modal from "./components/modal";
-import { emptyRecentsPlaceholder } from "./placeholders";
+import { emptyPlaceholder } from "./placeholders";
 
 const PAGE_SIZE = 10;
 
@@ -18,6 +18,7 @@ enum FilterOption {
 }
 
 export default function Recents() {
+    const [loading, setLoading] = useState(true);
     const [filter, setFiler] = useState<FilterOption>(FilterOption.ALL);
     const [refreshing, setRefreshing] = useState(false);
     const [trackers, setTrackers] = useState<ChapterTracker[] | null>(null);
@@ -26,12 +27,14 @@ export default function Recents() {
     const colors = useTheme().colors;
 
     async function fetchTrackers() {
+        setLoading(true);
         const trackerMap = await getAllTrackersAsync();
         const recentTrackers = Object.values(trackerMap)
             ?.filter((tracker) => !tracker.hideHistory && (tracker.status === 'reading' || tracker.status === 'read'))
             ?.sort((a, b) => b.lastRead - a.lastRead);
         setTrackers(recentTrackers);
         setPagination(0);
+        setLoading(false);
     }
 
     const onRefresh = useCallback(() => {
@@ -46,8 +49,11 @@ export default function Recents() {
         fetchTrackers();
     }, []);
 
-    console.log(trackers?.length);
-
+    if (loading) {
+        return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text>Loading...</Text>
+        </View>;
+    }
 
     const renderBookAccordion = (chapter: ChapterTracker) => {
         return <List.Item id={chapter.novel.bookId}
@@ -108,7 +114,7 @@ export default function Recents() {
                 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 data={paginatedData}
-                ListEmptyComponent={emptyRecentsPlaceholder(filter === FilterOption.ALL ? 'Nothing found in recents, try refreshing' :
+                ListEmptyComponent={emptyPlaceholder(filter === FilterOption.ALL ? 'Nothing found in recents, try refreshing' :
                     'Nothing found in recents, are you sure you are on the right filter?')}
                 renderItem={({ item }) => renderBookAccordion(item)}
                 onEndReachedThreshold={0.4}
