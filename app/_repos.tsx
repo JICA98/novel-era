@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { ActivityIndicator, Button, Title } from "react-native-paper";
 import { create } from "zustand";
 import { StyleSheet } from 'react-native';
+import { errorPlaceholder } from "./placeholders";
 
 const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
 
@@ -49,14 +50,7 @@ export default function UseRepositoryLayout({ props }: { props: UseRepositoryLay
     }
 
     if (repositories.error) {
-        return (
-            <View style={styles.container}>
-                <Title style={styles.errorText}>Failed to fetch repositories. Please try again.</Title>
-                <Button onPress={fetchData} children={
-                    'Retry'
-                } />
-            </View>
-        );
+        return errorPlaceholder({ onRetry: fetchData });
     }
 
     return props.renderRepositories(repositories.data?.repos ?? []);

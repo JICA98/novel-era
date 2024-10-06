@@ -21,7 +21,7 @@ export interface TabBarProps {
 export const TabBar: React.FC<TabBarProps> = ({ tabs, selectedIndex, onTabPress }) => {
   const colors = useTheme().colors;
   return (
-    <View style={[styles.tabBarContainer, { backgroundColor: colors.backdrop }]}>
+    <View style={[styles.tabBarContainer, { backgroundColor: colors.background }]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

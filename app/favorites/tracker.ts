@@ -1,26 +1,7 @@
-import { Content, FetchData, Repo } from "@/types";
-import { Chapter } from "epub-gen";
+import { Content, Repo } from "@/types";
 import { create, StoreApi, UseBoundStore } from "zustand";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAllKeys, getData, storeData } from "../storage";
 
-const storeData = async (key: string, value: any) => {
-    try {
-        const jsonValue = JSON.stringify(value);
-        await AsyncStorage.setItem(key, jsonValue);
-    } catch (e) {
-        console.error(e);
-    }
-};
-
-const getData = async (key: string) => {
-    try {
-        const jsonValue = await AsyncStorage.getItem(key);
-        return jsonValue != null ? JSON.parse(jsonValue) : null;
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
-};
 
 export interface ChapterTracker {
     repo: Repo;
@@ -111,7 +92,7 @@ export function inverseFavoriteTracker({ novelTracker, repo, content, allNovelTr
     setNovelTracker(updatedTracker);
     allNovelTrackerStore.set(key, createNovelTrackerStore(updatedTracker));
     setAllNovelTracker(allNovelTrackerStore);
-    saveNovelTracker(updatedTracker).then(() => {});
+    saveNovelTracker(updatedTracker).then(() => { });
 }
 
 export function createChapter(repo: Repo, novel: Content, chapterId: string): ChapterTracker {
@@ -156,7 +137,7 @@ export async function getAllTrackersAsync() {
 }
 
 async function getDataByKeyPrefix<T>(prefix: string) {
-    const allKeys = await AsyncStorage.getAllKeys();
+    const allKeys = await getAllKeys();
     const trackers = {} as Record<string, T>;
     for (let i = 0; i < allKeys.length; i++) {
         const key = allKeys[i];

@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import SearchLayout from './search';
 import Recents from './recents';
 import FavoriteScreen from './favorites/_layout';
+import Settings from './settings';
 
 export const indexes = {
     favorites: 0,
@@ -18,7 +19,7 @@ const SearchRoute = () => <SearchLayout />;
 
 const RecentsRoute = () => <Recents />;
 
-const SettingsRoute = () => <Text>Settings</Text>;
+const SettingsRoute = () => <Settings />;
 
 export const useBottomIndexStore = create((set) => ({
     index: 0,
