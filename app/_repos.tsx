@@ -3,8 +3,10 @@ import React, { useEffect } from "react";
 import { View } from "react-native";
 import { ActivityIndicator, Button, Title } from "react-native-paper";
 import { create } from "zustand";
+import { persist, createJSONStorage } from 'zustand/middleware'
 import { StyleSheet } from 'react-native';
 import { errorPlaceholder } from "./placeholders";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
 
@@ -14,20 +16,28 @@ interface FetchData<T> {
     isLoading: boolean;
 }
 
-const useRepositoryStore = create((set) => ({
-    repositories: { isLoading: true } as FetchData<ReposData>,
-    fetchData: () => {
-        set({ repositories: { isLoading: true } });
-        fetch(repoLink)
-            .then(response => response.json())
-            .then(data => {
-                set({ repositories: { data, isLoading: false } });
-            })
-            .catch(error => {
-                set({ repositories: { error, isLoading: false } });
-            });
-    }
-}));
+export const asyncStorage = () => createJSONStorage(() => AsyncStorage);
+
+const useRepositoryStore = create(persist(
+    (set) => ({
+        repositories: { isLoading: true } as FetchData<ReposData>,
+        fetchData: () => {
+            set({ repositories: { isLoading: true } });
+            fetch(repoLink)
+                .then(response => response.json())
+                .then(data => {
+                    set({ repositories: { data, isLoading: false } });
+                })
+                .catch(error => {
+                    set({ repositories: { error, isLoading: false } });
+                });
+        }
+    }),
+    {
+        name: 'repository-storage',
+        storage: asyncStorage(),
+    },
+));
 
 interface UseRepositoryLayoutProps {
     renderRepositories: (repositories: Repo[]) => JSX.Element;

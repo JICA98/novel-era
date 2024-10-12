@@ -15,22 +15,27 @@ import { AppBar } from "../components/appbar";
 import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, novelKey, NovelTracker } from "../favorites/tracker";
 import { FAB } from 'react-native-paper';
 import { errorPlaceholder } from "../placeholders";
+import { httpGet } from "../storage";
 
 
 const HEADER_MAX_HEIGHT = 320;
 const PAGE_SIZE = 80;
 
-async function fetchContentChapters(repo: Repo, content: Content): Promise<Content> {
-    const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
-    console.log(url);
+async function fetchContentChapters(repo: Repo, content: Content, cached: boolean): Promise<Content> {
     try {
-        const response = await fetch(url);
-        const html = await response.text();
-        var dom = IDOMParser.parse(html).documentElement;
-        const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
-        const summary = processData(dom, repo.homeSelector.summarySelector);
-        const author = processData(dom, repo.homeSelector.authorSelector);
-        return { ...content, latestChapter, summary, author };
+        const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
+        return await httpGet<Content>(url, {
+            cached,
+            onCache: (data) => !!data.latestChapter,
+            onResponse: async (response) => {
+                const html = await response.text();
+                var dom = IDOMParser.parse(html).documentElement;
+                const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
+                const summary = processData(dom, repo.homeSelector.summarySelector);
+                const author = processData(dom, repo.homeSelector.authorSelector);
+                return { ...content, latestChapter, summary, author };
+            }
+        });
     } catch (error) {
         console.error(error);
         throw error;
@@ -69,14 +74,14 @@ export default function ContentLayout() {
     const novelTracker = novelTrackerStore((state: any) => state.content) as NovelTracker;
     const setNovelTracker = novelTrackerStore((state: any) => state.setContent);
 
-    function handleContentFetch() {
+    function handleContentFetch(cached = false) {
         setLoading();
-        fetchContentChapters(repo, _content)
+        fetchContentChapters(repo, _content, cached)
             .then(data => setContent({ data }))
             .catch(error => setContent({ error }));
     }
     useEffect(() => {
-        handleContentFetch();
+        handleContentFetch(true);
     }, []);
 
     let child;

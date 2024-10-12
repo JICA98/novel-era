@@ -1,13 +1,13 @@
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
-import { PaperProvider, MD3LightTheme, MD3DarkTheme } from "react-native-paper";
+import { useEffect } from "react";
+import { PaperProvider } from "react-native-paper";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 import * as p from "plimit-lit";
 import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "./favorites/tracker";
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
 import { useColorScheme } from "react-native";
-import { getTheme, UserPreferences } from "./settings";
 import { getUserPreference, userPrefStore } from "./storage";
+import { getTheme } from "./settings/themeSettings";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);

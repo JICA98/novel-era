@@ -1,43 +1,47 @@
-import { ActivityIndicator, Appbar, Button, Card, Icon, Menu, Title, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar, useTheme } from "react-native-paper";
 import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Content, FetchData, processData, Repo, Selector, SelectorType } from "@/types";
+import { Content, FetchData, processData, Repo, SelectorType } from "@/types";
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import IDOMParser from "advanced-html-parser";
 import { Searchbar } from 'react-native-paper';
-import { FontAwesome } from '@expo/vector-icons';
 import jsonpath from 'jsonpath';
 import { MenuFunction } from "../components/menu";
-import { Refresh } from "../components/refresh";
 import BookItem from "./bookItem";
 import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
+import { cacheValue, getCachedValue, httpGet } from "../storage";
 
-async function fetchContentList({ repo, searchQuery }: { repo: Repo, searchQuery?: string }): Promise<Content[]> {
+async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo, searchQuery?: string, cached?: boolean }): Promise<Content[]> {
     try {
         const selector = searchQuery ? repo.repoSearch : repo.listSelector;
         const url = repo.repoUrl + selector.path.replace('[text]', searchQuery || '');
-        console.log(url);
-        const response = await fetch(url);
-        let html = '';
-        if (selector.type === SelectorType.http) {
-            const json = await response.json();
-            html = jsonpath.query(json, selector.jsonPath)[0];
-        } else {
-            html = await response.text();
-        }
-        var dom = IDOMParser.parse(html).documentElement;
-        const list = dom.querySelectorAll(selector.selector);
+        return await httpGet<Content[]>(url, {
+            cached,
+            cachedKey: `content-storage-${repo.id}-${url}`,
+            onCache: (data) => !!data.length,
+            onResponse: async (response) => {
+                let html = '';
+                if (selector.type === SelectorType.http) {
+                    const json = await response.json();
+                    html = jsonpath.query(json, selector.jsonPath)[0];
+                } else {
+                    html = await response.text();
+                }
+                var dom = IDOMParser.parse(html).documentElement;
+                const list = dom.querySelectorAll(selector.selector);
 
-        return Array.from(list).map((item) => {
-            const title = processData(item, selector.title);
-            const bookImage = processData(item, selector.bookImage);
-            const bookLink = processData(item, selector.bookLink);
-            const bookId = processData(item, selector.bookId);
-            // const rating = processData(item, selector.rating);
-            return { title, bookImage, bookLink, bookId };
-        });
+                return Array.from(list).map((item) => {
+                    const title = processData(item, selector.title);
+                    const bookImage = processData(item, selector.bookImage);
+                    const bookLink = processData(item, selector.bookLink);
+                    const bookId = processData(item, selector.bookId);
+                    // const rating = processData(item, selector.rating);
+                    return { title, bookImage, bookLink, bookId };
+                });
+            }
+        }) ?? [];
     } catch (error) {
         console.error(error);
         throw new Error('Failed to fetch content');
@@ -61,16 +65,13 @@ export default function RepositorLayout() {
     let child;
 
     function fetchContent({ cached, searchQuery }: { cached: boolean, searchQuery?: string }) {
-        if (cached && content.data) {
-            return;
-        }
         setLoading();
-        fetchContentList({ repo, searchQuery })
+        fetchContentList({ repo, searchQuery, cached })
             .then(data => setContent({ data }))
             .catch(error => setContent({ error }));
     }
     useEffect(() => {
-        fetchContent({ cached: false });
+        fetchContent({ cached: true });
     }, []);
     const hasDataLoaded = content.data && !content.isLoading;
 

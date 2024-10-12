@@ -4,7 +4,7 @@ import { create } from 'zustand'
 import SearchLayout from './search';
 import Recents from './recents';
 import FavoriteScreen from './favorites/_layout';
-import Settings from './settings';
+import Settings from './settings/_layout';
 
 export const indexes = {
     favorites: 0,

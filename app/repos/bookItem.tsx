@@ -4,6 +4,7 @@ import { View } from "react-native";
 import { Card } from "react-native-paper";
 
 export default function BookItem({ repo, item }: { repo: Repo, item: Content }) {
+    const size = 44.0;
     return (
         <Card style={styles.card} onPress={() => {
             return router.push({
@@ -12,7 +13,7 @@ export default function BookItem({ repo, item }: { repo: Repo, item: Content }) 
             });
         }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Card.Cover source={{ uri: item.bookImage }} style={{ width: 100, height: 100, marginRight: 8 }} />
+                <Card.Cover source={{ uri: item.bookImage }} style={{ width: size * 2, height: size * 3, marginRight: 8 }} />
                 <View style={{ flex: 1 }}>
                     <Card.Title title={item.title} titleNumberOfLines={2} />
                 </View>
