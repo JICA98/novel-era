@@ -141,16 +141,22 @@ export function htmlToIdSentences(html: string) {
 function joinSentencesIntoHtml(sentences: Sentence[]): string {
     let html = '';
     sentences.forEach((sentence) => {
-        if (sentence.children) {
-            let childrenHtml = joinSentencesIntoHtml(sentence.children);
-            html += `<${sentence.tagName}>${childrenHtml}</${sentence.tagName}>`;
-        } else {
-            html += sentence.html;
-        }
+        html += buildHtmlFromSentence(sentence);
     });
     return html;
 }
 
+
+export function buildHtmlFromSentence(sentence: Sentence) {
+    let html = '';
+    if (sentence.children) {
+        let childrenHtml = joinSentencesIntoHtml(sentence.children);
+        html += `<${sentence.tagName}>${childrenHtml}</${sentence.tagName}>`;
+    } else {
+        html += sentence.html;
+    }
+    return html;
+}
 
 function createSentenceFromNode(text: string, parentTag = 'span'): Sentence {
     const id = uuid.v4() as string;
