@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { UserPreferences } from './settings/types';
+import { defaultEditorPreferences, ThemeOptions, UserPreferences } from './settings/types';
 
 export const storeData = async (key: string, value: any) => {
     try {
@@ -11,7 +11,7 @@ export const storeData = async (key: string, value: any) => {
     }
 };
 
-export const getData = async (key: string) => {
+export const getData = async <T>(key: string): Promise<T | null> => {
     try {
         const jsonValue = await AsyncStorage.getItem(key);
         return jsonValue != null ? JSON.parse(jsonValue) : null;
@@ -32,15 +32,22 @@ export const getAllKeys = async () => {
 
 export const userPrefStore = create((set) => ({
     userPref: null,
-    setUserPref: (userPref: UserPreferences) => set({ userPref }),
+    setUserPref: (userPref: UserPreferences) => {
+        set({ userPref });
+        setUserPreference(userPref).then(() => { });
+    },
 }));
 
 export async function getUserPreference(): Promise<UserPreferences> {
-    const userPref = await getData('userPreference');
-    return userPref ?? { theme: 'system' };
+    const userPref = await getData<UserPreferences>('userPreference');
+    return {
+        theme: userPref?.theme ?? ThemeOptions.System,
+        editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
+    }
 }
 
-export async function setUserPreference(userPref: UserPreferences) {
+
+async function setUserPreference(userPref: UserPreferences) {
     await storeData('userPreference', userPref);
 }
 

@@ -2,7 +2,6 @@ import { Material3Theme, useMaterial3Theme } from "@pchmn/expo-material3-theme";
 import { useEffect, useState } from "react";
 import { View, StyleSheet, Text, ColorSchemeName, useColorScheme } from "react-native";
 import { Button, List, MD3DarkTheme, MD3LightTheme, PaperProvider, RadioButton, Snackbar, useTheme } from "react-native-paper";
-import { getUserPreference, setUserPreference, userPrefStore } from "../storage";
 import { UserPreferences, ThemeOptions } from "./types";
 
 export const ThemeSelectionAccordion = ({ userPref, setUserPref }: {
@@ -20,7 +19,6 @@ export const ThemeSelectionAccordion = ({ userPref, setUserPref }: {
     const handleApplyTheme = () => {
         const newUserPref = { ...userPref, theme };
         setUserPref(newUserPref);
-        setUserPreference(newUserPref);
         setSnackbarVisible(true);
     }
     return (

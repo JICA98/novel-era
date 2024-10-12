@@ -4,6 +4,7 @@ import IDOMParser from "advanced-html-parser";
 import { saveFile } from "../downloads/utils";
 import { View } from "react-native";
 import TimeAgo from '@andordavoti/react-native-timeago';
+import { TTS } from "./tts";
 
 export interface ChapterData {
     id: string;
@@ -44,6 +45,11 @@ export async function fetchChapter(repo: Repo, content: Content, id: string): Pr
         console.error(error);
         throw new Error('Failed to fetch chapter');
     }
+}
+
+export function textContent(html: string) {
+    const dom = IDOMParser.parse(`<html><body>${html}</body></html>`).documentElement;
+    return dom.textContent;
 }
 
 export function navigateToNextChapter(props: RenderChapterProps, add = 1) {

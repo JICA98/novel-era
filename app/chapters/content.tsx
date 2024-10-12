@@ -3,10 +3,14 @@ import { View, useWindowDimensions, ScrollView, NativeSyntheticEvent, NativeScro
 import PagerView from 'react-native-pager-view';
 import { IconButton, useTheme } from 'react-native-paper';
 import RenderHtml from 'react-native-render-html';
-import { RenderChapterProps, navigateToNextChapter } from './common';
+import { RenderChapterProps, navigateToNextChapter, textContent } from './common';
 import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../favorites/tracker';
+import { UserPreferences } from '../settings/types';
+import { userPrefStore } from '../storage';
+import { htmlToIdSentences, setTTS, toQueue, TTS, ttsStore } from './tts';
 
 export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderChapterProps) => {
+    const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
     const [pages, setPages] = useState<any[]>([]);
     const { width } = useWindowDimensions();
     const theme = useTheme();
@@ -19,11 +23,12 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         allTrackers: chapterTrackerStore((state: any) => state.content),
         setAllTrackers: chapterTrackerStore((state: any) => state.setContent),
     });
+    const tts: TTS = ttsStore((state: any) => state.tts);
+    const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
     const tracker = useTracker((state: any) => state.content) as ChapterTracker;
     const setTracker = useTracker((state: any) => state.setContent) as (_: ChapterTracker) => void;
     const windowHeight = useWindowDimensions().height;
 
-    // Function to split content into pages
     const splitContentIntoPages = (content: string) => {
         const words = content.split(' ');
         const pageSize = 20500;
@@ -32,13 +37,15 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         for (let i = 0; i < words.length; i += pageSize) {
             result.push(words.slice(i, i + pageSize).join(' '));
         }
-
         return result;
     };
 
     useEffect(() => {
-        const pageContent = splitContentIntoPages(props.data);
+        const { html, sentences } = htmlToIdSentences(props.data);
+        const pageContent = splitContentIntoPages(html);
         setPages(pageContent);
+        let tts: TTS = { state: 'unknown', queue: toQueue(sentences) };
+        setTTStore(tts);
     }, [props.data]);
 
     const prevChapBtn = <View style={{ padding: 16, marginBottom: 30, alignItems: 'center' }}>
@@ -86,7 +93,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
             updateChapterProgress(progress);
         }
     }
-
+    console.log('current sentence', tts.currentSentence);
     return (
         <PagerView style={{ flex: 1 }} initialPage={0}>
             {pages.map((eventsHTML, index) => {
@@ -96,7 +103,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
 
                         <ScrollView ref={scrollViewRef}
                             onScroll={onScroll}
-                            onContentSizeChange={(w: number, h: number) => {
+                            onContentSizeChange={(_: number, h: number) => {
                                 if (props.fromPrevious) {
                                     scrollViewRef.current?.scrollToEnd({ animated: false });
                                 } else if (tracker && tracker.chapterProgress > 0) {
@@ -112,8 +119,17 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                             <RenderHtml
                                 contentWidth={width}
                                 source={source}
-                                baseStyle={{ fontSize: 18, color: theme.colors.onBackground, fontFamily: 'serif' }}
+                                baseStyle={{
+                                    fontSize: editorPref.fontSize, color: theme.colors.onBackground,
+                                    fontFamily: editorPref.fontFamily,
+                                    letterSpacing: editorPref.letterSpacing,
+                                }}
                                 ignoredDomTags={['nf3e90', 'nf5865']}
+                                idsStyles={{
+                                    [`${tts.currentSentence}`]: {
+                                        backgroundColor: 'black', // Change this to your desired color
+                                    },
+                                }}
                             />
                             <View style={{ margin: 20 }} ></View>
                             {(props.id !== props.content.latestChapter?.toString() && props.enableNextPrev) && (
@@ -126,3 +142,8 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         </PagerView>
     );
 };
+
+
+function TTSTextComponent(text: string) {
+
+}
