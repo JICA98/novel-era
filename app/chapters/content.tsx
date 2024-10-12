@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList } from 'react-native';
+import { View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList, ScrollView } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IconButton, useTheme } from 'react-native-paper';
 import RenderHtml from 'react-native-render-html';
@@ -11,7 +11,7 @@ import { buildHtmlFromSentence, htmlToIdSentences, Sentence, toQueue, TTS, ttsSt
 
 export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderChapterProps) => {
     const [pages, setPages] = useState<any[]>([]);
-    const flatListRef = useRef<FlatList<any> | null>(null);
+    const listRef = useRef<ScrollView>(null);
     const chapterId = props.id;
     const useTracker = getOrCreateTrackerStore({
         chapterId: props.id,
@@ -47,22 +47,10 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     }, [props.data]);
 
     useEffect(() => {
-        if (flatListRef) {
-            if (props.fromPrevious) {
-                flatListRef.current?.scrollToEnd({ animated: false });
-            } else if (tracker && tracker.chapterProgress > 0) {
-                // const yOffset = tracker.chapterProgress * (h - windowHeight);
-                // scrollViewRef.current?.scrollTo({ y: yOffset, animated: false })
-                return;
-            }
-        }
-    }, [flatListRef]);
-
-    useEffect(() => {
         if (tts.currentSentence) {
             const index = tts.queue.findIndex((sentence) => sentence.id === tts.currentSentence);
             if (index > -1) {
-                flatListRef.current?.scrollToIndex({ index, animated: true, viewOffset: height / 2.5 });
+                // listRef.current?.scrollToIndex({ index, animated: true, viewOffset: height / 2.5 });
             }
         }
     }, [tts.currentSentence]);
@@ -124,18 +112,28 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     )}</>);
     return (
         <PagerView style={{ flex: 1 }} initialPage={0}>
-            {pages.map((_, index) => {
+            {pages.map((html, index) => {
                 return (
                     <View key={index} style={{ flex: 1, marginHorizontal: 10 }}>
-                        <FlatList
-                            ref={flatListRef}
-                            data={tts.queue} onScroll={onScroll}
-                            keyExtractor={item => item.id}
-                            ListHeaderComponent={ListHeaderComponent}
-                            ListFooterComponent={ListFooterComponent}
-                            renderItem={({ item }: { item: Sentence }) =>
-                                (<RenderComponent sentence={item} currentSentence={tts.currentSentence} />)}
-                        />
+                        <ScrollView
+                            ref={listRef}
+                            onScroll={onScroll}
+                            onContentSizeChange={(_: number, h: number) => {
+                                if (props.fromPrevious) {
+                                    listRef.current?.scrollToEnd({ animated: false });
+                                } else if (tracker && tracker.chapterProgress > 0) {
+                                    const yOffset = tracker.chapterProgress * (h - windowHeight);
+                                    listRef.current?.scrollTo({ y: yOffset, animated: false });
+                                    return;
+                                }
+                            }}
+                        >
+                            {ListHeaderComponent}
+                            {<RenderComponent html={html} currentSentence={tts.currentSentence} />}
+                            {(props.id !== props.content.latestChapter?.toString() && props.enableNextPrev) && (
+                                nextChapBtn
+                            )}
+                        </ScrollView>
                     </View>
                 );
             })}
@@ -144,11 +142,10 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
 };
 
 
-function RenderComponent({ sentence, currentSentence }: { sentence: Sentence, currentSentence?: string }) {
+function RenderComponent({ html, currentSentence }: { html: string, currentSentence?: string }) {
     const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
     const { width } = useWindowDimensions();
     const theme = useTheme();
-    const html = buildHtmlFromSentence(sentence);
     return (
         <View style={{ paddingBottom: 15 }}>
             <RenderHtml
