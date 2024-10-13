@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, memo, } from 'react';
-import { Text, View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef, memo, useCallback, } from 'react';
+import { Text, View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList, ScrollView, ViewToken } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IconButton, useTheme } from 'react-native-paper';
 import RenderHtml, { CustomBlockRenderer, CustomMixedRenderer, CustomTextualRenderer } from 'react-native-render-html';
@@ -24,6 +24,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
     const tracker = useTracker((state: any) => state.content) as ChapterTracker;
     const setTracker = useTracker((state: any) => state.setContent) as (_: ChapterTracker) => void;
+    const [viewableItems, setViewableItems] = useState<ViewToken<Sentence>[]>([]);
     const windowHeight = useWindowDimensions().height;
 
     const splitContentIntoPages = (content: string) => {
@@ -45,11 +46,27 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         setTTStore(tts);
     }, [props.data]);
 
+    const updateViewableItems = ({ viewableItems }:
+        { viewableItems: ViewToken<Sentence>[] }): void => {
+        setViewableItems(viewableItems);
+        if (viewableItems.length && !isSpeechOrPause(tts.state)) {
+            const currentSentence = getCurrentSentence(viewableItems);
+            if (currentSentence) {
+                tts.currentSentence = currentSentence.id;
+                setTTStore({ ...tts });
+            }
+        }
+    };
+
     useEffect(() => {
         if (tts.currentSentence && isSpeechOrPause(tts.state)) {
-            const index = indexOfSentence(tts.sentences, tts.currentSentence);
-            if (index > -1) {
-                listRef.current?.scrollToIndex({ index, animated: true, viewOffset: windowHeight / 3 });
+            const isCurrentSentenceVisible =
+                indexOfSentence(viewableItems.map(e => e.item), tts.currentSentence) > -1;
+            if (!isCurrentSentenceVisible) {
+                const index = indexOfSentence(tts.sentences, tts.currentSentence);
+                if (index > -1) {
+                    listRef.current?.scrollToIndex({ index, animated: false, viewOffset: 30 });
+                }
             }
         }
     }, [tts.currentSentence]);
@@ -113,21 +130,8 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                         <FlatList
                             ref={listRef}
                             onScroll={onScroll}
-                            onViewableItemsChanged={({ viewableItems }) => {
-                                if (viewableItems.length && tts.state !== 'speak') {
-                                    console.log('viewableItems', viewableItems.map(_ => ({
-                                        text: _.item.text?.substring(0, 25),
-                                        id: _.item.id
-                                    })));
-                                    const children = viewableItems[0]?.item?.children;
-                                    if (children && children.length) {
-                                        const currentSentence = children[1] ?? children[0];
-                                        console.log('currentSentence', currentSentence);
-                                        tts.currentSentence = currentSentence.id;
-                                        setTTStore({ ...tts });
-                                    }
-                                }
-                            }}
+                            onViewableItemsChanged={updateViewableItems}
+                            viewabilityConfig={{ itemVisiblePercentThreshold: 100 }}
                             data={tts.sentences}
                             ListHeaderComponent={ListHeaderComponent}
                             ListFooterComponent={ListFooterComponent}
@@ -160,10 +164,27 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
 
 };
 
+function getCurrentSentence(viewables: ViewToken<Sentence>[]): Sentence | undefined {
+    if (viewables[0]?.index === 0) {
+        return viewables[0]?.item?.children?.[0];
+    }
+    const initialChildren = viewables[0]?.item?.children;
+    if (initialChildren && initialChildren.length > 5) {
+        return initialChildren[5];
+    }
+    const children = viewables[1]?.item?.children ?? initialChildren;
+    if (children && children.length) {
+        const currentSentence = children[1] ?? children[0];
+        return currentSentence;
+    }
+    return undefined;
+}
+
 
 const RenderComponent = memo(({ sentence, currentSentence, state }:
     { sentence: Sentence, currentSentence?: string, state: SpeechAction }) => {
     const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
+    const setCurrentSentence: (s: string) => void = ttsStore((state: any) => state.setCurrentSentence);
     const { width } = useWindowDimensions();
     const theme = useTheme();
     const sentenceStyle: any = {};
@@ -171,7 +192,6 @@ const RenderComponent = memo(({ sentence, currentSentence, state }:
         sentenceStyle[currentSentence] = {
             backgroundColor: theme.colors.primary,
             color: theme.colors.onPrimary,
-            margin: 5,
         };
     }
     return (
@@ -187,6 +207,22 @@ const RenderComponent = memo(({ sentence, currentSentence, state }:
                 }}
                 ignoredDomTags={['nf3e90', 'nf5865']}
                 idsStyles={sentenceStyle}
+                tagsStyles={{
+                    a: {
+                        color: theme.colors.onSurface,
+                        textDecorationLine: 'none',
+                    }
+                }}
+                renderersProps={{
+                    a: {
+                        onPress(_, __, attr, ___) {
+                            console.log('Link pressed', attr.id);
+                            if (attr.id) {
+                                setCurrentSentence(attr.id);
+                            }
+                        },
+                    }
+                }}
             />
         </View>
     );

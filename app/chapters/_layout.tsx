@@ -1,7 +1,7 @@
 import { FetchData } from "@/types";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated } from "react-native";
+import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
 import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
 import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
 import { AppBar } from "../components/appbar";
@@ -79,6 +79,24 @@ const ChapterLayout: React.FC = () => {
         const newFontSize = editorPref.fontSize + add;
         setUserPref({ ...userPref, editorPreferences: { ...editorPref, fontSize: newFontSize } });
     }
+
+    useEffect(() => {
+        const backAction = () => {
+            if (focusedMode) {
+                setFocusedMode(false);
+                return true;
+            }
+            return false;
+        };
+
+        const backHandler = BackHandler.addEventListener(
+            'hardwareBackPress',
+            backAction,
+        );
+
+        return () => backHandler.remove();
+    }, [focusedMode]);
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {!focusedMode && (
@@ -102,7 +120,7 @@ const ChapterLayout: React.FC = () => {
         }
 
         const bottomBar = <Animated.View style={{
-            padding: 16, flexDirection: 'row', justifyContent: 'center', backgroundColor: colors.backdrop
+            padding: 16, flexDirection: 'row', justifyContent: 'center', backgroundColor: colors.surfaceVariant
         }}>
             <IconButton icon="crop-free" onPress={() => setFocusedMode(!focusedMode)} />
             <View style={{ width: 16 }} />
@@ -115,13 +133,13 @@ const ChapterLayout: React.FC = () => {
 
         return (
             <>
-                {(tts.state === 'speak' || tts.state === 'pause' || tts.state === 'resume') && (
+                {(tts.state === 'speak' || tts.state === 'pause') && (
                     <View style={{
                         justifyContent: 'center',
-                        backgroundColor: colors.backdrop
+                        backgroundColor: colors.surfaceVariant
                     }}>
                         <Button icon={tts.state === 'pause' ? 'play' : 'pause'}
-                            onPress={() => updateTTS(tts.state === 'pause' ? 'resume' : 'pause')}>
+                            onPress={() => updateTTS(tts.state === 'pause' ? 'speak' : 'pause')}>
                             {tts.state === 'pause' ? 'Resume' : 'Pause'}
                         </Button>
                         <Button icon="stop" onPress={() => updateTTS('stop')}>Stop</Button>

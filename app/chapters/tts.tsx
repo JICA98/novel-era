@@ -11,7 +11,7 @@ export interface Sentence {
     children?: Sentence[];
 }
 
-export type SpeechAction = 'unknown' | 'speak' | 'stop' | 'pause' | 'resume';
+export type SpeechAction = 'unknown' | 'speak' | 'stop' | 'pause';
 
 export function isSpeechOrPause(state: SpeechAction) {
     return state === 'speak' || state === 'pause';
@@ -29,10 +29,19 @@ export const ttsStore = create((set, get: any) => ({
         state: 'unknown',
         sentences: [],
     } as TTS,
+    setCurrentSentence: (currentSentence: string) => {
+        const currentTTS: TTS = get().tts;
+        const tts: TTS = { ...currentTTS, currentSentence };
+        if (isSpeechOrPause(tts.state)) {
+            tts.state = 'pause';
+            tts.currentSentence = currentSentence;
+            updateSentenceTracker(tts);
+            setTTS({ tts: { ...tts }, setTTS: get().setTTS, decreaseIndex: false });
+        }
+    },
     setTTS: (tts: TTS) => {
         if (!isSpeechOrPause(tts.state)) {
-            sentenceTracker.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
-            console.log('sentenceTracker.index', sentenceTracker.index);
+            updateSentenceTracker(tts);
         }
         set({ tts });
     },
@@ -40,8 +49,13 @@ export const ttsStore = create((set, get: any) => ({
 
 let sentenceTracker = { index: 0 };
 
-export function setTTS({ tts, setTTS }:
-    { tts: TTS, setTTS: (tts: TTS) => void }) {
+function updateSentenceTracker(tts: TTS) {
+    sentenceTracker.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
+}
+
+export function setTTS({ tts, setTTS, decreaseIndex = true }:
+    { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
+    let promise = Promise.resolve();
     switch (tts.state) {
         case 'unknown':
             sentenceTracker = { index: 0 };
@@ -53,16 +67,16 @@ export function setTTS({ tts, setTTS }:
         case 'stop':
             sentenceTracker = { index: 0 };
             tts.currentSentence = undefined;
-            Speech.stop().then(() => { });
+            promise = Speech.stop().then(() => { });
             break;
         case 'pause':
-            if (sentenceTracker.index !== 0) {
-                sentenceTracker.index--;
+            if (sentenceTracker.index !== 0 && tts.ttsQueue) {
+                if (decreaseIndex) {
+                    sentenceTracker.index--;
+                }
+                tts.currentSentence = tts.ttsQueue[sentenceTracker.index].id;
             }
-            Speech.stop().then(() => { });
-            break;
-        case 'resume':
-            processNextSentence();
+            promise = Speech.stop().then(() => { });
             break;
     }
 
@@ -88,6 +102,8 @@ export function setTTS({ tts, setTTS }:
             });
         }
     }
+
+    return promise;
 }
 
 export function indexOfSentence(sentences: Sentence[], id?: string) {
@@ -177,9 +193,9 @@ export function buildHtmlFromSentence(sentence: Sentence) {
     return html;
 }
 
-function createSentenceFromNode(text: string, parentTag = 'span'): Sentence {
+function createSentenceFromNode(text: string, parentTag = 'a'): Sentence {
     const id = uuid.v4() as string;
-    const html = `<${parentTag} id="${id}" >${text}</${parentTag}>`;
+    const html = `<${parentTag} id="${id}" href="${id}" >${text}</${parentTag}>`;
     return { id, text, html };
 }
 
