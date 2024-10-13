@@ -164,6 +164,11 @@ function splitTextIntoSentences(text: string): Sentence[] {
     return result;
 }
 
+const validTags = [
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'span', 'a', 'li', 'div', 'blockquote',
+    'strong', 'em', 'b', 'i', 'u', 'small', 'mark', 'del', 'ins', 'sub', 'sup', 'code',
+    'pre', 'abbr', 'cite', 'q', 'time', 'var', 'samp', 'kbd', 'dfn', 'bdo', 'ruby', 'rt', 'rp'
+];
 
 export function htmlToIdSentences(html: string) {
     const dom = IDOMParser.parse(`<html>
@@ -176,10 +181,10 @@ export function htmlToIdSentences(html: string) {
     function traverse(node: any) {
         if (node?.nodeType === 3) { // Text node
             const text = node.textContent.trim();
-            if (text) {
+            const tagName = node.parentNode?.tagName ?? 'span';
+            if (text && validTags.includes(tagName)) {
                 const children = splitTextIntoSentences(text);
                 if (children.length) {
-                    const tagName = node.parentNode?.tagName ?? 'span';
                     const parent: Sentence = {
                         id: uuid.v4() as string,
                         tagName,

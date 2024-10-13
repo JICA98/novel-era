@@ -4,7 +4,7 @@ import IDOMParser from "advanced-html-parser";
 import { saveFile } from "../downloads/utils";
 import { View } from "react-native";
 import TimeAgo from '@andordavoti/react-native-timeago';
-import { TTS } from "./tts";
+import { SpeechAction } from "./tts";
 
 export interface ChapterData {
     id: string;
@@ -23,6 +23,7 @@ export interface RenderChapterProps {
     continueReading?: boolean;
     fromPrevious?: boolean;
     enableNextPrev: boolean;
+    speachState: SpeechAction;
 }
 
 export function chapterKey(repo: Repo, content: Content, id: string) {
@@ -52,16 +53,18 @@ export function textContent(html: string) {
     return dom.textContent;
 }
 
-export function navigateToNextChapter(props: RenderChapterProps, add = 1) {
+export function navigateToNextChapter(props: RenderChapterProps, add = 1, speachState: SpeechAction = 'unknown') {
+    props = {
+        ...props,
+        id: (parseInt(props.id) + add).toString(),
+        continueReading: true,
+        fromPrevious: add === -1,
+        speachState: speachState,
+    };
     router.replace({
         pathname: '/chapters',
         params: {
-            props: JSON.stringify({
-                ...props,
-                id: (parseInt(props.id) + add).toString(),
-                continueReading: true,
-                fromPrevious: add === -1,
-            }),
+            props: JSON.stringify(props),
         }
     });
 }

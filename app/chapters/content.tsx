@@ -6,7 +6,7 @@ import RenderHtml, { CustomBlockRenderer, CustomMixedRenderer, CustomTextualRend
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../favorites/tracker';
 import * as Speech from 'expo-speech';
-import { buildHtmlFromSentence, htmlToIdSentences, indexOfSentence, isSpeechOrPause, Sentence, SpeechAction, toQueue, TTS, ttsStore } from './tts';
+import { buildHtmlFromSentence, htmlToIdSentences, indexOfSentence, isSpeechOrPause, Sentence, setTTS, SpeechAction, toQueue, TTS, ttsStore } from './tts';
 import { UserPreferences, userPrefStore } from '../userpref';
 
 export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderChapterProps) => {
@@ -43,8 +43,14 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         const { html, sentences } = htmlToIdSentences(props.data);
         const pageContent = splitContentIntoPages(html);
         setPages(pageContent);
-        let tts: TTS = { state: 'unknown', sentences: sentences, ttsQueue: toQueue(sentences), index: 0, ttsConfig };
+        let tts: TTS = {
+            state: props.speachState, sentences, ttsQueue: toQueue(sentences),
+            index: 0, ttsConfig
+        };
         setTTStore(tts);
+        if (tts.state === 'speak') {
+            setTTS({ tts, setTTS: setTTStore });
+        }
     }, [props.data]);
 
     const updateViewableItems = ({ viewableItems }:
@@ -86,7 +92,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                     if (isCompleted) {
                         updateChapterProgress(1);
                         clearInterval(intervalId);
-                        navigateToNextChapter(props, 1);
+                        navigateToNextChapter(props, 1, 'speak');
                     }
                 }, 1000);
             }

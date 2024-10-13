@@ -62,6 +62,7 @@ const ChapterLayout: React.FC = () => {
             continueReading={props.continueReading}
             enableNextPrev={props.enableNextPrev}
             id={props.id} content={props.content} repo={props.repo}
+            speachState={props.speachState}
         />;
     }
     const chapterActions = [
