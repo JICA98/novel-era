@@ -13,34 +13,42 @@ export interface Sentence {
 
 export type SpeechAction = 'unknown' | 'speak' | 'stop' | 'pause' | 'resume';
 
+export function isSpeechOrPause(state: SpeechAction) {
+    return state === 'speak' || state === 'pause';
+}
+
 export interface TTS {
     state: SpeechAction;
-    queue: Sentence[];
+    sentences: Sentence[];
+    ttsQueue?: Sentence[];
     currentSentence?: string;
 }
 
-export const ttsStore = create((set) => ({
+export const ttsStore = create((set, get: any) => ({
     tts: {
         state: 'unknown',
-        queue: [],
+        sentences: [],
     } as TTS,
-    setTTS: (tts: TTS) => set({ tts }),
+    setTTS: (tts: TTS) => {
+        if (!isSpeechOrPause(tts.state)) {
+            sentenceTracker.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
+            console.log('sentenceTracker.index', sentenceTracker.index);
+        }
+        set({ tts });
+    },
 }));
 
 let sentenceTracker = { index: 0 };
 
 export function setTTS({ tts, setTTS }:
     { tts: TTS, setTTS: (tts: TTS) => void }) {
-    console.log('Setting TTS', tts.state);
     switch (tts.state) {
         case 'unknown':
             sentenceTracker = { index: 0 };
             tts.currentSentence = undefined;
             break;
         case 'speak':
-            if (tts.queue.length) {
-                processNextSentence();
-            }
+            processNextSentence();
             break;
         case 'stop':
             sentenceTracker = { index: 0 };
@@ -61,8 +69,9 @@ export function setTTS({ tts, setTTS }:
     setTTS({ ...tts });
 
     function processNextSentence() {
-        if (sentenceTracker.index < tts.queue.length) {
-            const currentSentence = tts.queue[sentenceTracker.index];
+        if (!tts.ttsQueue?.length) return;
+        if (sentenceTracker.index < tts.ttsQueue.length) {
+            const currentSentence = tts.ttsQueue[sentenceTracker.index];
             performSpeech(currentSentence);
             tts.currentSentence = currentSentence.id;
             sentenceTracker.index++;
@@ -79,6 +88,11 @@ export function setTTS({ tts, setTTS }:
             });
         }
     }
+}
+
+export function indexOfSentence(sentences: Sentence[], id?: string) {
+    return sentences.findIndex((sentence) => sentence.id === id
+        || sentence.children?.find((child) => child.id === id));
 }
 
 function splitTextIntoSentences(text: string): Sentence[] {
@@ -120,9 +134,15 @@ export function htmlToIdSentences(html: string) {
             if (text) {
                 const children = splitTextIntoSentences(text);
                 if (children.length) {
-                    const parent: Sentence = { id: uuid.v4() as string, tagName: node.parentNode?.tagName ?? 'span' };
-                    parent.children = children;
-                    sentences.push(parent);
+                    const tagName = node.parentNode?.tagName ?? 'span';
+                    const parent: Sentence = {
+                        id: uuid.v4() as string,
+                        tagName,
+                        text,
+                        children
+                    };
+                    const html = buildHtmlFromSentence(parent);
+                    sentences.push({ ...parent, html });
                 }
             }
         } else if (node?.childNodes) {
@@ -134,7 +154,6 @@ export function htmlToIdSentences(html: string) {
 
     traverse(dom);
     const joinedHtml = joinSentencesIntoHtml(sentences);
-    console.log(joinedHtml);
     return { sentences, html: joinedHtml };
 }
 
