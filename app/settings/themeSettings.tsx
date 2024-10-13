@@ -1,8 +1,8 @@
-import { Material3Theme, useMaterial3Theme } from "@pchmn/expo-material3-theme";
-import { useEffect, useState } from "react";
-import { View, StyleSheet, Text, ColorSchemeName, useColorScheme } from "react-native";
-import { Button, List, MD3DarkTheme, MD3LightTheme, PaperProvider, RadioButton, Snackbar, useTheme } from "react-native-paper";
-import { UserPreferences, ThemeOptions } from "./types";
+import { Material3Theme } from "@pchmn/expo-material3-theme";
+import { useState } from "react";
+import { View, StyleSheet, ColorSchemeName } from "react-native";
+import { Button, List, MD3DarkTheme, MD3LightTheme, RadioButton, Snackbar, useTheme } from "react-native-paper";
+import { UserPreferences, ThemeOptions } from "../userpref";
 
 export const ThemeSelectionAccordion = ({ userPref, setUserPref }: {
     userPref: UserPreferences, setUserPref: (userPref: UserPreferences) => void

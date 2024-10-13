@@ -1,6 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { create } from 'zustand';
-import { defaultEditorPreferences, ThemeOptions, UserPreferences } from './settings/types';
 
 export const storeData = async (key: string, value: any) => {
     try {
@@ -28,27 +26,6 @@ export const getAllKeys = async () => {
         console.error(e);
         return [];
     }
-}
-
-export const userPrefStore = create((set) => ({
-    userPref: null,
-    setUserPref: (userPref: UserPreferences) => {
-        set({ userPref });
-        setUserPreference(userPref).then(() => { });
-    },
-}));
-
-export async function getUserPreference(): Promise<UserPreferences> {
-    const userPref = await getData<UserPreferences>('userPreference');
-    return {
-        theme: userPref?.theme ?? ThemeOptions.System,
-        editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
-    }
-}
-
-
-async function setUserPreference(userPref: UserPreferences) {
-    await storeData('userPreference', userPref);
 }
 
 export async function cacheValue(key: string, value: any) {

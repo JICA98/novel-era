@@ -2,6 +2,7 @@ import { create } from "zustand";
 import * as Speech from 'expo-speech';
 import uuid from 'react-native-uuid';
 import IDOMParser from "advanced-html-parser";
+import { TTSConfig } from "../userpref";
 
 export interface Sentence {
     id: string;
@@ -20,14 +21,18 @@ export function isSpeechOrPause(state: SpeechAction) {
 export interface TTS {
     state: SpeechAction;
     sentences: Sentence[];
-    ttsQueue?: Sentence[];
+    ttsQueue: Sentence[];
     currentSentence?: string;
+    index: number;
+    ttsConfig?: TTSConfig;
 }
 
 export const ttsStore = create((set, get: any) => ({
     tts: {
         state: 'unknown',
         sentences: [],
+        ttsQueue: [],
+        index: 0,
     } as TTS,
     setCurrentSentence: (currentSentence: string) => {
         const currentTTS: TTS = get().tts;
@@ -39,6 +44,22 @@ export const ttsStore = create((set, get: any) => ({
             setTTS({ tts: { ...tts }, setTTS: get().setTTS, decreaseIndex: false });
         }
     },
+    updateTTSConfig: (ttsConfig: TTSConfig) => {
+        const currentTTS: TTS = get().tts;
+        const tts: TTS = { ...currentTTS, ttsConfig };
+        set({ ...tts });
+        function startSpeaking() {
+            tts.state = 'speak';
+            setTTS({ tts, setTTS: get().setTTS, decreaseIndex: false });
+        }
+        if (tts.state === 'speak') {
+            tts.state = 'pause';
+            setTTS({ tts, setTTS: get().setTTS, decreaseIndex: true })
+                .then(startSpeaking);
+        } else if (tts.state === 'pause') {
+            startSpeaking();
+        }
+    },
     setTTS: (tts: TTS) => {
         if (!isSpeechOrPause(tts.state)) {
             updateSentenceTracker(tts);
@@ -47,48 +68,50 @@ export const ttsStore = create((set, get: any) => ({
     },
 }));
 
-let sentenceTracker = { index: 0 };
-
 function updateSentenceTracker(tts: TTS) {
-    sentenceTracker.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
+    tts.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
 }
 
 export function setTTS({ tts, setTTS, decreaseIndex = true }:
     { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
     let promise = Promise.resolve();
+    console.log('before setTTS', tts.state, tts.index, tts.currentSentence);
     switch (tts.state) {
         case 'unknown':
-            sentenceTracker = { index: 0 };
+            tts.index = 0;
             tts.currentSentence = undefined;
             break;
         case 'speak':
             processNextSentence();
             break;
         case 'stop':
-            sentenceTracker = { index: 0 };
-            tts.currentSentence = undefined;
-            promise = Speech.stop().then(() => { });
+            async function handleStop() {
+                if (await Speech.isSpeakingAsync()) {
+                    Speech.stop().then(() => { });
+                }
+            }
+            handleStop();
             break;
         case 'pause':
-            if (sentenceTracker.index !== 0 && tts.ttsQueue) {
+            if (tts.index !== 0 && tts.ttsQueue) {
                 if (decreaseIndex) {
-                    sentenceTracker.index--;
+                    tts.index--;
                 }
-                tts.currentSentence = tts.ttsQueue[sentenceTracker.index].id;
+                tts.currentSentence = tts.ttsQueue[tts.index].id;
             }
             promise = Speech.stop().then(() => { });
             break;
     }
 
+    console.log('after setTTS', tts.state, tts.index, tts.currentSentence);
     setTTS({ ...tts });
 
     function processNextSentence() {
-        if (!tts.ttsQueue?.length) return;
-        if (sentenceTracker.index < tts.ttsQueue.length) {
-            const currentSentence = tts.ttsQueue[sentenceTracker.index];
+        if (tts.index < tts.ttsQueue.length) {
+            const currentSentence = tts.ttsQueue[tts.index];
             performSpeech(currentSentence);
             tts.currentSentence = currentSentence.id;
-            sentenceTracker.index++;
+            tts.index++;
         } else {
             tts.state = 'unknown';
         }
@@ -96,9 +119,15 @@ export function setTTS({ tts, setTTS, decreaseIndex = true }:
     }
 
     function performSpeech(child?: Sentence) {
+        const _ttsConfig = tts.ttsConfig;
+        console.log('usingConfig', _ttsConfig);
         if (child?.text) {
             Speech.speak(child.text, {
                 onDone: processNextSentence,
+                pitch: _ttsConfig?.pitch,
+                rate: _ttsConfig?.rate,
+                volume: _ttsConfig?.volume,
+                voice: _ttsConfig?.voice,
             });
         }
     }

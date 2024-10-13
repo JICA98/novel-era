@@ -66,7 +66,7 @@ export default function Recents() {
             onPress={() => {
                 const chapterProps: RenderChapterProps = {
                     focusedMode: false, id: chapter.chapterId, content: chapter.novel, repo: chapter.repo,
-                    enableNextPrev: false,
+                    enableNextPrev: true,
                     data: ''
                 };
                 router.push(

@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import { getUserPreference, userPrefStore } from "../storage";
 import { ThemeSelectionAccordion } from "./themeSettings";
+import { userPrefStore, getUserPreference } from "../userpref";
 
 
 export default function Settings() {

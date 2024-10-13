@@ -8,9 +8,9 @@ import { AppBar } from "../components/appbar";
 import { RenderPagedContent } from "./content";
 import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNextChapter } from "./common";
 import { errorPlaceholder } from "../placeholders";
-import { userPrefStore } from "../storage";
-import { UserPreferences } from "../settings/types";
 import { setTTS, SpeechAction, TTS, ttsStore } from "./tts";
+import TTSControls from "./ttscontrols";
+import { UserPreferences, userPrefStore } from "../userpref";
 
 const ChapterLayout: React.FC = () => {
     const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
@@ -46,13 +46,13 @@ const ChapterLayout: React.FC = () => {
 
     let child;
     const hasDataLoaded = contentData.data && !contentData.isLoading;
-    if (contentData.isLoading) {
+    if (contentData.isLoading || contentData.data === undefined) {
         child = (
             <View style={styles.listPadding}>
                 <ActivityIndicator animating={true} size="large" />
             </View>
         );
-    } else if (contentData.error || contentData.data === undefined) {
+    } else if (contentData.error) {
         child = errorPlaceholder({ onRetry: () => fetchChapterData(false) });
     } else {
         child = <RenderPagedContent
@@ -119,34 +119,25 @@ const ChapterLayout: React.FC = () => {
             setTTS({ tts: t, setTTS: setTTStore });
         }
 
-        const bottomBar = <Animated.View style={{
-            padding: 16, flexDirection: 'row', justifyContent: 'center', backgroundColor: colors.surfaceVariant
-        }}>
-            <IconButton icon="crop-free" onPress={() => setFocusedMode(!focusedMode)} />
-            <View style={{ width: 16 }} />
-            <IconButton icon="minus" onPress={() => updateFontSize(-1)} />
-            <View style={{ width: 16 }} />
-            <IconButton icon="plus" onPress={() => updateFontSize(1)} />
-            <View style={{ width: 16 }} />
-            <IconButton icon="volume-high" onPress={() => updateTTS(tts.state === 'speak' ? 'stop' : 'speak')} />
-        </Animated.View>;
-
+        const renderButtonGroup = <>
+            <View style={styles.bottomBarStyle}>
+                <IconButton icon="crop-free" onPress={() => setFocusedMode(!focusedMode)} />
+                <View style={{ width: 16 }} />
+                <IconButton icon="minus" onPress={() => updateFontSize(-1)} />
+                <View style={{ width: 16 }} />
+                <IconButton icon="plus" onPress={() => updateFontSize(1)} />
+                <View style={{ width: 16 }} />
+                <IconButton icon="volume-high" onPress={() => updateTTS(tts.state === 'speak' ? 'stop' : 'speak')} />
+            </View>
+        </>;
         return (
-            <>
-                {(tts.state === 'speak' || tts.state === 'pause') && (
-                    <View style={{
-                        justifyContent: 'center',
-                        backgroundColor: colors.surfaceVariant
-                    }}>
-                        <Button icon={tts.state === 'pause' ? 'play' : 'pause'}
-                            onPress={() => updateTTS(tts.state === 'pause' ? 'speak' : 'pause')}>
-                            {tts.state === 'pause' ? 'Resume' : 'Pause'}
-                        </Button>
-                        <Button icon="stop" onPress={() => updateTTS('stop')}>Stop</Button>
-                    </View>
-                )}
-                {bottomBar}
-            </>
+            <View style={{
+                backgroundColor: colors.surfaceVariant,
+                position: 'absolute' as 'absolute', bottom: 0, left: 0, right: 0,
+            }}>
+                {<TTSControls />}
+                {renderButtonGroup}
+            </View>
         );
     }
 }
@@ -156,9 +147,8 @@ const styles = {
     container: {
         flex: 1,
     },
-    bottomBarButtons: {
-        // flexDirection: 'row',
-        // alignItems: 'center',
+    bottomBarStyle: {
+        paddingBottom: 2, flexDirection: 'row' as 'row', justifyContent: 'center' as 'center',
     },
     listPadding: {
         marginTop: 80,
@@ -190,9 +180,9 @@ const styles = {
         fontSize: 16,
     },
     invisibleButton: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
+        position: 'absolute' as 'absolute',
+        top: '50%' as any,
+        left: '50%' as any,
         width: 110,
         height: 110,
         borderRadius: 25,
@@ -208,7 +198,6 @@ const styles = {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 16,
-        backgroundColor: 'rgba(0,0,0,0.3)',
     }
 };
 

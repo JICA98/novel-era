@@ -5,9 +5,9 @@ import { IconButton, useTheme } from 'react-native-paper';
 import RenderHtml, { CustomBlockRenderer, CustomMixedRenderer, CustomTextualRenderer } from 'react-native-render-html';
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../favorites/tracker';
-import { UserPreferences } from '../settings/types';
-import { userPrefStore } from '../storage';
+import * as Speech from 'expo-speech';
 import { buildHtmlFromSentence, htmlToIdSentences, indexOfSentence, isSpeechOrPause, Sentence, SpeechAction, toQueue, TTS, ttsStore } from './tts';
+import { UserPreferences, userPrefStore } from '../userpref';
 
 export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderChapterProps) => {
     const [pages, setPages] = useState<any[]>([]);
@@ -26,6 +26,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const setTracker = useTracker((state: any) => state.setContent) as (_: ChapterTracker) => void;
     const [viewableItems, setViewableItems] = useState<ViewToken<Sentence>[]>([]);
     const windowHeight = useWindowDimensions().height;
+    const ttsConfig = (userPrefStore((state: any) => state.userPref) as UserPreferences).ttsConfig;
 
     const splitContentIntoPages = (content: string) => {
         const words = content.split(' ');
@@ -42,7 +43,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         const { html, sentences } = htmlToIdSentences(props.data);
         const pageContent = splitContentIntoPages(html);
         setPages(pageContent);
-        let tts: TTS = { state: 'unknown', sentences: sentences, ttsQueue: toQueue(sentences) };
+        let tts: TTS = { state: 'unknown', sentences: sentences, ttsQueue: toQueue(sentences), index: 0, ttsConfig };
         setTTStore(tts);
     }, [props.data]);
 
@@ -60,27 +61,37 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
 
     useEffect(() => {
         if (tts.currentSentence && isSpeechOrPause(tts.state)) {
-            const isCurrentSentenceVisible =
-                indexOfSentence(viewableItems.map(e => e.item), tts.currentSentence) > -1;
+            scrollToSentence();
+            handleLastSentence();
+        }
+
+        function scrollToSentence() {
+            const isCurrentSentenceVisible = indexOfSentence(viewableItems.map(e => e.item), tts.currentSentence) > -1;
             if (!isCurrentSentenceVisible) {
                 const index = indexOfSentence(tts.sentences, tts.currentSentence);
                 if (index > -1) {
                     listRef.current?.scrollToIndex({ index, animated: false, viewOffset: 30 });
+                    console.log('Scrolling to index', index, tts.ttsQueue.length);
                 }
             }
         }
-    }, [tts.currentSentence]);
 
-    const nextChapBtn = <View style={{ padding: 16, marginBottom: 30, alignItems: 'center' }}>
-        <IconButton
-            icon={'arrow-down'}
-            mode='contained-tonal'
-            size={40}
-            onPress={() => {
-                updateChapterProgress(1);
-                return navigateToNextChapter(props, 1);
-            }} />
-    </View>;
+        function handleLastSentence() {
+            const queueIndex = indexOfSentence(tts.ttsQueue, tts.currentSentence);
+            if (queueIndex === tts.ttsQueue.length - 1) {
+                console.log('Last sentence reached');
+                const intervalId = setInterval(async () => {
+                    const isCompleted = !(await Speech.isSpeakingAsync());
+                    console.log('Is speaking', isCompleted);
+                    if (isCompleted) {
+                        updateChapterProgress(1);
+                        clearInterval(intervalId);
+                        navigateToNextChapter(props, 1);
+                    }
+                }, 1000);
+            }
+        }
+    }, [tts.currentSentence]);
 
     function updateChapterProgress(progress: number) {
         if (!tracker) {
@@ -120,7 +131,16 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         )}
     </View>);
     const ListFooterComponent = (<>{(props.id !== props.content.latestChapter?.toString() && props.enableNextPrev) && (
-        nextChapBtn
+        <View style={{ padding: 16, marginBottom: 70, alignItems: 'center' }}>
+            <IconButton
+                icon={'arrow-down'}
+                mode='contained-tonal'
+                size={40}
+                onPress={() => {
+                    updateChapterProgress(1);
+                    return navigateToNextChapter(props, 1);
+                }} />
+        </View>
     )}</>);
     return (
         <PagerView style={{ flex: 1 }} initialPage={0}>

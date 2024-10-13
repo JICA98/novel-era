@@ -6,8 +6,8 @@ import * as p from "plimit-lit";
 import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "./favorites/tracker";
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
 import { useColorScheme } from "react-native";
-import { getUserPreference, userPrefStore } from "./storage";
 import { getTheme } from "./settings/themeSettings";
+import { userPrefStore, getUserPreference } from "./userpref";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
