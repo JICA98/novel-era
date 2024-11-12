@@ -7,8 +7,50 @@ import { defaultTTSConfig, TTSConfig, UserPreferences, userPrefStore } from "../
 import { MD3Colors } from "react-native-paper/lib/typescript/types";
 import * as Speech from 'expo-speech';
 import SelectDropdown from 'react-native-select-dropdown'
+import { create } from "zustand";
 
 type SetTTSConfig = (ttsConfig: TTSConfig) => void;
+
+interface Speaker extends Speech.Voice {
+    speaker: string;
+}
+
+const systemVoice = { speaker: 'Mary', identifier: "system", language: "System Default", name: "System Default", quality: Speech.VoiceQuality.Default };
+
+const defaultVoices: Speaker[] = [
+    { speaker: 'Patricia', identifier: "en-us-x-tpf-local", language: "en-US", name: "en-us-x-tpf-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Jennifer', identifier: "en-us-x-sfg-network", language: "en-US", name: "en-us-x-sfg-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Linda', identifier: "en-us-x-sfg-local", language: "en-US", name: "en-us-x-sfg-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Elizabeth', identifier: "en-us-x-iob-local", language: "en-US", name: "en-us-x-iob-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Smith', identifier: "en-us-x-tpd-network", language: "en-US", name: "en-us-x-tpd-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Barbara', identifier: "en-us-x-tpc-network", language: "en-US", name: "en-us-x-tpc-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Susan', identifier: "en-us-x-iob-network", language: "en-US", name: "en-us-x-iob-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Johnson', identifier: "en-us-x-iol-network", language: "en-US", name: "en-us-x-iol-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Williams', identifier: "en-us-x-iom-network", language: "en-US", name: "en-us-x-iom-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Brown', identifier: "en-us-x-iom-local", language: "en-US", name: "en-us-x-iom-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Jessica', identifier: "en-US-language", language: "en-US", name: "en-US-language", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Jones', identifier: "en-us-x-tpd-local", language: "en-US", name: "en-us-x-tpd-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Sarah', identifier: "en-us-x-iog-network", language: "en-US", name: "en-us-x-iog-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Karen', identifier: "en-us-x-tpf-network", language: "en-US", name: "en-us-x-tpf-network", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Kia', identifier: "en-us-x-iog-local", language: "en-US", name: "en-us-x-iog-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Gracia', identifier: "en-us-x-tpc-local", language: "en-US", name: "en-us-x-tpc-local", quality: Speech.VoiceQuality.Enhanced },
+    { speaker: 'Davis', identifier: "en-us-x-iol-local", language: "en-US", name: "en-us-x-iol-local", quality: Speech.VoiceQuality.Enhanced }
+];
+export const voicesStore = create<any>((set) => ({
+    content: defaultVoices,
+    setContent: (content: any[]) => set({ content }),
+}))
+
+export function setUpVoices(setVoices: any) {
+    Speech.getAvailableVoicesAsync().then((voices) => {
+        voices = voices?.filter(x => x.language === 'en-US');
+        if (voices.length) {
+            voices = defaultVoices.filter(x => voices.findIndex(e => e.identifier === x.identifier) !== -1);
+            setVoices([systemVoice, ...voices]);
+        }
+    });
+}
+
 
 export default function TTSControls() {
     const ttsConfig = (userPrefStore((state: any) => state.userPref) as UserPreferences).ttsConfig;
@@ -17,7 +59,7 @@ export default function TTSControls() {
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
     const updateTTSConfig: SetTTSConfig = ttsStore((state: any) => state.updateTTSConfig);
     const controlVisible = isSpeechOrPause(tts.state);
-    const [voices, setVoices] = React.useState<Speech.Voice[] | null>(null);
+    const voices: Speaker[] = voicesStore((state) => state.content);
     const colors = useTheme().colors;
 
     function updateTTS(state: SpeechAction) {
@@ -30,24 +72,10 @@ export default function TTSControls() {
         updateTTSConfig(ttsConfig);
     }
 
-    useEffect(() => {
-        Speech.getAvailableVoicesAsync().then((voices) => {
-            if (voices.length) {
-                setVoices([
-                    {
-                        identifier: 'system', name: 'System Default',
-                        quality: Speech.VoiceQuality.Default, language: 'System Default'
-                    },
-                    ...voices,
-                ]);
-            }
-        });
-    }, [ttsConfig]);
-
     const voicesSelect = (voices?.length && <>
         <SelectDropdown
             defaultValue={ttsConfig.voice}
-            data={voices.map((voice) => ({ title: voice.name, id: voice.identifier, label: voice.language }))}
+            data={voices.map((voice) => ({ title: voice.name, id: voice.identifier, label: voice.speaker }))}
             onSelect={(item, _) => {
                 updateTTSConfigBoth({ ...ttsConfig, voice: item.id });
             }}
@@ -58,7 +86,7 @@ export default function TTSControls() {
                     <Button mode="contained-tonal" style={styles.dropdownButtonStyle}>
                         <Icon source="microphone" size={20} />
                         <View style={{ width: 8 }} />
-                        <Title style={{ fontSize: 16 }} >{voice.language}</Title>
+                        <Title style={{ fontSize: 16 }} >{voice.speaker}</Title>
                     </Button>
                 );
             }}

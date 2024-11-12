@@ -1,7 +1,6 @@
 import { FetchData } from "@/types";
 import { create, StoreApi, UseBoundStore } from "zustand";
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 
 export const allDownloadsStore = create((set) => ({
     downloads: new Map<string, UseBoundStore<StoreApi<FetchData<any>>>>(),

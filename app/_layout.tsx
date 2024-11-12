@@ -8,6 +8,7 @@ import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
 import { useColorScheme } from "react-native";
 import { getTheme } from "./settings/themeSettings";
 import { userPrefStore, getUserPreference } from "./userpref";
+import { setUpVoices, voicesStore } from "./chapters/ttscontrols";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
@@ -24,6 +25,7 @@ export default function RootLayout() {
   const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
   const userPref = userPrefStore((state: any) => state.userPref);
   const setUserPref = userPrefStore((state: any) => state.setUserPref);
+  const setVoices = voicesStore((state: any) => state.setContent);
 
   useEffect(() => {
     try {
@@ -35,6 +37,7 @@ export default function RootLayout() {
       setupDownloadStores(downloads, setDownloads);
       setupTrackingStores(allTrackers, setAllTrackers);
       setupFavoriteStores(allNovelTrackerStore, setAllNovelTracker);
+      setUpVoices(setVoices);
     } catch (error) {
       console.error(error);
     }

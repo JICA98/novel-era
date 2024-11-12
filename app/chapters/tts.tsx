@@ -40,8 +40,12 @@ export const ttsStore = create((set, get: any) => ({
         if (isSpeechOrPause(tts.state)) {
             tts.state = 'pause';
             tts.currentSentence = currentSentence;
+            const _setTTS = get().setTTS;
             updateSentenceTracker(tts);
-            setTTS({ tts: { ...tts }, setTTS: get().setTTS, decreaseIndex: false });
+            setTTS({ tts: { ...tts }, setTTS: _setTTS })
+                .then(() => {
+                    setTTS({ tts: { ...tts, state: 'speak' }, setTTS: _setTTS });
+                });
         }
     },
     updateTTSConfig: (ttsConfig: TTSConfig) => {
@@ -50,11 +54,11 @@ export const ttsStore = create((set, get: any) => ({
         set({ ...tts });
         function startSpeaking() {
             tts.state = 'speak';
-            setTTS({ tts, setTTS: get().setTTS, decreaseIndex: false });
+            setTTS({ tts, setTTS: get().setTTS });
         }
         if (tts.state === 'speak') {
             tts.state = 'pause';
-            setTTS({ tts, setTTS: get().setTTS, decreaseIndex: true })
+            setTTS({ tts, setTTS: get().setTTS })
                 .then(startSpeaking);
         } else if (tts.state === 'pause') {
             startSpeaking();
@@ -72,7 +76,7 @@ function updateSentenceTracker(tts: TTS) {
     tts.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
 }
 
-export function setTTS({ tts, setTTS, decreaseIndex = true }:
+export function setTTS({ tts, setTTS }:
     { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
     let promise = Promise.resolve();
     console.log('before setTTS', tts.state, tts.index, tts.currentSentence);
@@ -94,9 +98,6 @@ export function setTTS({ tts, setTTS, decreaseIndex = true }:
             break;
         case 'pause':
             if (tts.index !== 0 && tts.ttsQueue) {
-                if (decreaseIndex) {
-                    tts.index--;
-                }
                 tts.currentSentence = tts.ttsQueue[tts.index].id;
             }
             promise = Speech.stop().then(() => { });
@@ -107,11 +108,10 @@ export function setTTS({ tts, setTTS, decreaseIndex = true }:
     setTTS({ ...tts });
 
     function processNextSentence() {
+        console.log('usingConfig', tts.ttsConfig);
         if (tts.index < tts.ttsQueue.length) {
-            const currentSentence = tts.ttsQueue[tts.index];
-            performSpeech(currentSentence);
-            tts.currentSentence = currentSentence.id;
-            tts.index++;
+            tts.ttsQueue.slice(tts.index)
+                .forEach(currentSentence => performSpeech(currentSentence));
         } else {
             tts.state = 'unknown';
         }
@@ -120,10 +120,10 @@ export function setTTS({ tts, setTTS, decreaseIndex = true }:
 
     function performSpeech(child?: Sentence) {
         const _ttsConfig = tts.ttsConfig;
-        console.log('usingConfig', _ttsConfig);
         if (child?.text) {
             Speech.speak(child.text, {
-                onDone: processNextSentence,
+                onStart: () => { tts.currentSentence = child.id; setTTS({ ...tts }); },
+                onDone: () => { tts.index++; setTTS({ ...tts }); },
                 pitch: _ttsConfig?.pitch,
                 rate: _ttsConfig?.rate,
                 volume: _ttsConfig?.volume,
