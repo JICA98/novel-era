@@ -42,10 +42,7 @@ export const ttsStore = create((set, get: any) => ({
             tts.currentSentence = currentSentence;
             const _setTTS = get().setTTS;
             updateSentenceTracker(tts);
-            setTTS({ tts: { ...tts }, setTTS: _setTTS })
-                .then(() => {
-                    setTTS({ tts: { ...tts, state: 'speak' }, setTTS: _setTTS });
-                });
+            setTTS({ tts: { ...tts }, setTTS: _setTTS }).then(() => { });
         }
     },
     updateTTSConfig: (ttsConfig: TTSConfig) => {
@@ -123,7 +120,9 @@ export function setTTS({ tts, setTTS }:
         if (child?.text) {
             Speech.speak(child.text, {
                 onStart: () => { tts.currentSentence = child.id; setTTS({ ...tts }); },
-                onDone: () => { tts.index++; setTTS({ ...tts }); },
+                onDone: () => {
+                    tts.index++; setTTS({ ...tts });
+                },
                 pitch: _ttsConfig?.pitch,
                 rate: _ttsConfig?.rate,
                 volume: _ttsConfig?.volume,

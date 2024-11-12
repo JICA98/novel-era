@@ -8,9 +8,10 @@ import { AppBar } from "../components/appbar";
 import { RenderPagedContent } from "./content";
 import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNextChapter } from "./common";
 import { errorPlaceholder } from "../placeholders";
-import { setTTS, SpeechAction, TTS, ttsStore } from "./tts";
+import { isSpeechOrPause, setTTS, SpeechAction, TTS, ttsStore } from "./tts";
 import TTSControls from "./ttscontrols";
 import { UserPreferences, userPrefStore } from "../userpref";
+import { FAB } from 'react-native-paper';
 
 const ChapterLayout: React.FC = () => {
     const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
@@ -98,6 +99,11 @@ const ChapterLayout: React.FC = () => {
         return () => backHandler.remove();
     }, [focusedMode]);
 
+    function updateTTS(state: SpeechAction) {
+        let t: TTS = { ...tts, state: state }
+        setTTS({ tts: t, setTTS: setTTStore });
+    }
+
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {!focusedMode && (
@@ -110,15 +116,25 @@ const ChapterLayout: React.FC = () => {
                 onPress={() => setFocusedMode(!focusedMode)}
             />)}
             {!focusedMode && (renderBottomBar())}
+            {
+                focusedMode && (isSpeechOrPause(tts.state)) &&
+                <>
+                    <FAB
+                        style={{
+                            position: 'absolute',
+                            margin: 16,
+                            right: 0,
+                            bottom: 0,
+                        }}
+                        size="small"
+                        icon={tts.state === 'pause' ? 'play' : 'pause'}
+                        onPress={() => updateTTS(tts.state === 'speak' ? 'stop' : 'speak')} />
+                </>
+            }
         </SafeAreaView >
     );
 
     function renderBottomBar(): React.ReactNode {
-
-        function updateTTS(state: SpeechAction) {
-            let t: TTS = { ...tts, state: state }
-            setTTS({ tts: t, setTTS: setTTStore });
-        }
 
         const renderButtonGroup = <>
             <View style={styles.bottomBarStyle}>
