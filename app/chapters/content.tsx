@@ -27,7 +27,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const [viewableItems, setViewableItems] = useState<ViewToken<Sentence>[]>([]);
     const windowHeight = useWindowDimensions().height;
     const ttsConfig = (userPrefStore((state: any) => state.userPref) as UserPreferences).ttsConfig;
-    const [initialNumToRender, setInitialNumToRender] = useState<number>(tts.sentences.length)
+    const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
 
     const splitContentIntoPages = (content: string) => {
         const words = content.split(' ');
@@ -41,7 +41,11 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     };
 
     useEffect(() => {
-        const { html, sentences } = htmlToIdSentences(props.data);
+        let data = props.data;
+        if (editorPref.hasChapterNumber) {
+            data = `<p>Chapter — ${props.id}</p>${data}`;
+        }
+        const { html, sentences } = htmlToIdSentences(data);
         const pageContent = splitContentIntoPages(html);
         setPages(pageContent);
         let tts: TTS = {
@@ -52,7 +56,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         if (tts.state === 'speak') {
             setTTS({ tts, setTTS: setTTStore });
         }
-    }, [props.data]);
+    }, [props.data, editorPref.hasChapterNumber]);
 
     const updateViewableItems = ({ viewableItems }:
         { viewableItems: ViewToken<Sentence>[] }): void => {

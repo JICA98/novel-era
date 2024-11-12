@@ -73,10 +73,13 @@ function updateSentenceTracker(tts: TTS) {
     tts.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
 }
 
+let interval: NodeJS.Timeout | undefined;
+
 export function setTTS({ tts, setTTS }:
     { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
     let promise = Promise.resolve();
     console.log('before setTTS', tts.state, tts.index, tts.currentSentence);
+    clearInterval(interval);
     switch (tts.state) {
         case 'unknown':
             tts.index = 0;
@@ -94,7 +97,7 @@ export function setTTS({ tts, setTTS }:
             handleStop();
             break;
         case 'pause':
-            if (tts.index !== 0 && tts.ttsQueue) {
+            if (tts.index !== 0) {
                 tts.currentSentence = tts.ttsQueue[tts.index].id;
             }
             promise = Speech.stop().then(() => { });
@@ -107,21 +110,36 @@ export function setTTS({ tts, setTTS }:
     function processNextSentence() {
         console.log('usingConfig', tts.ttsConfig);
         if (tts.index < tts.ttsQueue.length) {
-            tts.ttsQueue.slice(tts.index)
-                .forEach(currentSentence => performSpeech(currentSentence));
+            const toSpeak = tts.ttsQueue.slice(tts.index);
+            let index = processSentencesBatch(toSpeak, 0);
+            interval = setInterval(() => {
+                index = processSentencesBatch(toSpeak, index);
+            }, 20_000);
         } else {
             tts.state = 'unknown';
         }
         setTTS({ ...tts });
+
+        function processSentencesBatch(toSpeak: Sentence[], index: number) {
+            toSpeak.slice(index, index + 20).forEach(e => performSpeech(e));
+            index += 20;
+            return index;
+        }
     }
 
     function performSpeech(child?: Sentence) {
         const _ttsConfig = tts.ttsConfig;
         if (child?.text) {
             Speech.speak(child.text, {
-                onStart: () => { tts.currentSentence = child.id; setTTS({ ...tts }); },
+                onStart: () => {
+                    if (tts.state === 'speak') {
+                        tts.currentSentence = child.id; setTTS({ ...tts });
+                    }
+                },
                 onDone: () => {
-                    tts.index++; setTTS({ ...tts });
+                    if (tts.state === 'speak') {
+                        tts.index++; setTTS({ ...tts });
+                    }
                 },
                 pitch: _ttsConfig?.pitch,
                 rate: _ttsConfig?.rate,

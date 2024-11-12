@@ -12,6 +12,7 @@ export interface EditorPreferences {
     fontFamily: string;
     letterSpacing: number;
     textAlign: 'left' | 'center' | 'right' | 'justify' | 'auto';
+    hasChapterNumber: boolean;
 }
 
 export interface TTSConfig {
@@ -33,6 +34,7 @@ export const defaultEditorPreferences: EditorPreferences = {
     fontFamily: 'serif',
     letterSpacing: 0,
     textAlign: 'left',
+    hasChapterNumber: false,
 };
 
 export interface UserPreferences {

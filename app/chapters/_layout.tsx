@@ -12,6 +12,7 @@ import { isSpeechOrPause, setTTS, SpeechAction, TTS, ttsStore } from "./tts";
 import TTSControls from "./ttscontrols";
 import { UserPreferences, userPrefStore } from "../userpref";
 import { FAB } from 'react-native-paper';
+import { MenuItem } from "../components/menu";
 
 const ChapterLayout: React.FC = () => {
     const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
@@ -66,16 +67,7 @@ const ChapterLayout: React.FC = () => {
             speachState={props.speachState}
         />;
     }
-    const chapterActions = [
-        {
-            leadingIcon: 'crop-free', title: 'Focus Mode', onPress: () => setFocusedMode(true)
-        },
-    ];
-    if (props.enableNextPrev) {
-        chapterActions.push({
-            leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () => navigateToNextChapter(props)
-        },);
-    }
+    const chapterActions: MenuItem[] = buildChapterActionMenu(setFocusedMode, userPref, props, setUserPref);
     function updateFontSize(add: number) {
         const editorPref = userPref.editorPreferences;
         const newFontSize = editorPref.fontSize + add;
@@ -128,7 +120,7 @@ const ChapterLayout: React.FC = () => {
                         }}
                         size="small"
                         icon={tts.state === 'pause' ? 'play' : 'pause'}
-                        onPress={() => updateTTS(tts.state === 'speak' ? 'stop' : 'speak')} />
+                        onPress={() => updateTTS(tts.state === 'speak' ? 'pause' : 'speak')} />
                 </>
             }
         </SafeAreaView >
@@ -219,3 +211,43 @@ const styles = {
 };
 
 export default ChapterLayout;
+
+function buildChapterActionMenu(
+    setFocusedMode: React.Dispatch<React.SetStateAction<boolean>>,
+    userPref: UserPreferences, props: RenderChapterProps, setUserPref: any
+) {
+    const chapterActions: MenuItem[] = [
+        {
+            leadingIcon: 'crop-free', title: 'Focus Mode', onPress: () => setFocusedMode(true)
+        }
+    ];
+    if (userPref.editorPreferences.hasChapterNumber) {
+        chapterActions.push({
+            leadingIcon: 'cancel', title: 'Disable Title', onPress: () => {
+                userPref.editorPreferences.hasChapterNumber = false;
+                setUserPref({ ...userPref });
+            }
+        });
+    }
+    if (!userPref.editorPreferences.hasChapterNumber) {
+        chapterActions.push({
+            leadingIcon: 'format-title', title: 'Enable Title', onPress: () => {
+                userPref.editorPreferences.hasChapterNumber = true;
+                setUserPref({ ...userPref });
+            }
+        });
+    }
+    if (props.enableNextPrev) {
+        if (parseInt(props.id) > 1) {
+            chapterActions.push({
+                leadingIcon: 'arrow-left', title: 'Previous Chapter', onPress: () => navigateToNextChapter(props, -1)
+            });
+        }
+        if (parseInt(props.id) < (props.content.latestChapter ?? 0)) {
+            chapterActions.push({
+                leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () => navigateToNextChapter(props)
+            });
+        }
+    }
+    return chapterActions;
+}
