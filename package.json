@@ -11,6 +11,8 @@
     "test": "jest --watchAll",
     "lint": "expo lint",
     "emulator": "emulator -avd Pixel_3a_API_34",
+    "buildAAB": "eas build --platform android --profile production",
+    "buildApk": "eas build --platform android --profile apkPreview",
     "scrcpy": "scrcpy"
   },
   "jest": {
