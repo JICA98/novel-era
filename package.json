@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "emulator": "emulator -avd Pixel_3a_API_34"
+    "emulator": "emulator -avd Pixel_3a_API_34",
+    "scrcpy": "scrcpy"
   },
   "jest": {
     "preset": "jest-expo"

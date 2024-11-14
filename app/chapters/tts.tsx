@@ -35,6 +35,9 @@ export const ttsStore = create((set, get: any) => ({
         index: 0,
     } as TTS,
     setCurrentSentence: (currentSentence: string) => {
+        if (opInProgress) {
+            return;
+        }
         const currentTTS: TTS = get().tts;
         const tts: TTS = { ...currentTTS, currentSentence };
         if (isSpeechOrPause(tts.state)) {
@@ -46,6 +49,9 @@ export const ttsStore = create((set, get: any) => ({
         }
     },
     updateTTSConfig: (ttsConfig: TTSConfig) => {
+        if (opInProgress) {
+            return;
+        }
         const currentTTS: TTS = get().tts;
         const tts: TTS = { ...currentTTS, ttsConfig };
         set({ ...tts });
@@ -62,6 +68,9 @@ export const ttsStore = create((set, get: any) => ({
         }
     },
     setTTS: (tts: TTS) => {
+        if (opInProgress) {
+            return;
+        }
         if (!isSpeechOrPause(tts.state)) {
             updateSentenceTracker(tts);
         }
@@ -74,9 +83,14 @@ function updateSentenceTracker(tts: TTS) {
 }
 
 let interval: NodeJS.Timeout | undefined;
+let opInProgress = false;
 
 export function setTTS({ tts, setTTS }:
     { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
+    if (opInProgress) {
+        return Promise.resolve();
+    }
+    opInProgress = true;
     let promise = Promise.resolve();
     console.log('before setTTS', tts.state, tts.index, tts.currentSentence);
     clearInterval(interval);
@@ -148,7 +162,7 @@ export function setTTS({ tts, setTTS }:
             });
         }
     }
-
+    opInProgress = false;
     return promise;
 }
 
