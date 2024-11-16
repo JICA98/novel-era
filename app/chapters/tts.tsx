@@ -1,8 +1,8 @@
-import { create } from "zustand";
+import {create} from "zustand";
 import * as Speech from 'expo-speech';
 import uuid from 'react-native-uuid';
 import IDOMParser from "advanced-html-parser";
-import { TTSConfig } from "../userpref";
+import {TTSConfig} from "../userpref";
 
 export interface Sentence {
     id: string;
@@ -35,46 +35,41 @@ export const ttsStore = create((set, get: any) => ({
         index: 0,
     } as TTS,
     setCurrentSentence: (currentSentence: string) => {
-        if (opInProgress) {
-            return;
-        }
         const currentTTS: TTS = get().tts;
-        const tts: TTS = { ...currentTTS, currentSentence };
+        const tts: TTS = {...currentTTS, currentSentence};
         if (isSpeechOrPause(tts.state)) {
             tts.state = 'pause';
             tts.currentSentence = currentSentence;
             const _setTTS = get().setTTS;
             updateSentenceTracker(tts);
-            setTTS({ tts: { ...tts }, setTTS: _setTTS }).then(() => { });
+            setTTS({tts: {...tts}, setTTS: _setTTS}).then(() => {
+            });
         }
     },
     updateTTSConfig: (ttsConfig: TTSConfig) => {
-        if (opInProgress) {
-            return;
-        }
         const currentTTS: TTS = get().tts;
-        const tts: TTS = { ...currentTTS, ttsConfig };
-        set({ ...tts });
+        const tts: TTS = {...currentTTS, ttsConfig};
+        set({...tts});
+
         function startSpeaking() {
             tts.state = 'speak';
-            setTTS({ tts, setTTS: get().setTTS });
+            setTTS({tts, setTTS: get().setTTS}).then(_ => {
+            });
         }
+
         if (tts.state === 'speak') {
             tts.state = 'pause';
-            setTTS({ tts, setTTS: get().setTTS })
+            setTTS({tts, setTTS: get().setTTS})
                 .then(startSpeaking);
         } else if (tts.state === 'pause') {
             startSpeaking();
         }
     },
     setTTS: (tts: TTS) => {
-        if (opInProgress) {
-            return;
-        }
         if (!isSpeechOrPause(tts.state)) {
             updateSentenceTracker(tts);
         }
-        set({ tts });
+        set({tts});
     },
 }));
 
@@ -82,18 +77,13 @@ function updateSentenceTracker(tts: TTS) {
     tts.index = tts.ttsQueue ? indexOfSentence(tts.ttsQueue, tts.currentSentence) : 0;
 }
 
-let interval: NodeJS.Timeout | undefined;
-let opInProgress = false;
-
-export function setTTS({ tts, setTTS }:
-    { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
-    if (opInProgress) {
-        return Promise.resolve();
-    }
-    opInProgress = true;
+export function setTTS({tts, setTTS}:
+                       { decreaseIndex?: boolean, tts: TTS, setTTS: (tts: TTS) => void }): Promise<void> {
     let promise = Promise.resolve();
+    let index = 0;
+    const toSpeak = tts.ttsQueue.slice(tts.index);
+
     console.log('before setTTS', tts.state, tts.index, tts.currentSentence);
-    clearInterval(interval);
     switch (tts.state) {
         case 'unknown':
             tts.index = 0;
@@ -103,42 +93,26 @@ export function setTTS({ tts, setTTS }:
             processNextSentence();
             break;
         case 'stop':
-            async function handleStop() {
-                if (await Speech.isSpeakingAsync()) {
-                    Speech.stop().then(() => { });
-                }
-            }
-            handleStop();
+            promise = Speech.stop().then(() => {
+            });
             break;
         case 'pause':
             if (tts.index !== 0) {
                 tts.currentSentence = tts.ttsQueue[tts.index].id;
             }
-            promise = Speech.stop().then(() => { });
+            promise = Speech.stop().then(() => {
+            });
             break;
     }
 
     console.log('after setTTS', tts.state, tts.index, tts.currentSentence);
-    setTTS({ ...tts });
+    setTTS({...tts});
 
     function processNextSentence() {
         console.log('usingConfig', tts.ttsConfig);
-        if (tts.index < tts.ttsQueue.length) {
-            const toSpeak = tts.ttsQueue.slice(tts.index);
-            let index = processSentencesBatch(toSpeak, 0);
-            interval = setInterval(() => {
-                index = processSentencesBatch(toSpeak, index);
-            }, 20_000);
-        } else {
-            tts.state = 'unknown';
-        }
-        setTTS({ ...tts });
-
-        function processSentencesBatch(toSpeak: Sentence[], index: number) {
-            toSpeak.slice(index, index + 20).forEach(e => performSpeech(e));
-            index += 20;
-            return index;
-        }
+        let sentences = toSpeak.slice(index, index + 3);
+        sentences.forEach(e => performSpeech(e));
+        index += sentences.length;
     }
 
     function performSpeech(child?: Sentence) {
@@ -147,12 +121,15 @@ export function setTTS({ tts, setTTS }:
             Speech.speak(child.text, {
                 onStart: () => {
                     if (tts.state === 'speak') {
-                        tts.currentSentence = child.id; setTTS({ ...tts });
+                        tts.currentSentence = child.id;
+                        setTTS({...tts});
                     }
                 },
                 onDone: () => {
                     if (tts.state === 'speak') {
-                        tts.index++; setTTS({ ...tts });
+                        tts.index++;
+                        setTTS({...tts});
+                        processNextSentence();
                     }
                 },
                 pitch: _ttsConfig?.pitch,
@@ -162,7 +139,7 @@ export function setTTS({ tts, setTTS }:
             });
         }
     }
-    opInProgress = false;
+
     return promise;
 }
 
@@ -202,7 +179,7 @@ const validTags = [
 ];
 
 export function htmlToIdSentences(html: string) {
-    const dom = IDOMParser.parse(`<html>
+    const dom = IDOMParser.parse(`<html lang="en">
     <body>
         ${html}
     </body>
@@ -223,7 +200,7 @@ export function htmlToIdSentences(html: string) {
                         children
                     };
                     const html = buildHtmlFromSentence(parent);
-                    sentences.push({ ...parent, html });
+                    sentences.push({...parent, html});
                 }
             }
         } else if (node?.childNodes) {
@@ -235,7 +212,7 @@ export function htmlToIdSentences(html: string) {
 
     traverse(dom);
     const joinedHtml = joinSentencesIntoHtml(sentences);
-    return { sentences, html: joinedHtml };
+    return {sentences, html: joinedHtml};
 }
 
 function joinSentencesIntoHtml(sentences: Sentence[]): string {
@@ -261,7 +238,7 @@ export function buildHtmlFromSentence(sentence: Sentence) {
 function createSentenceFromNode(text: string, parentTag = 'a'): Sentence {
     const id = uuid.v4() as string;
     const html = `<${parentTag} id="${id}" href="${id}" >${text}</${parentTag}>`;
-    return { id, text, html };
+    return {id, text, html};
 }
 
 export function toQueue(sentences: Sentence[]): Sentence[] {
