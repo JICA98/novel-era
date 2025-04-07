@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "com.jica98.novelera",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -46,4 +46,5 @@
       "url": "https://u.expo.dev/2a08ae4e-e0a0-496e-96ad-c0b3578a4537"
     }
   }
+  
 }

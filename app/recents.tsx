@@ -1,5 +1,5 @@
 import { RefreshControl, SafeAreaView, ScrollView, View, Image, Text, FlatList, ImageBackground } from "react-native";
-import { IconButton, List, SegmentedButtons, Title, useTheme } from "react-native-paper";
+import { FAB, IconButton, List, SegmentedButtons, Title, useTheme } from "react-native-paper";
 import { ChapterTracker, getAllTrackersAsync, saveTracker } from "./favorites/tracker";
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChapterCard } from "./contents/chapterCard";
@@ -125,6 +125,14 @@ export default function Recents() {
                     </View>
                 }
             />
+            
+            {(trackers?.length) && <FAB
+                icon="delete"
+                visible={filter === FilterOption.ALL}
+                style={{ position: 'absolute', bottom: 16, right: 16 }}
+                onPress={() => setShowDelete(true)}
+                label="Delete All"
+            />}
         </SafeAreaView>
     );
 
@@ -144,12 +152,6 @@ export default function Recents() {
                 icon: 'book-open-page-variant',
             },
         ];
-        if (trackers?.length) {
-            actions.push({
-                value: FilterOption.DELETE, label: 'Delete',
-                icon: 'delete-sweep'
-            },);
-        }
         return <SegmentedButtons
             value={filter || ''}
             onValueChange={(option) => {

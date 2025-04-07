@@ -9,10 +9,25 @@ import { useColorScheme } from "react-native";
 import { getTheme } from "./settings/themeSettings";
 import { userPrefStore, getUserPreference } from "./userpref";
 import { setUpVoices, voicesStore } from "./chapters/ttscontrols";
+import * as Linking from "expo-linking";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
 }
+
+
+const createSessionFromUrl = async (url: string) => {
+  const { params, errorCode } = QueryParams.getQueryParams(url);
+  if (errorCode) throw new Error(errorCode);
+  const { access_token, refresh_token } = params;
+  if (!access_token) return;
+  const { data, error } = await supabase.auth.setSession({
+    access_token,
+    refresh_token,
+  });
+  if (error) throw error;
+  return data.session;
+};
 
 export default function RootLayout() {
   const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
@@ -26,6 +41,9 @@ export default function RootLayout() {
   const userPref = userPrefStore((state: any) => state.userPref);
   const setUserPref = userPrefStore((state: any) => state.setUserPref);
   const setVoices = voicesStore((state: any) => state.setContent);
+  // Handle linking into app from email app.
+  const url = Linking.useURL();
+  if (url) createSessionFromUrl(url);
 
   useEffect(() => {
     try {
