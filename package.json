@@ -70,7 +70,9 @@
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.19.13",
     "timeago.js": "^4.0.0-beta.3",
-    "zustand": "^5.0.0-rc.2"
+    "zustand": "^5.0.0-rc.2",
+    "expo-auth-session": "~6.0.3",
+    "expo-device": "~7.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
