@@ -22,12 +22,7 @@ export interface CloudBackupSnapshot {
   updated_at: string;
 }
 
-const resolvedDatabaseUrl =
-  process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL ??
-  app.options.databaseURL ??
-  (app.options.projectId ? `https://${app.options.projectId}-default-rtdb.firebaseio.com` : undefined);
-
-const realtimeDb = resolvedDatabaseUrl ? getDatabase(app, resolvedDatabaseUrl) : getDatabase(app);
+const realtimeDb = getDatabase(app);
 const USER_COLLECTION = 'users';
 const DATA_VERSION = '1.0';
 

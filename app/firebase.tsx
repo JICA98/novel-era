@@ -19,6 +19,9 @@ const firebaseConfig = {
   messagingSenderId: "592249265367",
   appId: "1:592249265367:web:3a4c784a3fda6650822492",
   measurementId: "G-KXWS9BTQ9K",
+  databaseURL:
+    process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL ??
+    "https://novel-era-default-rtdb.firebaseio.com",
 };
 
 const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
