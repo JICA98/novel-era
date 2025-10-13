@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import { backupPreferences, restorePreferences } from '../lib/supabase'
 import { Button, List, TextInput, Title, useTheme } from 'react-native-paper'
-import { ChapterTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore, NovelTracker } from '../favorites/tracker'
+import { chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import PaperDialog from '../components/dialog'
 import {

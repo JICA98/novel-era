@@ -5,6 +5,11 @@ import { Analytics, getAnalytics } from "firebase/analytics";
 import { Auth, getAuth, initializeAuth } from "firebase/auth";
 import type { Persistence } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
+import {
+  // @ts-ignore 
+  getReactNativePersistence
+} from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDqug99SsA5fdOlUi6sfNdwkUGU6rCoZos",
@@ -23,11 +28,8 @@ if (Platform.OS === "web") {
   auth = getAuth(app);
 } else {
   try {
-    const { getReactNativePersistence } = require("firebase/auth/react-native") as {
-      getReactNativePersistence: (storage: typeof AsyncStorage) => Persistence;
-    };
     auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage),
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage)
     });
   } catch (error) {
     // initializeAuth throws if auth was already initialized; fall back to getAuth in that case.
