@@ -9,9 +9,8 @@ import { useColorScheme } from "react-native";
 import { getTheme } from "./settings/themeSettings";
 import { userPrefStore, getUserPreference } from "./userpref";
 import { setUpVoices, voicesStore } from "./chapters/ttscontrols";
-import { AuthState, authStateStore, AuthUser, setUpAuthUser } from "./settings/accountSettings";
-import { setUpSupabaseUser, supabase, supabaseStore } from "./lib/supabase";
-import { AuthChangeEvent } from "@supabase/supabase-js";
+import { authStateStore, setUpAuthUser } from "./lib/auth";
+import { setUpSupabaseUser, supabaseStore } from "./lib/supabase";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);

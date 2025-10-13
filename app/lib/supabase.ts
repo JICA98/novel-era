@@ -5,7 +5,7 @@ import { Database } from '@/types/database.types';
 import { createStore } from '../downloads/utils';
 import { UserPreferences } from '../userpref';
 import { ChapterTracker, NovelTracker } from '../favorites/tracker';
-import { AuthState, AuthUser } from '../settings/accountSettings';
+import { AuthState, AuthUser } from '../lib/auth';
 import * as Device from 'expo-device';
 import { Alert } from 'react-native';
 import { Json } from '@/database.types';

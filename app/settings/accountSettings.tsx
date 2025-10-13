@@ -1,59 +1,19 @@
 import React, { useState } from 'react'
-import { Alert, StyleSheet, View, AppState } from 'react-native'
-import { supabase, backupPreferences, restorePreferences } from '../lib/supabase'
+import { Alert, StyleSheet, View } from 'react-native'
+import { backupPreferences, restorePreferences } from '../lib/supabase'
 import { Button, List, TextInput, Title, useTheme } from 'react-native-paper'
-import { createStore } from '../downloads/utils'
-import { AuthChangeEvent } from '@supabase/supabase-js'
 import { ChapterTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore, NovelTracker } from '../favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import PaperDialog from '../components/dialog'
-
-export enum AuthState {
-    SIGNED_IN,
-    SIGNED_OUT
-}
-
-export interface AuthUser {
-    authId?: string
-    email: string
-    state: AuthState
-}
-
-// Tells Supabase Auth to continuously refresh the session automatically if
-// the app is in the foreground. When this is added, you will continue to receive
-// `onAuthStateChange` events with the `TOKEN_REFRESHED` or `SIGNED_OUT` event
-// if the user's session is terminated. This should only be registered once.
-AppState.addEventListener('change', (state) => {
-    if (state === 'active') {
-        supabase.auth.startAutoRefresh()
-    } else {
-        supabase.auth.stopAutoRefresh()
-    }
-})
-
-export async function setUpAuthUser(setAuthState: any) {
-    let alreadyResolved = false;
-    return new Promise<AuthUser>((resolve) => {
-        supabase.auth.onAuthStateChange((event: AuthChangeEvent, session) => {
-            console.log('event', event)
-            const user = session?.user;
-            let authUser: AuthUser;
-            if (user?.email) {
-                console.log('session', user)
-                authUser = { authId: user.id, email: user?.email, state: AuthState.SIGNED_IN };
-            } else {
-                authUser = { email: '', state: AuthState.SIGNED_OUT }
-            }
-            if (!alreadyResolved) {
-                resolve(authUser);
-            }
-            alreadyResolved = true;
-            setAuthState(authUser);
-        })
-    });
-}
-
-export const authStateStore = createStore({ email: '', state: AuthState.SIGNED_OUT } as AuthUser)
+import {
+    AuthState,
+    AuthUser,
+    authStateStore,
+    signInWithEmail,
+    signInWithGoogle,
+    signOutUser,
+    signUpWithEmail,
+} from '../lib/auth'
 
 
 export default function Auth({ setSnackbarText }: { setSnackbarText: (text: string) => void }) {
@@ -74,8 +34,6 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
     const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
 
-    console.log
-
     function prevalidation(): boolean {
         if (!email || !password) {
             setSnackbarText('Please enter your email and password')
@@ -93,34 +51,42 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
         return true;
     }
 
-    async function signInWithEmail() {
+    async function handleEmailSignIn() {
         if (!prevalidation()) return;
         setLoading(true);
-        const { error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        })
-
-        if (error) setSnackbarText(error.message);
-        setLoading(false)
+        try {
+            await signInWithEmail(email, password);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unable to sign in';
+            setSnackbarText(message);
+        } finally {
+            setLoading(false);
+        }
     }
 
-    async function signUpWithEmail() {
+    async function handleEmailSignUp() {
         if (!prevalidation()) return;
         setLoading(true);
-        const {
-            data: { session },
-            error,
-        } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-        })
+        try {
+            await signUpWithEmail(email, password);
+            Alert.alert('Account created', 'Please verify your email before signing in.');
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unable to create account';
+            setSnackbarText(message);
+        } finally {
+            setLoading(false);
+        }
+    }
 
-        setLoading(false)
-        if (error) {
-            setSnackbarText(error.message);
-        } else {
-            if (!session) Alert.alert('Please check your inbox for email verification!')
+    async function handleGoogleSignIn() {
+        setLoading(true);
+        try {
+            await signInWithGoogle();
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unable to sign in with Google';
+            setSnackbarText(message);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -152,14 +118,19 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     <Button
                         mode="contained"
                         loading={loading}
-                        onPress={() => signInWithEmail()}
+                        onPress={() => handleEmailSignIn()}
                     >
                         Sign in
                     </Button>
                 </View>
                 <View style={styles.verticallySpaced}>
-                    <Button mode="contained" disabled={loading} onPress={() => signUpWithEmail()} >
+                    <Button mode="contained" disabled={loading} onPress={() => handleEmailSignUp()} >
                         Sign up
+                    </Button>
+                </View>
+                <View style={styles.verticallySpaced}>
+                    <Button mode="outlined" disabled={loading} onPress={() => handleGoogleSignIn()}>
+                        Sign in with Google
                     </Button>
                 </View>
             </View>
@@ -216,11 +187,12 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
             {showSignOut && <PaperDialog title={'Sign out'}
                 description='This will sign you out of your account, continue?' setVisible={setSignOut}
                 done={async () => {
-                    const { error } = await supabase.auth.signOut();
-                    if (error) {
-                        setSnackbarText(error.message);
-                    } else {
+                    try {
+                        await signOutUser();
                         setSnackbarText('Signed out successfully');
+                    } catch (error: unknown) {
+                        const message = error instanceof Error ? error.message : 'Unable to sign out';
+                        setSnackbarText(message);
                     }
                 }}
             />}
