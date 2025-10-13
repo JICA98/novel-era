@@ -91,7 +91,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     }
 
     function signInSignUpPage() {
-        return (<>
+        return (
             <View style={styles.container}>
                 <View style={[styles.verticallySpaced, styles.mt20]}>
                     <TextInput
@@ -134,11 +134,11 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     </Button>
                 </View>
             </View>
-        </>);
+        );
     }
 
     function accountInfoPage() {
-        return (<>
+        return (
             <View style={styles.container}>
                 <View style={[styles.verticallySpaced]}>
                     <Title style={{ color: colors.primary }}>Signed in with</Title>
@@ -179,7 +179,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     </View>
                 </View>
             </View>
-        </>);
+        );
     }
 
     return (
