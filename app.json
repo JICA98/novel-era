@@ -47,9 +47,9 @@
       "eas": {
         "projectId": "2a08ae4e-e0a0-496e-96ad-c0b3578a4537"
       },
-      "googleWebClientId": "YOUR_WEB_CLIENT_ID",
+      "googleWebClientId": "592249265367-c4q262q4h84pvqco9q7rv6bkhec6an3g.apps.googleusercontent.com",
       "googleIosClientId": "YOUR_IOS_CLIENT_ID",
-      "googleAndroidClientId": "YOUR_ANDROID_CLIENT_ID"
+      "googleAndroidClientId": "592249265367-c4q262q4h84pvqco9q7rv6bkhec6an3g.apps.googleusercontent.com"
     },
     "runtimeVersion": {
       "policy": "appVersion"
