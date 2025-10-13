@@ -201,12 +201,18 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                 done={async () => {
                     const chapterPreferences = await getAllTrackersAsync();
                     const favPreferences = await getFavoriteTrackersAsync();
-                    backupPreferences({
+                    const result = await backupPreferences({
                         userId: authUser.authId ?? '',
                         userPref,
                         chapterPreferences,
                         favPreferences,
-                    })
+                    });
+
+                    if (result?.error) {
+                        setSnackbarText('Failed to back up preferences');
+                    } else {
+                        setSnackbarText('Preferences backed up successfully');
+                    }
                 }}
             />}
             {showRestore && <PaperDialog title={'Restore Preferences'}
@@ -214,7 +220,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                 done={async () => {
                     const chapterPreferences = await getAllTrackersAsync();
                     const favPreferences = await getFavoriteTrackersAsync();
-                    restorePreferences({
+                    const result = await restorePreferences({
                         userId: authUser.authId ?? '',
                         userPref,
                         chapterPreferences,
@@ -222,7 +228,15 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         setUserPref,
                         setAllTrackers,
                         setAllNovelTracker,
-                    })
+                    });
+
+                    if (result?.restored) {
+                        setSnackbarText('Preferences restored from backup');
+                    } else if (result?.missing) {
+                        setSnackbarText('No backup found for this account');
+                    } else if (result?.error) {
+                        setSnackbarText('Failed to restore preferences');
+                    }
                 }}
             />}
 

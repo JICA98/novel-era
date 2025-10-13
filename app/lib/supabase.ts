@@ -73,7 +73,10 @@ export async function backupPreferences({
   userPref?: UserPreferences;
   chapterPreferences?: Record<string, ChapterTracker>;
   favPreferences?: Record<string, NovelTracker>;
-}) {
+}): Promise<
+  | { data: CloudBackupSnapshot; error?: undefined }
+  | { data?: undefined; error: unknown }
+> {
   if (!userId) {
     const error = new Error('Missing user identifier for backup.');
     console.error(error.message);
@@ -184,10 +187,14 @@ export async function restorePreferences({
   setUserPref: any;
   setAllTrackers: any;
   setAllNovelTracker: any;
-}) {
+}): Promise<
+  | { restored: true; missing?: false }
+  | { restored: false; missing?: true; error?: undefined }
+  | { restored: false; error: unknown; missing?: false }
+> {
   if (!userId) {
     Alert.alert('Error', 'Missing user identifier. Sign in and try again.');
-    return;
+    return { restored: false, error: new Error('Missing user identifier') };
   }
 
   try {
@@ -195,7 +202,7 @@ export async function restorePreferences({
 
     if (!snapshot.exists()) {
       Alert.alert('Info', 'No backup found for this account.');
-      return;
+      return { restored: false, missing: true };
     }
 
     const data = snapshot.val() as CloudBackupSnapshot;
@@ -215,9 +222,11 @@ export async function restorePreferences({
     if (novelPref?.value) {
       setAllNovelTracker(novelPref.value);
     }
+    return { restored: true };
   } catch (error) {
     console.error('Error fetching user data:', error);
     Alert.alert('Error', 'Failed to fetch user data from the cloud.');
+    return { restored: false, error };
   }
 }
 
