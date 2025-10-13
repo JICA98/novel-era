@@ -55,7 +55,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="repos" options={{ headerShown: false }} />
         <Stack.Screen name="contents" options={{ headerShown: false }} />
-        <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
       </Stack>
     </PaperProvider>)
   );

@@ -12,7 +12,8 @@
     "apkPreview": {
       "android": {
         "buildType": "apk"
-      }
+      },
+      "channel": "apkpreview"
     },
     "preview": {
       "distribution": "internal",
