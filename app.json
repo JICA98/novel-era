@@ -32,7 +32,13 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.YOUR_IOS_CLIENT_ID"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -40,7 +46,10 @@
     "extra": {
       "eas": {
         "projectId": "2a08ae4e-e0a0-496e-96ad-c0b3578a4537"
-      }
+      },
+      "googleWebClientId": "YOUR_WEB_CLIENT_ID",
+      "googleIosClientId": "YOUR_IOS_CLIENT_ID",
+      "googleAndroidClientId": "YOUR_ANDROID_CLIENT_ID"
     },
     "runtimeVersion": {
       "policy": "appVersion"

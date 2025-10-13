@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { createStore } from "../downloads/utils";
 import { auth } from "../firebase";
 import {
@@ -7,11 +8,27 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendEmailVerification,
+  signInWithCredential,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
+
+type GoogleSigninModule = typeof import("@react-native-google-signin/google-signin");
+
+let GoogleSigninNative: GoogleSigninModule["GoogleSignin"] | undefined;
+let googleStatusCodes: GoogleSigninModule["statusCodes"] | undefined;
+
+if (Platform.OS !== "web") {
+  try {
+    const googleSignInModule: GoogleSigninModule = require("@react-native-google-signin/google-signin");
+    GoogleSigninNative = googleSignInModule.GoogleSignin;
+    googleStatusCodes = googleSignInModule.statusCodes;
+  } catch (nativeImportError) {
+    console.warn("Failed to load native Google Sign-In module", nativeImportError);
+  }
+}
 
 export enum AuthState {
   SIGNED_IN,
@@ -26,6 +43,14 @@ export interface AuthUser {
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+interface GoogleExtraConfig {
+  googleWebClientId?: string;
+  googleIosClientId?: string;
+}
+
+const googleExtraConfig = (Constants.expoConfig?.extra ?? {}) as GoogleExtraConfig;
+let googleNativeConfigured = false;
 
 export const authStateStore = createStore({
   email: "",
@@ -92,19 +117,40 @@ export async function signUpWithEmail(email: string, password: string): Promise<
 export async function signInWithGoogle(): Promise<void> {
   try {
     if (Platform.OS !== "web") {
-      throw new Error(
-        "Google sign-in for native platforms is not configured yet. Please add native Google Sign-In support."
-      );
+      ensureNativeGoogleConfigured();
+      if (!GoogleSigninNative) {
+        throw new Error("Google Sign-In native module is unavailable.");
+      }
+
+      if (Platform.OS === "android") {
+        await GoogleSigninNative.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      }
+      const { idToken } = await GoogleSigninNative.signIn();
+      if (!idToken) {
+        throw new Error("Google sign-in did not return an ID token.");
+      }
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      return;
     }
 
     await signInWithPopup(auth, googleProvider);
   } catch (error) {
-    throw new Error(extractFirebaseMessage(error, "Google sign-in failed."));
+    const message =
+      resolveGoogleNativeError(error) ?? extractFirebaseMessage(error, "Google sign-in failed.");
+    throw new Error(message);
   }
 }
 
 export async function signOutUser(): Promise<void> {
   try {
+    if (Platform.OS !== "web" && googleNativeConfigured && GoogleSigninNative) {
+      try {
+        await GoogleSigninNative.signOut();
+      } catch (nativeSignOutError) {
+        console.warn("Failed to sign out from Google natively", nativeSignOutError);
+      }
+    }
     await signOut(auth);
   } catch (error) {
     throw new Error(extractFirebaseMessage(error, "Unable to sign out."));
@@ -144,3 +190,54 @@ const firebaseErrorCodeMap: Record<string, string> = {
   "auth/popup-closed-by-user": "Google sign-in was cancelled before completion.",
   "auth/cancelled-popup-request": "Cancelled Google sign-in request.",
 };
+
+function ensureNativeGoogleConfigured(): void {
+  if (Platform.OS === "web" || googleNativeConfigured) {
+    return;
+  }
+
+  if (!GoogleSigninNative) {
+    throw new Error("Google Sign-In native module is unavailable.");
+  }
+
+  const webClientId = googleExtraConfig.googleWebClientId;
+  if (!webClientId) {
+    throw new Error(
+      "Missing googleWebClientId in Expo config. Update app.json extra.googleWebClientId with your Web Client ID."
+    );
+  }
+
+  GoogleSigninNative.configure({
+    webClientId,
+    iosClientId: googleExtraConfig.googleIosClientId,
+    offlineAccess: false,
+  });
+
+  googleNativeConfigured = true;
+}
+
+function resolveGoogleNativeError(error: unknown): string | undefined {
+  if (!error || Platform.OS === "web") {
+    return undefined;
+  }
+
+  if (typeof error === "object" && "code" in error) {
+    const code = (error as { code?: string }).code;
+    if (typeof code === "string" && googleStatusCodes) {
+      if (code === googleStatusCodes.SIGN_IN_CANCELLED || code === String(googleStatusCodes.SIGN_IN_CANCELLED)) {
+        return "Google sign-in was cancelled.";
+      }
+      if (code === googleStatusCodes.IN_PROGRESS || code === String(googleStatusCodes.IN_PROGRESS)) {
+        return "Another Google sign-in request is already in progress.";
+      }
+      if (
+        code === googleStatusCodes.PLAY_SERVICES_NOT_AVAILABLE ||
+        code === String(googleStatusCodes.PLAY_SERVICES_NOT_AVAILABLE)
+      ) {
+        return "Google Play Services is unavailable or needs to be updated.";
+      }
+    }
+  }
+
+  return undefined;
+}
