@@ -32,6 +32,8 @@ export default function RootLayout() {
   const setSupabaseUser = supabaseStore((state: any) => state.setContent);
 
   useEffect(() => {
+    let unsubscribeFromBackup: (() => void) | undefined;
+
     try {
       async function fetchUserPreferences() {
         const preferences = await getUserPreference();
@@ -42,10 +44,21 @@ export default function RootLayout() {
       setupTrackingStores(allTrackers, setAllTrackers);
       setupFavoriteStores(allNovelTrackerStore, setAllNovelTracker);
       setUpVoices(setVoices);
-      setUpAuthUser(setAuthState).then((authUser) => setUpSupabaseUser(setSupabaseUser, authUser));
+      setUpAuthUser(setAuthState).then((authUser) => {
+        const teardown = setUpSupabaseUser(setSupabaseUser, authUser);
+        if (typeof teardown === 'function') {
+          unsubscribeFromBackup = teardown;
+        }
+      });
     } catch (error) {
       console.error(error);
     }
+
+    return () => {
+      if (unsubscribeFromBackup) {
+        unsubscribeFromBackup();
+      }
+    };
   }, []);
   console.log(userPref);
   return (

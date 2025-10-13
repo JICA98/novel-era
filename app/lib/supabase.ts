@@ -1,108 +1,124 @@
-import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/database.types';
+import { Alert } from 'react-native';
+import * as Device from 'expo-device';
+import { getDatabase, onValue, ref, get, set } from 'firebase/database';
 import { createStore } from '../downloads/utils';
 import { UserPreferences } from '../userpref';
 import { ChapterTracker, NovelTracker } from '../favorites/tracker';
 import { AuthState, AuthUser } from '../lib/auth';
-import * as Device from 'expo-device';
-import { Alert } from 'react-native';
-import { Json } from '@/database.types';
-const supabaseUrl = "https://fbclavuffwejpuqazgwq.supabase.co";
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZiY2xhdnVmZndlanB1cWF6Z3dxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwNDA3NjYsImV4cCI6MjA1OTYxNjc2Nn0.vcrkKXQQDeBTjzgYZ4IRDR9M2vpOrghMLmaw5W7JSk4";
+import { app } from '../firebase';
 
-export interface SupabaseUser {
-  authId: string;
-  userPreference?: { version: string; deviceId: string; value: UserPreferences };
-  favPreferences?: { version: string; deviceId: string; value: Record<string, NovelTracker> };
-  chapterPreferences?: { version: string; deviceId: string; value: Record<string, ChapterTracker> };
-  createdAt: string;
-  updatedAt: string;
+type VersionedPayload<T> = {
+  version: string;
+  deviceId: string;
+  value: T;
+};
+
+export interface CloudBackupSnapshot {
+  auth_id: string;
+  user_pref?: VersionedPayload<UserPreferences>;
+  tracker?: VersionedPayload<Record<string, ChapterTracker>>;
+  fav_pref?: VersionedPayload<Record<string, NovelTracker>>;
+  created_at?: string;
+  updated_at: string;
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+const resolvedDatabaseUrl =
+  process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL ??
+  app.options.databaseURL ??
+  (app.options.projectId ? `https://${app.options.projectId}-default-rtdb.firebaseio.com` : undefined);
 
-export const supabaseStore = createStore(undefined as SupabaseUser | undefined);
+const realtimeDb = resolvedDatabaseUrl ? getDatabase(app, resolvedDatabaseUrl) : getDatabase(app);
+const USER_COLLECTION = 'users';
+const DATA_VERSION = '1.0';
 
+export const supabaseStore = createStore(undefined as CloudBackupSnapshot | undefined);
 
-export async function setUpSupabaseUser(setSupabaseUser: any, authUser: AuthUser) {
-  console.log('supabase auth user', authUser);
-  if (authUser?.state !== AuthState.SIGNED_IN || authUser.authId === undefined) {
-    return;
+export function setUpSupabaseUser(
+  setSupabaseUser: any,
+  authUser: AuthUser
+): (() => void) | undefined {
+  if (authUser?.state !== AuthState.SIGNED_IN || !authUser.authId) {
+    return undefined;
   }
-  try {
 
-    const channels = supabase.channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'user', filter: `auth_id=eq.${authUser.authId}` },
-        (payload) => {
-          console.log('Change received!', payload)
+  try {
+    const userRef = ref(realtimeDb, `${USER_COLLECTION}/${authUser.authId}`);
+    setSupabaseUser({ isLoading: true });
+
+    return onValue(
+      userRef,
+      (snapshot) => {
+        if (!snapshot.exists()) {
+          setSupabaseUser({ data: undefined, isLoading: false });
+          return;
         }
-      )
-      .subscribe()
+
+        const value = snapshot.val() as CloudBackupSnapshot;
+        setSupabaseUser({ data: value, isLoading: false });
+      },
+      (error) => {
+        console.warn('Failed to subscribe to backup data', error);
+        setSupabaseUser({ error, isLoading: false });
+      }
+    );
+  } catch (error) {
+    console.info('Error subscribing to user data:', error);
   }
-  catch (error) {
-    console.info('Error fetching user data:', error);
-  }
+
+  return undefined;
 }
 
-export async function backupPreferences(
-  { userId, userPref, chapterPreferences, favPreferences }:
-    {
-      userId: string,
-      userPref?: UserPreferences,
-      chapterPreferences?: Record<string, ChapterTracker>,
-      favPreferences?: Record<string, NovelTracker>
-    }
-) {
-  try {
-    const deviceId = Device.modelName;
-    const version = '1.0';
-    console.log('deviceId', deviceId);
-    console.log('userId', userId);
-    console.log('userPref', userPref);
-    console.log('chapterPreferences', chapterPreferences);
-    console.log('favPreferences', favPreferences);
+export async function backupPreferences({
+  userId,
+  userPref,
+  chapterPreferences,
+  favPreferences,
+}: {
+  userId: string;
+  userPref?: UserPreferences;
+  chapterPreferences?: Record<string, ChapterTracker>;
+  favPreferences?: Record<string, NovelTracker>;
+}) {
+  if (!userId) {
+    const error = new Error('Missing user identifier for backup.');
+    console.error(error.message);
+    return { error };
+  }
 
-    const toBeSaved = {
+  try {
+    const deviceId = Device.modelName ?? 'unknown';
+    const now = new Date().toISOString();
+    const userRef = ref(realtimeDb, `${USER_COLLECTION}/${userId}`);
+
+    const existingSnapshot = await get(userRef);
+    const createdAt = existingSnapshot.exists()
+      ? (existingSnapshot.val()?.created_at as string | undefined)
+      : now;
+
+    const payload: CloudBackupSnapshot = {
       auth_id: userId,
-      updated_at: new Date().toISOString(),
+      created_at: createdAt,
+      updated_at: now,
       user_pref: {
-        version,
+        version: DATA_VERSION,
         deviceId,
         value: JSON.parse(JSON.stringify(userPref ?? {})),
       },
       tracker: {
-        version,
-        deviceId: 'deviceId',
+        version: DATA_VERSION,
+        deviceId,
         value: JSON.parse(JSON.stringify(compressChapterPref(chapterPreferences) ?? {})),
       },
       fav_pref: {
-        version,
+        version: DATA_VERSION,
         deviceId,
         value: JSON.parse(JSON.stringify(compressNovelPref(favPreferences) ?? {})),
-      }
+      },
     };
-    const { data, error } = await supabase.from('user').upsert(toBeSaved, {
-      onConflict: 'auth_id',
-    }).eq('auth_id', userId).select();
-    console.log('data', data);
-    console.log('error', error);
-    if (error) {
-      return { error };
-    } else if (data.length === 0) {
-      console.warn('Error', 'No data returned from the server.');
-    }
-    return { data };
+
+    await set(userRef, payload);
+
+    return { data: payload };
   } catch (error) {
     console.error('Error updating preferences:', error);
     return { error };
@@ -161,45 +177,63 @@ function compressNovelPref(novelPref?: Record<string, NovelTracker>) {
 
 
 export async function restorePreferences({
-  userId, userPref, chapterPreferences, favPreferences,
-  setUserPref, setAllTrackers, setAllNovelTracker
+  userId,
+  setUserPref,
+  setAllTrackers,
+  setAllNovelTracker,
 }: {
   userId: string;
-  userPref: UserPreferences; chapterPreferences: Record<string, ChapterTracker>;
-  favPreferences: Record<string, NovelTracker>; setUserPref: any; setAllTrackers: any;
-  setAllNovelTracker: any
+  userPref: UserPreferences;
+  chapterPreferences: Record<string, ChapterTracker>;
+  favPreferences: Record<string, NovelTracker>;
+  setUserPref: any;
+  setAllTrackers: any;
+  setAllNovelTracker: any;
 }) {
-  await supabase.from('user').select('*').eq('auth_id', userId).limit(1).single().then(({ data, error }) => {
-    if (error) {
-      console.error('Error fetching user data:', error);
-      Alert.alert('Error', 'Failed to fetch user data from Supabase.');
+  if (!userId) {
+    Alert.alert('Error', 'Missing user identifier. Sign in and try again.');
+    return;
+  }
+
+  try {
+    const snapshot = await get(ref(realtimeDb, `${USER_COLLECTION}/${userId}`));
+
+    if (!snapshot.exists()) {
+      Alert.alert('Info', 'No backup found for this account.');
       return;
     }
-    if (!data) {
-      console.warn('No data found for user:', userId);
-      return;
-    }
+
+    const data = snapshot.val() as CloudBackupSnapshot;
     const { user_pref, tracker, fav_pref } = data;
-    let pref = parseVersionJson(user_pref);
+
+    const pref = parseVersionedPayload(user_pref);
     if (pref?.value) {
       setUserPref(pref.value);
     }
-    let chapterPref = parseVersionJson(tracker);
+
+    const chapterPref = parseVersionedPayload(tracker);
     if (chapterPref?.value) {
       setAllTrackers(chapterPref.value);
     }
-    let novelPref = parseVersionJson(fav_pref);
+
+    const novelPref = parseVersionedPayload(fav_pref);
     if (novelPref?.value) {
       setAllNovelTracker(novelPref.value);
     }
-  });
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    Alert.alert('Error', 'Failed to fetch user data from the cloud.');
+  }
 }
 
-function parseVersionJson(json?: Json) {
-  if (!json) {
+function parseVersionedPayload<T>(payload?: VersionedPayload<T> | null) {
+  if (!payload) {
     return null;
   }
-  const stringJson = JSON.stringify(json);
-  const parsed = JSON.parse(stringJson);
-  return { version: parsed.version, deviceId: parsed.deviceId, value: parsed.value };
+
+  return {
+    version: payload.version,
+    deviceId: payload.deviceId,
+    value: payload.value,
+  };
 }
