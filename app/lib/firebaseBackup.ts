@@ -26,10 +26,10 @@ const realtimeDb = getDatabase(app);
 const USER_COLLECTION = 'users';
 const DATA_VERSION = '1.0';
 
-export const supabaseStore = createStore(undefined as CloudBackupSnapshot | undefined);
+export const firebaseStore = createStore(undefined as CloudBackupSnapshot | undefined);
 
-export function setUpSupabaseUser(
-  setSupabaseUser: any,
+export function setUpFirebaseUser(
+  setFirebaseUser: any,
   authUser: AuthUser
 ): (() => void) | undefined {
   if (authUser?.state !== AuthState.SIGNED_IN || !authUser.authId) {
@@ -38,22 +38,22 @@ export function setUpSupabaseUser(
 
   try {
     const userRef = ref(realtimeDb, `${USER_COLLECTION}/${authUser.authId}`);
-    setSupabaseUser({ isLoading: true });
+    setFirebaseUser({ isLoading: true });
 
     return onValue(
       userRef,
       (snapshot) => {
         if (!snapshot.exists()) {
-          setSupabaseUser({ data: undefined, isLoading: false });
+          setFirebaseUser({ data: undefined, isLoading: false });
           return;
         }
 
         const value = snapshot.val() as CloudBackupSnapshot;
-        setSupabaseUser({ data: value, isLoading: false });
+        setFirebaseUser({ data: value, isLoading: false });
       },
       (error) => {
         console.warn('Failed to subscribe to backup data', error);
-        setSupabaseUser({ error, isLoading: false });
+        setFirebaseUser({ error, isLoading: false });
       }
     );
   } catch (error) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
-import { backupPreferences, restorePreferences } from '../lib/supabase'
+import { backupPreferences, restorePreferences } from '../lib/firebaseBackup'
 import { Button, List, TextInput, Title, useTheme } from 'react-native-paper'
 import { chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'

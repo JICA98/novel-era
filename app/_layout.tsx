@@ -10,7 +10,7 @@ import { getTheme } from "./settings/themeSettings";
 import { userPrefStore, getUserPreference } from "./userpref";
 import { setUpVoices, voicesStore } from "./chapters/ttscontrols";
 import { authStateStore, setUpAuthUser } from "./lib/auth";
-import { setUpSupabaseUser, supabaseStore } from "./lib/supabase";
+import { setUpFirebaseUser, firebaseStore } from "./lib/firebaseBackup";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
@@ -29,7 +29,7 @@ export default function RootLayout() {
   const setUserPref = userPrefStore((state: any) => state.setUserPref);
   const setVoices = voicesStore((state: any) => state.setContent);
   const setAuthState = authStateStore((state: any) => state.setContent);
-  const setSupabaseUser = supabaseStore((state: any) => state.setContent);
+  const setFirebaseUser = firebaseStore((state: any) => state.setContent);
 
   useEffect(() => {
     let unsubscribeFromBackup: (() => void) | undefined;
@@ -45,7 +45,7 @@ export default function RootLayout() {
       setupFavoriteStores(allNovelTrackerStore, setAllNovelTracker);
       setUpVoices(setVoices);
       setUpAuthUser(setAuthState).then((authUser) => {
-        const teardown = setUpSupabaseUser(setSupabaseUser, authUser);
+        const teardown = setUpFirebaseUser(setFirebaseUser, authUser);
         if (typeof teardown === 'function') {
           unsubscribeFromBackup = teardown;
         }
