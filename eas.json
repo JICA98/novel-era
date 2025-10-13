@@ -13,7 +13,7 @@
       "android": {
         "buildType": "apk"
       },
-      "channel": "apkPreview"
+      "channel": "apkpreview"
     },
     "preview": {
       "distribution": "internal",
