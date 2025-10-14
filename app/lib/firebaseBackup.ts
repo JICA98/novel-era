@@ -6,6 +6,7 @@ import { UserPreferences } from '../userpref';
 import { ChapterTracker, NovelTracker } from '../favorites/tracker';
 import { AuthState, AuthUser } from '../lib/auth';
 import { app } from '../firebase';
+import { Content, Repo } from '@/types';
 
 type VersionedPayload<T> = {
   version: string;
@@ -16,11 +17,27 @@ type VersionedPayload<T> = {
 export interface CloudBackupSnapshot {
   auth_id: string;
   user_pref?: VersionedPayload<UserPreferences>;
-  tracker?: VersionedPayload<Record<string, ChapterTracker>>;
-  fav_pref?: VersionedPayload<Record<string, NovelTracker>>;
+  tracker?: VersionedPayload<Record<string, ChapterTrackerPayload>>;
+  fav_pref?: VersionedPayload<Record<string, NovelTrackerPayload>>;
+  novels?: VersionedPayload<NovelIndex>;
   created_at?: string;
   updated_at: string;
 }
+
+type TrackerReference = {
+  repoId: string;
+  novelId: string;
+};
+
+type ChapterTrackerPayload = Omit<ChapterTracker, 'repo' | 'novel'> & TrackerReference;
+type NovelTrackerPayload = Omit<NovelTracker, 'repo' | 'novel'> & TrackerReference;
+
+type NovelIndexEntry = {
+  repo: Repo;
+  novel: Content;
+};
+
+type NovelIndex = Record<string, NovelIndexEntry>;
 
 const realtimeDb = getDatabase(app);
 const USER_COLLECTION = 'users';
@@ -93,6 +110,14 @@ export async function backupPreferences({
       ? (existingSnapshot.val()?.created_at as string | undefined)
       : now;
 
+    const chapterCompression = compressChapterPref(chapterPreferences);
+    const favoriteCompression = compressNovelPref(favPreferences);
+
+    const novelIndex = mergeNovelIndexes(
+      chapterCompression.novelIndex,
+      favoriteCompression.novelIndex,
+    );
+
     const payload: CloudBackupSnapshot = {
       auth_id: userId,
       created_at: createdAt,
@@ -105,14 +130,22 @@ export async function backupPreferences({
       tracker: {
         version: DATA_VERSION,
         deviceId,
-        value: JSON.parse(JSON.stringify(compressChapterPref(chapterPreferences) ?? {})),
+        value: JSON.parse(JSON.stringify(chapterCompression.trackers)),
       },
       fav_pref: {
         version: DATA_VERSION,
         deviceId,
-        value: JSON.parse(JSON.stringify(compressNovelPref(favPreferences) ?? {})),
+        value: JSON.parse(JSON.stringify(favoriteCompression.trackers)),
       },
     };
+
+    if (Object.keys(novelIndex).length > 0) {
+      payload.novels = {
+        version: DATA_VERSION,
+        deviceId,
+        value: JSON.parse(JSON.stringify(novelIndex)),
+      };
+    }
 
     await set(userRef, payload);
 
@@ -124,53 +157,174 @@ export async function backupPreferences({
 }
 
 function compressChapterPref(chapterPref?: Record<string, ChapterTracker>) {
+  const trackers: Record<string, ChapterTrackerPayload> = {};
+  const novelIndex: NovelIndex = {};
+
   if (!chapterPref) {
-    return chapterPref;
+    return { trackers, novelIndex };
   }
-  const compressed = {} as Record<string, ChapterTracker>;
-  for (const key in chapterPref) {
+
+  for (const key of Object.keys(chapterPref)) {
     const tracker = chapterPref[key];
-    compressed[key] = {
-      ...tracker,
-      repo: {
-        id: tracker.repo.id,
-        idName: tracker.repo.idName,
-      } as any,
-      novel: {
-        bookId: tracker.novel.bookId,
-        bookImage: tracker.novel.bookImage,
-        bookLink: tracker.novel.bookLink,
-        title: tracker.novel.title,
-        latestChapter: tracker.novel.latestChapter,
-      }
+    if (!tracker) {
+      continue;
+    }
+
+    const { repo, novel, ...rest } = tracker;
+    const referenceKey = novelReferenceKey(repo.id, novel.bookId);
+    if (!novelIndex[referenceKey]) {
+      novelIndex[referenceKey] = {
+        repo,
+        novel,
+      };
+    }
+
+    trackers[key] = {
+      ...rest,
+      repoId: repo.id,
+      novelId: novel.bookId,
     };
   }
-  return compressed;
+
+  return { trackers, novelIndex };
 }
 
 function compressNovelPref(novelPref?: Record<string, NovelTracker>) {
+  const trackers: Record<string, NovelTrackerPayload> = {};
+  const novelIndex: NovelIndex = {};
+
   if (!novelPref) {
-    return novelPref;
+    return { trackers, novelIndex };
   }
-  const compressed = {} as Record<string, NovelTracker>;
-  for (const key in novelPref) {
+
+  for (const key of Object.keys(novelPref)) {
     const tracker = novelPref[key];
-    compressed[key] = {
-      ...tracker,
-      repo: {
-        id: tracker.repo.id,
-        idName: tracker.repo.idName,
-      } as any,
-      novel: {
-        bookId: tracker.novel.bookId,
-        bookImage: tracker.novel.bookImage,
-        bookLink: tracker.novel.bookLink,
-        title: tracker.novel.title,
-        latestChapter: tracker.novel.latestChapter,
-      }
+    if (!tracker) {
+      continue;
+    }
+
+    const { repo, novel, ...rest } = tracker;
+    const referenceKey = novelReferenceKey(repo.id, novel.bookId);
+    if (!novelIndex[referenceKey]) {
+      novelIndex[referenceKey] = {
+        repo,
+        novel,
+      };
+    }
+
+    trackers[key] = {
+      ...rest,
+      repoId: repo.id,
+      novelId: novel.bookId,
     };
   }
-  return compressed;
+
+  return { trackers, novelIndex };
+}
+
+function novelReferenceKey(repoId: string, novelId: string): string {
+  return `${repoId}::${novelId}`;
+}
+
+function mergeNovelIndexes(...indexes: NovelIndex[]): NovelIndex {
+  return indexes.reduce<NovelIndex>((acc, index) => {
+    for (const key of Object.keys(index)) {
+      if (!acc[key]) {
+        acc[key] = index[key];
+      }
+    }
+    return acc;
+  }, {});
+}
+
+function isChapterTrackerCompressed(
+  tracker: ChapterTracker | ChapterTrackerPayload
+): tracker is ChapterTrackerPayload {
+  return 'repoId' in tracker && 'novelId' in tracker;
+}
+
+function isNovelTrackerCompressed(
+  tracker: NovelTracker | NovelTrackerPayload
+): tracker is NovelTrackerPayload {
+  return 'repoId' in tracker && 'novelId' in tracker;
+}
+
+function expandChapterPref(
+  compressed?: Record<string, ChapterTracker | ChapterTrackerPayload>,
+  novelIndex?: NovelIndex
+): Record<string, ChapterTracker> | undefined {
+  if (!compressed) {
+    return undefined;
+  }
+
+  const result: Record<string, ChapterTracker> = {};
+
+  for (const key of Object.keys(compressed)) {
+    const entry = compressed[key];
+    if (!entry) {
+      continue;
+    }
+
+    if (!isChapterTrackerCompressed(entry)) {
+      result[key] = entry;
+      continue;
+    }
+
+    const { repoId, novelId, ...rest } = entry;
+    const reference = novelIndex?.[novelReferenceKey(repoId, novelId)];
+
+    if (!reference) {
+      console.warn('Missing novel reference for tracker', repoId, novelId);
+      continue;
+    }
+
+    result[key] = {
+      ...rest,
+      repo: reference.repo,
+      novel: reference.novel,
+    };
+  }
+
+  return result;
+}
+
+function expandNovelPref(
+  compressed?: Record<string, NovelTracker | NovelTrackerPayload>,
+  novelIndex?: NovelIndex
+): Record<string, NovelTracker> | undefined {
+  if (!compressed) {
+    return undefined;
+  }
+
+  const result: Record<string, NovelTracker> = {};
+
+  for (const key of Object.keys(compressed)) {
+    const entry = compressed[key];
+    if (!entry) {
+      continue;
+    }
+
+    if (!isNovelTrackerCompressed(entry)) {
+      result[key] = entry;
+      continue;
+    }
+
+    const { repoId, novelId, ...rest } = entry;
+    const reference = novelIndex?.[novelReferenceKey(repoId, novelId)];
+
+    if (!reference) {
+      console.warn('Missing novel reference for favorite tracker', repoId, novelId);
+      continue;
+    }
+
+    result[key] = {
+      ...rest,
+      repo: reference.repo,
+      novel: reference.novel,
+    };
+  }
+
+  return result;
 }
 
 
@@ -206,21 +360,26 @@ export async function restorePreferences({
     }
 
     const data = snapshot.val() as CloudBackupSnapshot;
-    const { user_pref, tracker, fav_pref } = data;
+    const { user_pref, tracker, fav_pref, novels } = data;
 
     const pref = parseVersionedPayload(user_pref);
     if (pref?.value) {
       setUserPref(pref.value);
     }
 
+    const novelIndexPayload = parseVersionedPayload(novels);
+    const novelIndex = novelIndexPayload?.value ?? {};
+
     const chapterPref = parseVersionedPayload(tracker);
     if (chapterPref?.value) {
-      setAllTrackers(chapterPref.value);
+      const enriched = expandChapterPref(chapterPref.value, novelIndex) ?? chapterPref.value;
+      setAllTrackers(enriched);
     }
 
     const novelPref = parseVersionedPayload(fav_pref);
     if (novelPref?.value) {
-      setAllNovelTracker(novelPref.value);
+      const enrichedFavorites = expandNovelPref(novelPref.value, novelIndex) ?? novelPref.value;
+      setAllNovelTracker(enrichedFavorites);
     }
     return { restored: true };
   } catch (error) {
