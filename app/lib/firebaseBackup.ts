@@ -8,7 +8,12 @@ import {
   NovelTracker,
   createChapterTrackerStore,
   createNovelTrackerStore,
+  saveTracker,
+  saveNovelTracker,
+  trackerKey,
+  novelKey,
 } from '../favorites/tracker';
+import { getAllKeys, removeMany } from '../storage';
 import { AuthState, AuthUser } from '../lib/auth';
 import { app } from '../firebase';
 import { Content, Repo } from '@/types';
@@ -373,6 +378,43 @@ function buildNovelTrackerStoreMap(
   return storeMap;
 }
 
+const CHAPTER_TRACKER_PREFIX = 'trackerv1-';
+const FAVORITE_TRACKER_PREFIX = 'favoritev1-';
+
+async function syncChapterTrackerStorage(trackers: Record<string, ChapterTracker>) {
+  const keysToKeep = new Set(
+    Object.values(trackers).map((tracker) =>
+      trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId)
+    )
+  );
+
+  const existingKeys = await getAllKeys();
+  const removable = existingKeys.filter(
+    (key) => key.startsWith(CHAPTER_TRACKER_PREFIX) && !keysToKeep.has(key)
+  );
+
+  await removeMany(removable);
+
+  await Promise.all(Object.values(trackers).map((tracker) => saveTracker(tracker)));
+}
+
+async function syncFavoriteTrackerStorage(trackers: Record<string, NovelTracker>) {
+  const keysToKeep = new Set(
+    Object.values(trackers).map((tracker) =>
+      novelKey(tracker.repo.id, tracker.novel.bookId)
+    )
+  );
+
+  const existingKeys = await getAllKeys();
+  const removable = existingKeys.filter(
+    (key) => key.startsWith(FAVORITE_TRACKER_PREFIX) && !keysToKeep.has(key)
+  );
+
+  await removeMany(removable);
+
+  await Promise.all(Object.values(trackers).map((tracker) => saveNovelTracker(tracker)));
+}
+
 
 type RestoreComparisonPayload = {
   previousUserPref?: UserPreferences;
@@ -519,12 +561,12 @@ export async function restorePreferences({
     const chapterPref = parseVersionedPayload(tracker);
     const novelPref = parseVersionedPayload(fav_pref);
     const restoredUserPref = pref?.value;
-    const restoredChapters = chapterPref?.value
-      ? expandChapterPref(chapterPref.value, novelIndex) ?? {}
-      : {};
-    const restoredFavorites = novelPref?.value
-      ? expandNovelPref(novelPref.value, novelIndex) ?? {}
-      : {};
+    const restoredChapters: Record<string, ChapterTracker> = chapterPref?.value
+      ? ((expandChapterPref(chapterPref.value, novelIndex) ?? {}) as Record<string, ChapterTracker>)
+      : ({} as Record<string, ChapterTracker>);
+    const restoredFavorites: Record<string, NovelTracker> = novelPref?.value
+      ? ((expandNovelPref(novelPref.value, novelIndex) ?? {}) as Record<string, NovelTracker>)
+      : ({} as Record<string, NovelTracker>);
 
     logRestoreComparison({
       previousUserPref: userPref,
@@ -538,6 +580,9 @@ export async function restorePreferences({
     if (restoredUserPref) {
       setUserPref(restoredUserPref);
     }
+
+    await syncChapterTrackerStorage(restoredChapters);
+    await syncFavoriteTrackerStorage(restoredFavorites);
 
     const chapterStores = buildChapterTrackerStoreMap(restoredChapters);
     setAllTrackers(chapterStores);
