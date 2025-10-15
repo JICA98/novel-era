@@ -31,7 +31,7 @@
                 },
                 "bookLink": {
                     "type": "text",
-                    "selector": "a",    
+                    "selector": "a",
                     "attribute": "href"
                 },
                 "bookImage": {
@@ -105,6 +105,259 @@
                     "type": "attribute",
                     "selector": "a",
                     "attribute": "title"
+                }
+            }
+        },
+        {
+            "name": "Novel Full",
+            "idName": "novel-full",
+            "id": "2",
+            "repoUrl": "https://novelfull.com",
+            "repoType": "novel",
+            "repoChapterType": {
+                "type": "paginated",
+                "path": "/[bookId]/chapters/page/[page]"
+            },
+            "repoIcon": "https://novelfull.com/favicon.ico",
+            "repoSearch": {
+                "type": "http",
+                "method": "GET",
+                "path": "/search?keyword=[text]",
+                "selector": ".list-truyen .row",
+                "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "h3 a",
+                    "attribute": "href",
+                    "regex": "/(.*).html"
+                },
+                "bookLink": {
+                    "type": "attribute",
+                    "selector": "h3 a",
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "attribute",
+                    "selector": "img",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": "h3 a"
+                }
+            },
+            "homeSelector": {
+                "type": "text",
+                "path": "/[bookId].html",
+                "page": "home",
+                "latestChapterSelector": {
+                    "type": "text",
+                    "selector": ".list-chapter li:first-child a"
+                },
+                "authorSelector": {
+                    "type": "text",
+                    "selector": ".info a[href*='author']"
+                },
+                "summarySelector": {
+                    "type": "text",
+                    "selector": "#desc-text"
+                }
+            },
+            "chapterSelector": {
+                "path": "/[bookId]/chapter-[chapterId].html",
+                "page": "chapter",
+                "content": {
+                    "type": "html",
+                    "selector": "#chapter-content",
+                    "filters": []
+                }
+            },
+            "listSelector": {
+                "type": "text",
+                "path": "/most-popular",
+                "selector": ".list-truyen .row",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "h3 a",
+                    "attribute": "href",
+                    "regex": "/(.*).html"
+                },
+                "bookImage": {
+                    "type": "attribute",
+                    "selector": "img",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": "h3 a"
+                }
+            }
+        },
+        {
+            "name": "Box Novel",
+            "idName": "box-novel",
+            "id": "3",
+            "repoUrl": "https://boxnovel.com",
+            "repoType": "novel",
+            "repoChapterType": {
+                "type": "list",
+                "path": "/novel/[bookId]/chapter-list"
+            },
+            "repoIcon": "https://boxnovel.com/wp-content/uploads/2020/03/cropped-boxnovel-192x192.png",
+            "repoSearch": {
+                "type": "http",
+                "method": "GET",
+                "path": "/?s=[text]",
+                "selector": ".c-tabs-item__content",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "/novel/(.*)/"
+                },
+                "bookImage": {
+                    "type": "attribute",
+                    "selector": "img",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": ".post-title a"
+                }
+            },
+            "homeSelector": {
+                "type": "text",
+                "path": "/novel/[bookId]/",
+                "latestChapterSelector": {
+                    "type": "text",
+                    "selector": ".wp-manga-chapter a"
+                },
+                "authorSelector": {
+                    "type": "text",
+                    "selector": ".author-content a"
+                },
+                "summarySelector": {
+                    "type": "text",
+                    "selector": ".summary__content"
+                }
+            },
+            "chapterSelector": {
+                "path": "/novel/[bookId]/chapter-[chapterId]/",
+                "content": {
+                    "type": "html",
+                    "selector": ".text-left",
+                    "filters": []
+                }
+            }
+        },
+        {
+            "name": "Wuxia World",
+            "idName": "wuxia-world",
+            "id": "4",
+            "repoUrl": "https://www.wuxiaworld.com",
+            "repoType": "novel",
+            "repoChapterType": {
+                "type": "iterative",
+                "path": "/novel/[bookId]/chapter-[chapterId]"
+            },
+            "repoIcon": "https://www.wuxiaworld.com/favicon.ico",
+            "repoSearch": {
+                "type": "http",
+                "method": "GET",
+                "path": "/api/novels/search?query=[text]",
+                "jsonPath": "$.items",
+                "selector": "",
+                "bookId": {
+                    "type": "json",
+                    "selector": "slug"
+                },
+                "title": {
+                    "type": "json",
+                    "selector": "name"
+                },
+                "bookImage": {
+                    "type": "json",
+                    "selector": "coverUrl"
+                }
+            },
+            "homeSelector": {
+                "type": "json",
+                "path": "/api/novels/[bookId]",
+                "latestChapterSelector": {
+                    "type": "json",
+                    "selector": "lastChapter.name"
+                },
+                "authorSelector": {
+                    "type": "json",
+                    "selector": "author.name"
+                },
+                "summarySelector": {
+                    "type": "json",
+                    "selector": "synopsis"
+                }
+            },
+            "chapterSelector": {
+                "path": "/api/chapters/[chapterId]",
+                "content": {
+                    "type": "json",
+                    "selector": "body"
+                }
+            }
+        },
+        {
+            "name": "Read Light Novel",
+            "idName": "read-light-novel",
+            "id": "5",
+            "repoUrl": "https://readlightnovel.me",
+            "repoType": "novel",
+            "repoChapterType": {
+                "type": "paginated",
+                "path": "/novel/[bookId]/chapters/page/[page]"
+            },
+            "repoIcon": "https://readlightnovel.me/favicon.ico",
+            "repoSearch": {
+                "type": "http",
+                "method": "GET",
+                "path": "/search?keyword=[text]",
+                "selector": ".novel-item",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "novel/(.*)"
+                },
+                "bookImage": {
+                    "type": "attribute",
+                    "selector": "img",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": ".novel-title a"
+                }
+            },
+            "homeSelector": {
+                "type": "text",
+                "path": "/novel/[bookId]",
+                "latestChapterSelector": {
+                    "type": "text",
+                    "selector": ".chapter-list a:first-child"
+                },
+                "authorSelector": {
+                    "type": "text",
+                    "selector": ".author a"
+                },
+                "summarySelector": {
+                    "type": "text",
+                    "selector": ".summary"
+                }
+            },
+            "chapterSelector": {
+                "path": "/novel/[bookId]/chapter-[chapterId]",
+                "content": {
+                    "type": "html",
+                    "selector": ".chapter-content3",
+                    "filters": []
                 }
             }
         }
