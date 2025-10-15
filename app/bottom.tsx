@@ -1,55 +1,92 @@
-import * as React from 'react';
-import { BottomNavigation, Text } from 'react-native-paper';
-import { create } from 'zustand'
-import SearchLayout from './search';
-import Recents from './recents';
-import FavoriteScreen from './favorites/_layout';
-import Settings from './settings/_layout';
+import { ReactNode, cloneElement, isValidElement } from "react";
+import { Pressable, Text, View } from "react-native";
+import { MotiView } from "moti";
+import { create } from "zustand";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppTheme } from "@/app/providers/theme-provider";
 
 export const indexes = {
-    favorites: 0,
-    search: 1,
+    feed: 0,
+    favorites: 1,
     recents: 2,
-    settings: 3
-}
+    settings: 3,
+} as const;
 
-const FavoritesRoute = () => <FavoriteScreen />;
+type BottomKey = keyof typeof indexes;
 
-const SearchRoute = () => <SearchLayout />;
-
-const RecentsRoute = () => <Recents />;
-
-const SettingsRoute = () => <Settings />;
-
-export const useBottomIndexStore = create((set) => ({
-    index: 0,
-    setIndex: (index: number) => set({ index: index })
-}))
-
-const MyBottom = () => {
-    const index = useBottomIndexStore((state: any) => state.index);
-    const setIndex = useBottomIndexStore((state: any) => state.setIndex);
-    const [routes] = React.useState([
-        { key: 'favorites', title: 'Favorites', focusedIcon: 'heart', unfocusedIcon: 'heart-outline' },
-        { key: 'search', title: 'Search', focusedIcon: 'cloud-search', unfocusedIcon: 'cloud-search-outline' },
-        { key: 'recents', title: 'Recents', focusedIcon: 'history' },
-        { key: 'settings', title: 'Settings', focusedIcon: 'application-settings', unfocusedIcon: 'application-settings-outline' },
-    ]);
-
-    const renderScene = BottomNavigation.SceneMap({
-        favorites: FavoritesRoute,
-        search: SearchRoute,
-        recents: RecentsRoute,
-        settings: SettingsRoute,
-    });
-
-    return (
-        <BottomNavigation
-            navigationState={{ index, routes }}
-            onIndexChange={setIndex}
-            renderScene={renderScene}
-        />
-    );
+export type TabConfig = {
+    key: BottomKey;
+    label: string;
+    icon: ReactNode;
 };
 
-export default MyBottom;
+type BottomStore = {
+    index: number;
+    setIndex: (index: number) => void;
+};
+
+export const useBottomIndexStore = create<BottomStore>((set) => ({
+    index: indexes.feed,
+    setIndex: (index: number) => set({ index }),
+}));
+
+interface BottomNavProps {
+    tabs: TabConfig[];
+}
+
+export function BottomNav({ tabs }: BottomNavProps) {
+    const { colors } = useAppTheme();
+        const index = useBottomIndexStore((state) => state.index);
+        const setIndex = useBottomIndexStore((state) => state.setIndex);
+    const insets = useSafeAreaInsets();
+
+    return (
+        <View style={{ paddingBottom: insets.bottom + 12 }} className="px-5">
+            <View
+                className="flex-row items-center justify-between rounded-3xl bg-surface-subtle dark:bg-surface px-2 py-2"
+                style={{ borderColor: colors.border, borderWidth: 1 }}
+            >
+                {tabs.map((tab, tabIndex) => {
+                    const isActive = tabIndex === index;
+                    const icon =
+                        isValidElement(tab.icon)
+                            ? cloneElement(tab.icon, {
+                                    color: isActive ? colors.accent : colors.textMuted,
+                                } as any)
+                            : tab.icon;
+                    return (
+                        <Pressable
+                            key={tab.key}
+                            accessibilityRole="tab"
+                            className="flex-1"
+                            onPress={() => setIndex(tabIndex)}
+                        >
+                            <View className="relative items-center justify-center overflow-hidden rounded-2xl px-3 py-2">
+                                {isActive && (
+                                    <MotiView
+                                        from={{ opacity: 0, scale: 0.92 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ type: "timing", duration: 180 }}
+                                        style={{
+                                            position: "absolute",
+                                            inset: 0,
+                                            borderRadius: 24,
+                                            backgroundColor: colors.accentMuted,
+                                        }}
+                                    />
+                                )}
+                                {icon}
+                                <Text
+                                    className="mt-1 text-xs font-medium"
+                                    style={{ color: isActive ? colors.accent : colors.textMuted }}
+                                >
+                                    {tab.label}
+                                </Text>
+                            </View>
+                        </Pressable>
+                    );
+                })}
+            </View>
+        </View>
+    );
+}

@@ -6,7 +6,7 @@ import { ChapterCard } from "./contents/chapterCard";
 import { timeAgo, RenderChapterProps } from "./chapters/common";
 import { router } from "expo-router";
 import Modal from "./components/modal";
-import { emptyPlaceholder } from "./placeholders";
+import { EmptyPlaceholder } from "./placeholders";
 
 const PAGE_SIZE = 10;
 
@@ -114,8 +114,8 @@ export default function Recents() {
                 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 data={paginatedData}
-                ListEmptyComponent={emptyPlaceholder(filter === FilterOption.ALL ? 'Nothing found in recents, try refreshing' :
-                    'Nothing found in recents, are you sure you are on the right filter?')}
+                ListEmptyComponent={<EmptyPlaceholder message={filter === FilterOption.ALL ? 'Nothing found in recents, try refreshing' :
+                    'Nothing found in recents, are you sure you are on the right filter?'} />}
                 renderItem={({ item }) => renderBookAccordion(item)}
                 onEndReachedThreshold={0.4}
                 ListFooterComponent={<View style={{ height: 100 }} />}

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { AccentColor, DEFAULT_ACCENT } from "./theme";
 import { getData, storeData } from "./storage";
 
 export enum ThemeOptions {
@@ -41,6 +42,7 @@ export interface UserPreferences {
     theme: ThemeOptions;
     editorPreferences: EditorPreferences;
     ttsConfig: TTSConfig;
+    accent: AccentColor;
 }
 
 export const userPrefStore = create((set, get: any) => ({
@@ -48,6 +50,15 @@ export const userPrefStore = create((set, get: any) => ({
     setUserPref: (userPref: UserPreferences) => {
         set({ userPref });
         setUserPreference(userPref).then(() => { });
+    },
+    setAccent: (accent: AccentColor) => {
+        const existing: UserPreferences | null = get().userPref;
+        if (!existing) {
+            return;
+        }
+        const updated = { ...existing, accent };
+        set({ userPref: updated });
+        setUserPreference(updated).then(() => { });
     },
     setTTSConfig: (ttsConfig: TTSConfig) => {
         const userPref: UserPreferences = get().userPref;
@@ -62,6 +73,7 @@ export async function getUserPreference(): Promise<UserPreferences> {
         theme: userPref?.theme ?? ThemeOptions.System,
         editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
+        accent: userPref?.accent ?? DEFAULT_ACCENT,
     };
 }
 

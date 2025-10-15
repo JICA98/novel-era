@@ -1,5 +1,10 @@
 module.exports = function (api) {
   api.cache(true);
+  const nativewindConfig = require('nativewind/babel')();
+  const filteredNativewindPlugins = (nativewindConfig.plugins ?? []).filter(
+    (plugin) => plugin !== 'react-native-worklets/plugin'
+  );
+
   return {
     presets: [
       [
@@ -8,11 +13,12 @@ module.exports = function (api) {
           unstable_transformImportMeta: true,
         },
       ],
+      ...(nativewindConfig.presets ?? []),
     ],
-    env: {
-      production: {
-        plugins: ['react-native-paper/babel'],
-      },
-    },
+    plugins: [
+      ...filteredNativewindPlugins,
+      'react-native-paper/babel',
+      'react-native-reanimated/plugin',
+    ],
   };
 };

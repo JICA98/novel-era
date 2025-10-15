@@ -1,113 +1,185 @@
-import { FetchData, Repo, ReposData } from "@/types";
-import { useEffect, useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
-import { ActivityIndicator, Avatar, Button, List, TextInput, Title, useTheme } from "react-native-paper";
-import { create } from "zustand";
-import { router } from 'expo-router';
+import { Repo } from "@/types";
+import { useMemo, useState } from "react";
+import { FlatList, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import { MotiView } from "moti";
 import UseRepositoryLayout from "./_repos";
-import { MD3Colors } from "react-native-paper/lib/typescript/types";
-import { emptyPlaceholder as emptyStatePlaceholder } from "./placeholders";
+import { Avatar, Badge, Card, Input, Button } from "@/app/components/ui";
+import { useAppTheme } from "@/app/providers/theme-provider";
+import { EmptyPlaceholder } from "./placeholders";
 
+type SearchVariant = "full" | "preview";
 
-export default function SearchLayout() {
+interface SearchLayoutProps {
+    variant?: SearchVariant;
+}
 
+export default function SearchLayout({ variant = "full" }: SearchLayoutProps) {
     return (
-        <UseRepositoryLayout props={{ renderRepositories: (repos) => (<SearchBarLayout repos={repos} />) }} />
+        <UseRepositoryLayout
+            props={{
+                renderRepositories: (repos) => <SearchContent repos={repos} variant={variant} />,
+            }}
+        />
     );
 }
 
-function SearchBarLayout({ repos }: { repos: Repo[] }) {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filteredRepos, setFilteredRepos] = useState<Repo[]>(repos);
-    const colors = useTheme().colors;
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        if (repos) {
-            const filtered = repos.filter(repo =>
-                repo.name.toLowerCase().includes(query.toLowerCase())
-            );
-            setFilteredRepos(filtered);
+function SearchContent({ repos, variant }: { repos: Repo[]; variant: SearchVariant }) {
+    const { colors } = useAppTheme();
+    const [query, setQuery] = useState("");
+
+    const filtered = useMemo(() => {
+        if (!query) {
+            return repos;
         }
+        const normalized = query.trim().toLowerCase();
+        return repos.filter((repo) => repo.name.toLowerCase().includes(normalized));
+    }, [query, repos]);
+
+        const handleNavigate = (repo: Repo) => {
+            router.push({ pathname: "/repos", params: { repo: JSON.stringify(repo) } } as never);
     };
+
+    if (variant === "preview") {
+        const previewItems = repos.slice(0, 3);
+        return (
+        <View className="mt-8">
+                <View className="flex-row items-center justify-between px-6">
+                    <Text style={{ color: colors.text }} className="text-xl font-semibold">
+                        Discover repositories
+                    </Text>
+                    <Button
+                        variant="ghost"
+                        onPress={() => router.push("/search")}
+                        className="px-1"
+                    >
+                        View all
+                    </Button>
+                </View>
+                <FlatList
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    data={previewItems}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={{ paddingHorizontal: 24, paddingVertical: 20, gap: 16 }}
+                    renderItem={({ item, index }) => (
+                        <MotiView
+                            from={{ opacity: 0, translateY: 18 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ type: "timing", duration: 220, delay: index * 40 }}
+                        >
+                            <Card style={{ width: 220 }}>
+                                <Avatar
+                                    uri={`https://picsum.photos/seed/${item.idName}/120/120`}
+                                    size={60}
+                                    className="mb-3 self-start"
+                                />
+                                <Text style={{ color: colors.text }} className="text-lg font-semibold">
+                                    {item.name}
+                                </Text>
+                                                <Text style={{ color: colors.textMuted }} className="mt-2 text-sm leading-5">
+                                                    {item.repoType} repository
+                                </Text>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="mt-6 self-start"
+                                                    onPress={() => handleNavigate(item)}
+                                                    icon={<Feather name="arrow-right" size={16} />}
+                                                >
+                                    Open repo
+                                </Button>
+                            </Card>
+                        </MotiView>
+                    )}
+                />
+            </View>
+        );
+    }
+
     return (
-        <View style={styles.container}>
-            {<TextInput
-                style={styles.searchBar}
-                placeholder="Search Repositories"
-                value={searchQuery}
-                onChangeText={handleSearch}
-            />}
-            {filteredRepos.length === 0 ? (
-                emptyStatePlaceholder('No repositories found')
-            ) : (
-                <List.Section>
-                    {filteredRepos.map((item) => (
-                        <List.Item
-                            key={item.id}
-                            title={() => highlightText(item.name, searchQuery, colors)}
-                            description={item.repoUrl}
-                            style={styles.repoItem}
-                            left={_ => <Avatar.Image size={48}
-                                source={{ uri: `https://picsum.photos/seed/${item.idName}/100/100` }} />}
-                            onPress={() => router.push({ pathname: '/repos', params: { repo: JSON.stringify(item) } })}
-                        />
-                    ))}
-                </List.Section>
+        <View className="flex-1 px-6 py-10">
+            <Text style={{ color: colors.text }} className="text-3xl font-semibold">
+                Search catalog
+            </Text>
+            <Text style={{ color: colors.textMuted }} className="mt-2 leading-6">
+                Browse curated repositories. Use the floating search to find new translations and sources quickly.
+            </Text>
+
+                    <Input
+                className="mt-6"
+                placeholder="Search repositories"
+                value={query}
+                        leadingIcon={<Feather name="search" size={18} color={colors.textMuted} />}
+                onChangeText={setQuery}
+            />
+
+                    {filtered.length === 0 ? (
+                        <EmptyPlaceholder message="No repositories match your search." />
+                    ) : (
+                <FlatList
+                    data={filtered}
+                    keyExtractor={(item) => item.id}
+                    contentContainerStyle={{ gap: 16, paddingVertical: 24 }}
+                    renderItem={({ item, index }) => (
+                        <MotiView
+                            from={{ opacity: 0, translateY: 12 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ type: "timing", duration: 220, delay: index * 25 }}
+                        >
+                            <Card>
+                                <View className="flex-row items-center justify-between">
+                                    <View className="flex-1 pr-4">
+                                        <Text style={{ color: colors.text }} className="text-lg font-semibold">
+                                            {highlightText(item.name, query, colors.accent)}
+                                        </Text>
+                                        <Text style={{ color: colors.textMuted }} className="mt-2 text-sm">
+                                            {item.repoUrl}
+                                        </Text>
+                                                            <Badge tone="accent" className="mt-3 self-start">
+                                                                {item.repoType}
+                                        </Badge>
+                                    </View>
+                                    <Avatar
+                                        uri={`https://picsum.photos/seed/${item.idName}/120/120`}
+                                        size={64}
+                                        className="ml-4"
+                                    />
+                                </View>
+                                                <Button
+                                                    variant="ghost"
+                                                    className="mt-6 self-start"
+                                                    onPress={() => handleNavigate(item)}
+                                                    icon={<Feather name="book-open" size={16} />}
+                                                >
+                                    View repository
+                                </Button>
+                            </Card>
+                        </MotiView>
+                    )}
+                    ListFooterComponent={<View style={{ height: 24 }} />}
+                />
             )}
         </View>
     );
 }
 
-const highlightText = (text: string, highlight: string, colors: MD3Colors) => {
-    if (!highlight.trim()) {
-        return <Title>{text}</Title>;
+function highlightText(text: string, query: string, accentColor: string) {
+    if (!query.trim()) {
+        return text;
     }
-    const regex = new RegExp(`(${highlight})`, 'gi');
+    const regex = new RegExp(`(${query})`, "ig");
     const parts = text.split(regex);
     return (
-        <Title>
-            {parts.map((part, index) =>
-                part.toLowerCase() === highlight.toLowerCase() ? (
-                    <Text key={index} style={[styles.highlight]}>
-                        {part}
-                    </Text>
-                ) : (
-                    part
-                )
-            )}
-        </Title>
+        <Text>
+            {parts.map((part, index) => (
+                <Text
+                    key={`${part}-${index}`}
+                    style={{ color: part.toLowerCase() === query.toLowerCase() ? accentColor : undefined, fontWeight: part.toLowerCase() === query.toLowerCase() ? "700" : "600" }}
+                >
+                    {part}
+                </Text>
+            ))}
+        </Text>
     );
-};
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-    },
-    searchBar: {
-        height: 40,
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingLeft: 8,
-        marginBottom: 16,
-    },
-    repoItem: {
-        padding: 16,
-    },
-    repoName: {
-        fontSize: 16,
-    },
-    errorText: {
-        color: 'red',
-        marginBottom: 16,
-    },
-    nothingFound: {
-        textAlign: 'center',
-        marginTop: 20,
-        fontSize: 18,
-        color: 'gray',
-    },
-    highlight: {
-        backgroundColor: 'yellow',
-    },
-});
+}

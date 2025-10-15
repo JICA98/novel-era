@@ -1,11 +1,10 @@
 import { Repo, ReposData } from "@/types";
 import React, { useEffect } from "react";
-import { View } from "react-native";
-import { ActivityIndicator, Button, Title } from "react-native-paper";
+import { ActivityIndicator, View } from "react-native";
 import { create } from "zustand";
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { StyleSheet } from 'react-native';
-import { errorPlaceholder } from "./placeholders";
+import { ErrorPlaceholder } from "./placeholders";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
@@ -40,7 +39,7 @@ const useRepositoryStore = create(persist(
 ));
 
 interface UseRepositoryLayoutProps {
-    renderRepositories: (repositories: Repo[]) => JSX.Element;
+    renderRepositories: (repositories: Repo[]) => React.ReactNode;
 }
 
 export default function UseRepositoryLayout({ props }: { props: UseRepositoryLayoutProps }) {
@@ -54,13 +53,13 @@ export default function UseRepositoryLayout({ props }: { props: UseRepositoryLay
     if (repositories.isLoading) {
         return (
             <View style={styles.container}>
-                <ActivityIndicator animating={true} size="large" />
+                <ActivityIndicator size="large" />
             </View>
         );
     }
 
     if (repositories.error) {
-        return errorPlaceholder({ onRetry: fetchData });
+        return <ErrorPlaceholder onRetry={fetchData} />;
     }
 
     return props.renderRepositories(repositories.data?.repos ?? []);

@@ -1,48 +1,53 @@
-import { ImageBackground, View, StyleSheet } from "react-native";
-import { Button, Title } from "react-native-paper";
+import { Image, View, Text } from "react-native";
+import { Button, Card } from "@/app/components/ui";
+import { useAppTheme } from "@/app/providers/theme-provider";
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 8,
-    },
-    emptyImage: {
-        height: 130,
-    }
-});
+export function EmptyFavoritePlaceholder() {
+    const { colors } = useAppTheme();
+    return (
+        <Card elevated className="mx-6 mt-32 items-center">
+            <Image
+                source={require("../assets/images/box.png")}
+                style={{ width: 180, height: 140, resizeMode: "contain" }}
+            />
+            <Text style={{ color: colors.text, textAlign: "center", fontSize: 16, marginTop: 16 }}>
+                Nothing found in favorites. Try refreshing or adding to your library.
+            </Text>
+        </Card>
+    );
+}
 
-export const emptyFavoritePlaceholder = (
-    <View style={[styles.container, { marginTop: 150, marginHorizontal: 15 }]}>
-        <ImageBackground
-            source={require('../assets/images/box.png')}
-            style={styles.emptyImage}
-            resizeMode="contain"
-        />
-        <Title style={{
-            textAlign: 'center', marginTop: 20, fontSize: 16
-        }}>Nothing found in favorites, try refreshing or adding something to the collection</Title>
-    </View>
-);
+export function EmptyPlaceholder({ message }: { message: string }) {
+    const { colors } = useAppTheme();
+    return (
+        <View className="items-center px-8 pt-16">
+            <Image
+                source={require("../assets/images/inbox.png")}
+                style={{ width: 180, height: 140, resizeMode: "contain" }}
+            />
+            <Text style={{ color: colors.text, textAlign: "center", fontSize: 16, marginTop: 16 }}>
+                {message}
+            </Text>
+        </View>
+    );
+}
 
-export const emptyPlaceholder = (message: string) => (
-    <View style={[styles.container, { marginTop: 100, marginHorizontal: 20 }]}>
-        <ImageBackground
-            source={require('../assets/images/inbox.png')}
-            style={styles.emptyImage}
-            resizeMode="contain"
-        />
-        <Title style={{ textAlign: 'center', marginTop: 20, fontSize: 16 }}>{message}</Title>
-    </View>
-);
-
-export const errorPlaceholder = ({ message, onRetry }: { message?: string, onRetry: () => void }) => (
-    <View style={[styles.container, { marginTop: 100, marginHorizontal: 20 }]}>
-        <ImageBackground
-            source={require('../assets/images/no-comment.png')}
-            style={styles.emptyImage}
-            resizeMode="contain"
-        />
-        <Title style={{ textAlign: 'center', marginTop: 20, fontSize: 16 }}>{message ?? 'Something wrong happenend, try again?'}</Title>
-        {onRetry && <Button mode="contained" onPress={onRetry} style={{ marginTop: 20 }}>Retry</Button>}
-    </View>
-);
+export function ErrorPlaceholder({ message, onRetry }: { message?: string; onRetry?: () => void }) {
+    const { colors } = useAppTheme();
+    return (
+        <View className="items-center px-8 pt-20">
+            <Image
+                source={require("../assets/images/no-comment.png")}
+                style={{ width: 180, height: 140, resizeMode: "contain" }}
+            />
+            <Text style={{ color: colors.text, textAlign: "center", fontSize: 16, marginTop: 16 }}>
+                {message ?? "Something went wrong. Try again?"}
+            </Text>
+            {onRetry && (
+                <Button className="mt-6" onPress={onRetry}>
+                    Retry
+                </Button>
+            )}
+        </View>
+    );
+}

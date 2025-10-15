@@ -10,7 +10,7 @@ import { Searchbar } from 'react-native-paper';
 import jsonpath from 'jsonpath';
 import { MenuFunction } from "../components/menu";
 import BookItem from "./bookItem";
-import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
+import { EmptyPlaceholder, ErrorPlaceholder } from "../placeholders";
 import { cacheValue, getCachedValue, httpGet } from "../storage";
 
 async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo, searchQuery?: string, cached?: boolean }): Promise<Content[]> {
@@ -82,7 +82,7 @@ export default function RepositorLayout() {
             </View>
         );
     } else if (content.error) {
-        child = errorPlaceholder({ onRetry: () => fetchContent({ cached: false }) });
+        child = <ErrorPlaceholder onRetry={() => fetchContent({ cached: false })} />;
     } else {
         child = (
             <FlatList
@@ -91,7 +91,7 @@ export default function RepositorLayout() {
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
-                ListEmptyComponent={emptyPlaceholder('No content found')}
+                ListEmptyComponent={<EmptyPlaceholder message='No content found' />}
                 ListFooterComponent={<View style={{ height: 120 }} />}
                 ListHeaderComponent={<View style={{ height: 20 }} />}
                 refreshControl={<RefreshControl refreshing={content.isLoading} onRefresh={() => fetchContent({ cached: false })} />}

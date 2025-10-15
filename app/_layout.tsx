@@ -1,16 +1,13 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { PaperProvider } from "react-native-paper";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 import * as p from "plimit-lit";
 import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "./favorites/tracker";
-import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
-import { useColorScheme } from "react-native";
-import { getTheme } from "./settings/themeSettings";
 import { userPrefStore, getUserPreference } from "./userpref";
 import { setUpVoices, voicesStore } from "./chapters/ttscontrols";
 import { authStateStore, setUpAuthUser } from "./lib/auth";
 import { setUpFirebaseUser, firebaseStore } from "./lib/firebaseBackup";
+import { ThemeProvider } from "./providers/theme-provider";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
@@ -21,8 +18,6 @@ export default function RootLayout() {
   const downloads = allDownloadsStore((state: any) => state.downloads);
   const allTrackers = chapterTrackerStore((state: any) => state.content);
   const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
-  const colorScheme = useColorScheme();
-  const { theme } = useMaterial3Theme();
   const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
   const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
   const userPref = userPrefStore((state: any) => state.userPref);
@@ -60,16 +55,17 @@ export default function RootLayout() {
       }
     };
   }, []);
-  console.log(userPref);
   return (
-    userPref && (<PaperProvider theme={getTheme({ colorScheme, theme, themeOptions: userPref.theme })}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="repos" options={{ headerShown: false }} />
-        <Stack.Screen name="contents" options={{ headerShown: false }} />
-        <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
-      </Stack>
-    </PaperProvider>)
+    userPref && (
+      <ThemeProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="repos" options={{ headerShown: false }} />
+          <Stack.Screen name="contents" options={{ headerShown: false }} />
+          <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
+        </Stack>
+      </ThemeProvider>
+    )
   );
 }
 
