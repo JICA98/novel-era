@@ -1,7 +1,7 @@
 import { Material3Theme } from "@pchmn/expo-material3-theme";
 import { useState } from "react";
-import { View, StyleSheet, ColorSchemeName } from "react-native";
-import { Button, List, MD3DarkTheme, MD3LightTheme, RadioButton, Snackbar, useTheme } from "react-native-paper";
+import { ColorSchemeName } from "react-native";
+import { Button, List, MD3DarkTheme, MD3LightTheme, RadioButton, useTheme } from "react-native-paper";
 import { UserPreferences, ThemeOptions } from "../userpref";
 
 export const ThemeSelectionAccordion = ({ userPref, setUserPref, setSnackbarText }: {
@@ -57,8 +57,9 @@ export const ThemeSelectionAccordion = ({ userPref, setUserPref, setSnackbarText
                 mode="contained"
                 onPress={handleApplyTheme}
                 style={{ margin: 10 }}
-                children="Apply Theme"
-            />
+            >
+                Apply Theme
+            </Button>
         </List.Accordion>
     );
 };
@@ -84,12 +85,3 @@ export function getTheme({ colorScheme, themeOptions, theme }: {
     }
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 0,
-    },
-    text: {
-        fontSize: 20,
-    },
-});
