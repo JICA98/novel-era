@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import { backupPreferences, restorePreferences } from '../lib/firebaseBackup'
-import { Button, List, TextInput, Title, useTheme } from 'react-native-paper'
+import { Button, List, TextInput, Title, useTheme, List as PaperList, Divider } from 'react-native-paper'
 import { chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import PaperDialog from '../components/dialog'
@@ -196,49 +196,71 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     }
                 }}
             />}
-            {showBackup && <PaperDialog title={'Backup Preferences'}
-                description='This will backup all preferences to the cloud, continue?' setVisible={setBackup}
-                done={async () => {
-                    const chapterPreferences = await getAllTrackersAsync();
-                    const favPreferences = await getFavoriteTrackersAsync();
-                    const result = await backupPreferences({
-                        userId: authUser.authId ?? '',
-                        userPref,
-                        chapterPreferences,
-                        favPreferences,
-                    });
-
-                    if (result?.error) {
-                        setSnackbarText('Failed to back up preferences');
-                    } else {
-                        setSnackbarText('Preferences backed up successfully');
+            {showBackup && (
+                <PaperDialog
+                    title={'Backup Preferences'}
+                    description='This will overwrite your existing cloud backup with current preferences. Continue?'
+                    details={
+                        <BackupSummary
+                            userPref={userPref}
+                            chapterStore={allTrackers}
+                            favoriteStore={allNovelTrackerStore}
+                        />
                     }
-                }}
-            />}
-            {showRestore && <PaperDialog title={'Restore Preferences'}
-                description='This will restore all preferences from the cloud, continue?' setVisible={setRestore}
-                done={async () => {
-                    const chapterPreferences = await getAllTrackersAsync();
-                    const favPreferences = await getFavoriteTrackersAsync();
-                    const result = await restorePreferences({
-                        userId: authUser.authId ?? '',
-                        userPref,
-                        chapterPreferences,
-                        favPreferences,
-                        setUserPref,
-                        setAllTrackers,
-                        setAllNovelTracker,
-                    });
+                    setVisible={setBackup}
+                    done={async () => {
+                        const chapterPreferences = await getAllTrackersAsync();
+                        const favPreferences = await getFavoriteTrackersAsync();
+                        const result = await backupPreferences({
+                            userId: authUser.authId ?? '',
+                            userPref,
+                            chapterPreferences,
+                            favPreferences,
+                        });
 
-                    if (result?.restored) {
-                        setSnackbarText('Preferences restored from backup');
-                    } else if (result?.missing) {
-                        setSnackbarText('No backup found for this account');
-                    } else if (result?.error) {
-                        setSnackbarText('Failed to restore preferences');
+                        if (result?.error) {
+                            setSnackbarText('Failed to back up preferences');
+                        } else {
+                            setSnackbarText('Preferences backed up successfully');
+                        }
+                    }}
+                />
+            )}
+            {showRestore && (
+                <PaperDialog
+                    title={'Restore Preferences'}
+                    description='This will overwrite your local preferences with the cloud backup. Continue?'
+                    details={
+                        <BackupSummary
+                            userPref={userPref}
+                            chapterStore={allTrackers}
+                            favoriteStore={allNovelTrackerStore}
+                        />
                     }
-                }}
-            />}
+                    setVisible={setRestore}
+                    done={async () => {
+                        const chapterPreferences = await getAllTrackersAsync();
+                        const favPreferences = await getFavoriteTrackersAsync();
+                        const result = await restorePreferences({
+                            userId: authUser.authId ?? '',
+                            userPref,
+                            chapterPreferences,
+                            favPreferences,
+                            setUserPref,
+                            setAllTrackers,
+                            setAllNovelTracker,
+                        });
+
+                        if (result?.restored) {
+                            setSnackbarText('Preferences restored from backup');
+                        } else if (result?.missing) {
+                            setSnackbarText('No backup found for this account');
+                        } else if (result?.error) {
+                            setSnackbarText('Failed to restore preferences');
+                        }
+                    }}
+                />
+            )}
 
 
             <List.Accordion
@@ -257,6 +279,56 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
         </>
 
     )
+}
+
+type BackupSummaryProps = {
+    userPref: UserPreferences;
+    chapterStore: Map<string, any>;
+    favoriteStore: Map<string, any>;
+};
+
+function BackupSummary({ userPref, chapterStore, favoriteStore }: BackupSummaryProps) {
+    const chapterCount = chapterStore?.size ?? 0;
+    const novelCount = favoriteStore?.size ?? 0;
+    const favoriteNames = Array.from(favoriteStore?.values?.() ?? [])
+        .map((store: any) => store?.getState?.()?.content?.novel?.title)
+        .filter((title: string | undefined): title is string => Boolean(title));
+
+    const trackedTitles = Array.from(chapterStore?.values?.() ?? [])
+        .map((store: any) => store?.getState?.()?.content?.novel?.title)
+        .filter((title: string | undefined): title is string => Boolean(title));
+
+    const combinedTitles = [...new Set([...favoriteNames, ...trackedTitles])];
+
+    return (
+        <PaperList.Section style={{ marginTop: 12 }}>
+            <PaperList.Item
+                title="Editor preferences"
+                description={userPref ? 'Theme, reader, and voice settings' : 'No preferences saved'}
+                left={(props) => <PaperList.Icon {...props} icon="tune" />}
+            />
+            <Divider />
+            <PaperList.Item
+                title={`${chapterCount} chapter${chapterCount === 1 ? '' : 's'}`}
+                description={
+                    combinedTitles.length
+                        ? combinedTitles.slice(0, 3).join(', ') + (combinedTitles.length > 3 ? '…' : '')
+                        : 'No chapters tracked'
+                }
+                left={(props) => <PaperList.Icon {...props} icon="book-open-variant" />}
+            />
+            <Divider />
+            <PaperList.Item
+                title={`${novelCount} favorite${novelCount === 1 ? '' : 's'}`}
+                description={
+                    favoriteNames.length
+                        ? favoriteNames.slice(0, 3).join(', ') + (favoriteNames.length > 3 ? '…' : '')
+                        : 'No favorites saved'
+                }
+                left={(props) => <PaperList.Icon {...props} icon="star" />}
+            />
+        </PaperList.Section>
+    );
 }
 
 const styles = StyleSheet.create({
