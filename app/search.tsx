@@ -1,4 +1,4 @@
-import { Repo, SelectorType, processData } from "@/types";
+import { Content, Repo, SelectorType, processData } from "@/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
@@ -293,67 +293,87 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                 </ScrollView>
             </View>
 
-            {needsMoreCharacters && (
-                <HelperText type="info" visible style={styles.helperText}>
-                    Type at least {MIN_QUERY_LENGTH} characters to search.
-                </HelperText>
-            )}
+            <View style={styles.resultsContainer}>
+                <ScrollView
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.resultsContent}
+                >
+                    {needsMoreCharacters && (
+                        <HelperText type="info" visible style={styles.helperText}>
+                            Type at least {MIN_QUERY_LENGTH} characters to search.
+                        </HelperText>
+                    )}
 
-            {error && (
-                <HelperText type="error" visible style={styles.helperText}>
-                    {error}
-                </HelperText>
-            )}
+                    {error && (
+                        <HelperText type="error" visible style={styles.helperText}>
+                            {error}
+                        </HelperText>
+                    )}
 
-            {isLoading && (
-                <View style={styles.loadingWrapper}>
-                    <ActivityIndicator animating size="large" />
-                </View>
-            )}
+                    {isLoading && (
+                        <View style={styles.loadingWrapper}>
+                            <ActivityIndicator animating size="large" />
+                        </View>
+                    )}
 
-            {showEmptyState && emptyPlaceholder("No results found")}
+                    {showEmptyState && emptyPlaceholder("No results found")}
 
-            {canSearch && !isLoading && !showEmptyState && results.length > 0 && (
-                <List.Section>
-                    {results.map((item) => (
-                        <List.Item
-                            key={item.id}
-                            title={item.title}
-                            description={item.sourceName}
-                            left={() => (
-                                <Avatar.Image
-                                    size={48}
-                                    source={{ uri: item.coverUrl || `https://picsum.photos/seed/${item.id}/200/200` }}
-                                />
-                            )}
-                            onPress={() => handleNavigateToRepo(item.sourceId, repos)}
-                        />
-                    ))}
-                </List.Section>
-            )}
-
-            {isHomeMode && !isLoading && !error && (
-                homeResults.length > 0 ? (
-                    <List.Section>
-                        {homeResults.map((item) => (
-                            <List.Item
-                                key={item.id}
-                                title={item.title}
-                                description={selectedRepo?.name ?? item.sourceName}
-                                left={() => (
-                                    <Avatar.Image
-                                        size={48}
-                                        source={{ uri: item.coverUrl || `https://picsum.photos/seed/${item.id}/200/200` }}
+                    {canSearch && !isLoading && !showEmptyState && results.length > 0 && (
+                        <List.Section>
+                            {results.map((item) => {
+                                const subtitle = resolveResultSubtitle(item);
+                                return (
+                                    <List.Item
+                                        key={item.id}
+                                        title={item.title}
+                                        description={subtitle}
+                                        left={() => (
+                                            <Avatar.Image
+                                                size={48}
+                                                source={{ uri: item.coverUrl || `https://picsum.photos/seed/${item.id}/200/200` }}
+                                            />
+                                        )}
+                                        onPress={() =>
+                                            handleOpenContent(
+                                                repos.find((repo) => repo.id === item.sourceId) ?? selectedRepo,
+                                                item
+                                            )
+                                        }
                                     />
-                                )}
-                                onPress={() => handleNavigateToRepo(item.sourceId, repos)}
-                            />
-                        ))}
-                    </List.Section>
-                ) : (
-                    emptyPlaceholder("Browse your library")
-                )
-            )}
+                                );
+                            })}
+                        </List.Section>
+                    )}
+
+                    {isHomeMode && !isLoading && !error && (
+                        homeResults.length > 0 ? (
+                            <List.Section>
+                                {homeResults.map((item) => {
+                                    const subtitle = resolveResultSubtitle(item);
+                                    return (
+                                        <List.Item
+                                            key={item.id}
+                                            title={item.title}
+                                            description={subtitle}
+                                            left={() => (
+                                                <Avatar.Image
+                                                    size={48}
+                                                    source={{
+                                                        uri: item.coverUrl || `https://picsum.photos/seed/${item.id}/200/200`,
+                                                    }}
+                                                />
+                                            )}
+                                            onPress={() => handleOpenContent(selectedRepo, item)}
+                                        />
+                                    );
+                                })}
+                            </List.Section>
+                        ) : (
+                            emptyPlaceholder("Browse your library")
+                        )
+                    )}
+                </ScrollView>
+            </View>
         </View>
     );
 }
@@ -512,12 +532,31 @@ async function fetchRepositoryHome({
     return items.filter((item) => !!item.title);
 }
 
-function handleNavigateToRepo(repoId: string, repos: Repo[]) {
-    const repo = repos.find((r) => r.id === repoId);
+function handleOpenContent(repo: Repo | undefined, item: SearchResultItem) {
     if (!repo) {
         return;
     }
-    router.push({ pathname: "/repos", params: { repo: JSON.stringify(repo) } } as never);
+
+    const content: Content = {
+        title: item.title,
+        bookImage: item.coverUrl ?? "",
+        bookLink: item.link ?? "",
+        bookId: item.bookId ?? item.id,
+        rating: item.rating,
+    };
+
+    router.push({
+        pathname: "/contents",
+        params: {
+            content: JSON.stringify(content),
+            repo: JSON.stringify(repo),
+        },
+    } as never);
+}
+
+function resolveResultSubtitle(item: SearchResultItem) {
+    const subtitle = item.summary?.trim() || item.rating?.trim() || item.link?.trim() || item.bookId?.trim();
+    return subtitle?.length ? subtitle : undefined;
 }
 
 const styles = StyleSheet.create({
@@ -538,6 +577,13 @@ const styles = StyleSheet.create({
     },
     repoChip: {
         marginRight: 8,
+    },
+    resultsContainer: {
+        flex: 1,
+        marginTop: 8,
+    },
+    resultsContent: {
+        paddingBottom: 120,
     },
     helperText: {
         marginTop: 8,
