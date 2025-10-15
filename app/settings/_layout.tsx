@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { ThemeSelectionAccordion } from "./themeSettings";
 import { userPrefStore, getUserPreference } from "../userpref";
 import Auth from "./accountSettings";
@@ -21,8 +21,8 @@ export default function Settings() {
     }, [setUserPref]);
 
     return (
-        <View style={[styles.container]}>
-            <View style={[styles.container]}>
+        <View style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
                 <List.Section>
                     <Auth setSnackbarText={setSnackbarText} />
                     {userPref && (
@@ -45,7 +45,7 @@ export default function Settings() {
                         </>
                     )}
                 </List.Section>
-            </View>
+            </ScrollView>
             <Snackbar
                 visible={!!snackbarText.length}
                 onDismiss={() => setSnackbarText('')}
@@ -65,6 +65,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 0,
+    },
+    scrollContent: {
+        paddingBottom: 48,
     },
     text: {
         fontSize: 20,
