@@ -3,7 +3,12 @@ import * as Device from 'expo-device';
 import { getDatabase, onValue, ref, get, set } from 'firebase/database';
 import { createStore } from '../downloads/utils';
 import { UserPreferences } from '../userpref';
-import { ChapterTracker, NovelTracker } from '../favorites/tracker';
+import {
+  ChapterTracker,
+  NovelTracker,
+  createChapterTrackerStore,
+  createNovelTrackerStore,
+} from '../favorites/tracker';
 import { AuthState, AuthUser } from '../lib/auth';
 import { app } from '../firebase';
 import { Content, Repo } from '@/types';
@@ -328,8 +333,153 @@ function expandNovelPref(
 }
 
 
+function buildChapterTrackerStoreMap(
+  trackers?: Record<string, ChapterTracker>
+): Map<string, ReturnType<typeof createChapterTrackerStore>> {
+  const storeMap = new Map<string, ReturnType<typeof createChapterTrackerStore>>();
+
+  if (!trackers) {
+    return storeMap;
+  }
+
+  for (const [key, tracker] of Object.entries(trackers)) {
+    if (!tracker) {
+      continue;
+    }
+
+    storeMap.set(key, createChapterTrackerStore(tracker));
+  }
+
+  return storeMap;
+}
+
+function buildNovelTrackerStoreMap(
+  trackers?: Record<string, NovelTracker>
+): Map<string, ReturnType<typeof createNovelTrackerStore>> {
+  const storeMap = new Map<string, ReturnType<typeof createNovelTrackerStore>>();
+
+  if (!trackers) {
+    return storeMap;
+  }
+
+  for (const [key, tracker] of Object.entries(trackers)) {
+    if (!tracker) {
+      continue;
+    }
+
+    storeMap.set(key, createNovelTrackerStore(tracker));
+  }
+
+  return storeMap;
+}
+
+
+type RestoreComparisonPayload = {
+  previousUserPref?: UserPreferences;
+  restoredUserPref?: UserPreferences;
+  previousChapters?: Record<string, ChapterTracker>;
+  restoredChapters?: Record<string, ChapterTracker>;
+  previousFavorites?: Record<string, NovelTracker>;
+  restoredFavorites?: Record<string, NovelTracker>;
+};
+
+function logRestoreComparison({
+  previousUserPref,
+  restoredUserPref,
+  previousChapters,
+  restoredChapters,
+  previousFavorites,
+  restoredFavorites,
+}: RestoreComparisonPayload) {
+  const userPrefDiff = buildUserPrefDiff(previousUserPref, restoredUserPref);
+  const chapterDiff = buildTrackerDiff(previousChapters, restoredChapters);
+  const favoriteDiff = buildTrackerDiff(previousFavorites, restoredFavorites);
+
+  console.log('Restore comparison', {
+    userPreferences: userPrefDiff,
+    chapters: chapterDiff,
+    favorites: favoriteDiff,
+  });
+}
+
+function buildUserPrefDiff(
+  previous?: UserPreferences,
+  restored?: UserPreferences
+) {
+  const previousRecord = previous ?? {};
+  const restoredRecord = restored ?? {};
+
+  const previousKeys = Object.keys(previousRecord);
+  const restoredKeys = Object.keys(restoredRecord);
+
+  const addedKeys = restoredKeys.filter((key) => !(key in previousRecord));
+  const removedKeys = previousKeys.filter((key) => !(key in restoredRecord));
+  const potentialUpdates = restoredKeys.filter(
+    (key) => key in previousRecord && key in restoredRecord
+  );
+
+  const updatedKeys = potentialUpdates.filter((key) =>
+    !isDeepEqual((previousRecord as any)[key], (restoredRecord as any)[key])
+  );
+
+  return {
+    changed: addedKeys.length + removedKeys.length + updatedKeys.length > 0,
+    added: addedKeys,
+    removed: removedKeys,
+    updated: updatedKeys,
+  };
+}
+
+function buildTrackerDiff(
+  previous?: Record<string, ChapterTracker | NovelTracker>,
+  restored?: Record<string, ChapterTracker | NovelTracker>
+) {
+  const prev = previous ?? {};
+  const next = restored ?? {};
+
+  const previousKeys = Object.keys(prev);
+  const restoredKeys = Object.keys(next);
+
+  const added = restoredKeys.filter((key) => !previousKeys.includes(key));
+  const removed = previousKeys.filter((key) => !restoredKeys.includes(key));
+  const maybeUpdated = restoredKeys.filter(
+    (key) => previousKeys.includes(key) && !added.includes(key)
+  );
+
+  const updated = maybeUpdated.filter(
+    (key) => !isDeepEqual(prev[key], next[key])
+  );
+
+  return {
+    addedCount: added.length,
+    removedCount: removed.length,
+    updatedCount: updated.length,
+    unchangedCount: restoredKeys.length - added.length - updated.length,
+    addedPreview: added.slice(0, 3),
+    removedPreview: removed.slice(0, 3),
+    updatedPreview: updated.slice(0, 3),
+  };
+}
+
+function isDeepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true;
+  }
+
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch (error) {
+    console.warn('Failed to compare values for restore diff', error);
+    return false;
+  }
+}
+
+
 export async function restorePreferences({
   userId,
+  userPref,
+  chapterPreferences,
+  favPreferences,
   setUserPref,
   setAllTrackers,
   setAllNovelTracker,
@@ -363,24 +513,37 @@ export async function restorePreferences({
     const { user_pref, tracker, fav_pref, novels } = data;
 
     const pref = parseVersionedPayload(user_pref);
-    if (pref?.value) {
-      setUserPref(pref.value);
-    }
-
     const novelIndexPayload = parseVersionedPayload(novels);
     const novelIndex = novelIndexPayload?.value ?? {};
 
     const chapterPref = parseVersionedPayload(tracker);
-    if (chapterPref?.value) {
-      const enriched = expandChapterPref(chapterPref.value, novelIndex) ?? chapterPref.value;
-      setAllTrackers(enriched);
+    const novelPref = parseVersionedPayload(fav_pref);
+    const restoredUserPref = pref?.value;
+    const restoredChapters = chapterPref?.value
+      ? expandChapterPref(chapterPref.value, novelIndex) ?? {}
+      : {};
+    const restoredFavorites = novelPref?.value
+      ? expandNovelPref(novelPref.value, novelIndex) ?? {}
+      : {};
+
+    logRestoreComparison({
+      previousUserPref: userPref,
+      restoredUserPref,
+      previousChapters: chapterPreferences,
+      restoredChapters,
+      previousFavorites: favPreferences,
+      restoredFavorites,
+    });
+
+    if (restoredUserPref) {
+      setUserPref(restoredUserPref);
     }
 
-    const novelPref = parseVersionedPayload(fav_pref);
-    if (novelPref?.value) {
-      const enrichedFavorites = expandNovelPref(novelPref.value, novelIndex) ?? novelPref.value;
-      setAllNovelTracker(enrichedFavorites);
-    }
+    const chapterStores = buildChapterTrackerStoreMap(restoredChapters);
+    setAllTrackers(chapterStores);
+
+    const favoriteStores = buildNovelTrackerStoreMap(restoredFavorites);
+    setAllNovelTracker(favoriteStores);
     return { restored: true };
   } catch (error) {
     console.error('Error fetching user data:', error);

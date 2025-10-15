@@ -416,20 +416,14 @@ type BackupSummaryData = {
 
 function buildSummaryFromLocal(
     userPref: UserPreferences,
-    chapterStore: Map<string, any>,
-    favoriteStore: Map<string, any>,
+    chapterStore: Map<string, any> | Record<string, any> | undefined,
+    favoriteStore: Map<string, any> | Record<string, any> | undefined,
 ): BackupSummaryData {
-    const chapterTrackers = chapterStore
-        ? Array.from(chapterStore.values())
-            .map((store: any) => store?.getState?.()?.content)
-            .filter((item: ChapterTracker | undefined): item is ChapterTracker => Boolean(item))
-        : [];
+    const chapterTrackers = collectTrackerContent(chapterStore)
+        .filter((item: ChapterTracker | undefined): item is ChapterTracker => Boolean(item));
 
-    const favoriteTrackers = favoriteStore
-        ? Array.from(favoriteStore.values())
-            .map((store: any) => store?.getState?.()?.content)
-            .filter((item: NovelTracker | undefined): item is NovelTracker => Boolean(item))
-        : [];
+    const favoriteTrackers = collectTrackerContent(favoriteStore)
+        .filter((item: NovelTracker | undefined): item is NovelTracker => Boolean(item));
 
     const chapterTitles = new Set<string>();
     chapterTrackers.forEach((tracker) => {
@@ -500,6 +494,45 @@ function formatTitlePreview(titles: string[]): string {
     }
     const preview = titles.slice(0, 3).join(', ');
     return preview + (titles.length > 3 ? '...' : '');
+}
+
+function collectTrackerContent(storeCollection: Map<string, any> | Record<string, any> | undefined | null): any[] {
+    if (!storeCollection) {
+        return [];
+    }
+
+    const entries: any[] = [];
+
+    if (storeCollection instanceof Map) {
+        entries.push(...Array.from(storeCollection.values()));
+    } else if (typeof storeCollection === 'object') {
+        entries.push(...Object.values(storeCollection));
+    }
+
+    return entries
+        .map((entry) => {
+            if (!entry) {
+                return undefined;
+            }
+
+            const getState = (entry as any)?.getState;
+            if (typeof getState === 'function') {
+                try {
+                    const state = getState();
+                    if (state && typeof state === 'object') {
+                        return state.content ?? state;
+                    }
+                    return state;
+                } catch (error) {
+                    console.warn('Unable to read tracker state for summary', error);
+                    return undefined;
+                }
+            }
+
+            const content = (entry as any)?.content;
+            return content !== undefined ? content : entry;
+        })
+        .filter((value) => value !== undefined);
 }
 
 const styles = StyleSheet.create({
