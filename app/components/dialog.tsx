@@ -19,10 +19,12 @@ const PaperDialog = ({ setVisible, title, description, details, done, cancel }: 
     <Portal>
       <Dialog visible={true} onDismiss={hideDialog}>
         <Dialog.Title>{title}</Dialog.Title>
-        <Dialog.Content>
-          {description && <Text variant="bodyMedium">{description}</Text>}
-          {details}
-        </Dialog.Content>
+        {(description || details) && (
+          <Dialog.Content>
+            {description && <Text variant="bodyMedium">{description}</Text>}
+            {details}
+          </Dialog.Content>
+        )}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
           <Dialog.Actions>
             <Button onPress={() => { hideDialog(); if (cancel) cancel(); }}>Cancel</Button>

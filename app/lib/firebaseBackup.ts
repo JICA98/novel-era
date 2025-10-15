@@ -400,3 +400,54 @@ function parseVersionedPayload<T>(payload?: VersionedPayload<T> | null) {
     value: payload.value,
   };
 }
+
+export type BackupPreviewData = {
+  userPref?: UserPreferences;
+  chapters?: Record<string, ChapterTracker | ChapterTrackerPayload>;
+  favorites?: Record<string, NovelTracker | NovelTrackerPayload>;
+  novelIndex?: NovelIndex;
+};
+
+export async function fetchBackupPreview(
+  userId: string
+): Promise<
+  | { data: BackupPreviewData; missing?: false; error?: undefined }
+  | { data?: undefined; missing: true; error?: undefined }
+  | { data?: undefined; missing?: false; error: unknown }
+> {
+  if (!userId) {
+    return { error: new Error('Missing user identifier for preview.') };
+  }
+
+  try {
+    const snapshot = await get(ref(realtimeDb, `${USER_COLLECTION}/${userId}`));
+
+    if (!snapshot.exists()) {
+      return { missing: true };
+    }
+
+    const data = snapshot.val() as CloudBackupSnapshot;
+    const novelIndex = parseVersionedPayload(data.novels)?.value ?? {};
+    const chapterPayload = parseVersionedPayload(data.tracker)?.value;
+    const favoritePayload = parseVersionedPayload(data.fav_pref)?.value;
+
+    const expandedChapters = expandChapterPref(chapterPayload, novelIndex);
+    const expandedFavorites = expandNovelPref(favoritePayload, novelIndex);
+
+    const chapters = expandedChapters ?? (chapterPayload as Record<string, ChapterTracker | ChapterTrackerPayload> | undefined) ?? {};
+    const favorites = expandedFavorites ?? (favoritePayload as Record<string, NovelTracker | NovelTrackerPayload> | undefined) ?? {};
+    const userPref = parseVersionedPayload(data.user_pref)?.value;
+
+    return {
+      data: {
+        userPref,
+        chapters,
+        favorites,
+        novelIndex,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching backup preview:', error);
+    return { error };
+  }
+}

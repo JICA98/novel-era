@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
-import { backupPreferences, restorePreferences } from '../lib/firebaseBackup'
-import { Button, List, TextInput, Title, useTheme, List as PaperList, Divider } from 'react-native-paper'
-import { chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
+import { backupPreferences, restorePreferences, fetchBackupPreview, type BackupPreviewData } from '../lib/firebaseBackup'
+import { ActivityIndicator, Button, Divider, List, Text, TextInput, Title, useTheme } from 'react-native-paper'
+import { ChapterTracker, NovelTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import PaperDialog from '../components/dialog'
 import {
@@ -33,6 +33,65 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
     const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
+    const [restorePreviewSummary, setRestorePreviewSummary] = useState<BackupSummaryData | undefined>();
+    const [restorePreviewLoading, setRestorePreviewLoading] = useState(false);
+    const [restorePreviewError, setRestorePreviewError] = useState<string | null>(null);
+
+    const localBackupSummary = buildSummaryFromLocal(userPref, allTrackers, allNovelTrackerStore);
+
+    useEffect(() => {
+        if (!showRestore) {
+            setRestorePreviewSummary(undefined);
+            setRestorePreviewError(null);
+            setRestorePreviewLoading(false);
+            return;
+        }
+
+        if (!authUser.authId) {
+            setRestorePreviewError('Sign in to restore preferences');
+            setRestorePreviewSummary(undefined);
+            setRestorePreviewLoading(false);
+            return;
+        }
+
+        let cancelled = false;
+        setRestorePreviewLoading(true);
+        setRestorePreviewError(null);
+        setRestorePreviewSummary(undefined);
+
+        fetchBackupPreview(authUser.authId)
+            .then((result) => {
+                if (cancelled) return;
+                if (result?.missing) {
+                    setRestorePreviewError('No backup found for this account');
+                    setRestorePreviewSummary(undefined);
+                    return;
+                }
+                if (result?.error) {
+                    setRestorePreviewError('Unable to load cloud backup preview');
+                    setRestorePreviewSummary(undefined);
+                    return;
+                }
+                if (result?.data) {
+                    setRestorePreviewSummary(buildSummaryFromPreview(result.data));
+                }
+            })
+            .catch((error) => {
+                if (cancelled) return;
+                console.error('Failed to load backup preview:', error);
+                setRestorePreviewError('Unable to load cloud backup preview');
+                setRestorePreviewSummary(undefined);
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setRestorePreviewLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [showRestore, authUser.authId]);
 
     function prevalidation(): boolean {
         if (!email || !password) {
@@ -202,9 +261,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     description='This will overwrite your existing cloud backup with current preferences. Continue?'
                     details={
                         <BackupSummary
-                            userPref={userPref}
-                            chapterStore={allTrackers}
-                            favoriteStore={allNovelTrackerStore}
+                            summary={localBackupSummary}
                         />
                     }
                     setVisible={setBackup}
@@ -232,13 +289,21 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     description='This will overwrite your local preferences with the cloud backup. Continue?'
                     details={
                         <BackupSummary
-                            userPref={userPref}
-                            chapterStore={allTrackers}
-                            favoriteStore={allNovelTrackerStore}
+                            summary={restorePreviewSummary}
+                            loading={restorePreviewLoading}
+                            error={restorePreviewError}
                         />
                     }
                     setVisible={setRestore}
                     done={async () => {
+                        if (restorePreviewLoading) {
+                            setSnackbarText('Still loading cloud backup preview. Please wait a moment.');
+                            return;
+                        }
+                        if (restorePreviewError) {
+                            setSnackbarText(restorePreviewError);
+                            return;
+                        }
                         const chapterPreferences = await getAllTrackersAsync();
                         const favPreferences = await getFavoriteTrackersAsync();
                         const result = await restorePreferences({
@@ -282,53 +347,159 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
 }
 
 type BackupSummaryProps = {
-    userPref: UserPreferences;
-    chapterStore: Map<string, any>;
-    favoriteStore: Map<string, any>;
+    summary?: BackupSummaryData;
+    loading?: boolean;
+    error?: string | null;
 };
 
-function BackupSummary({ userPref, chapterStore, favoriteStore }: BackupSummaryProps) {
-    const chapterCount = chapterStore?.size ?? 0;
-    const novelCount = favoriteStore?.size ?? 0;
-    const favoriteNames = Array.from(favoriteStore?.values?.() ?? [])
-        .map((store: any) => store?.getState?.()?.content?.novel?.title)
-        .filter((title: string | undefined): title is string => Boolean(title));
+function BackupSummary({ summary, loading, error }: BackupSummaryProps) {
+    if (loading) {
+        return (
+            <View style={{ paddingVertical: 12, alignItems: 'center' }}>
+                <ActivityIndicator animating size="small" />
+                <Text style={{ marginTop: 8 }}>Fetching latest backup...</Text>
+            </View>
+        );
+    }
 
-    const trackedTitles = Array.from(chapterStore?.values?.() ?? [])
-        .map((store: any) => store?.getState?.()?.content?.novel?.title)
-        .filter((title: string | undefined): title is string => Boolean(title));
+    if (error) {
+        return (
+            <View style={{ paddingVertical: 12 }}>
+                <Text>{error}</Text>
+            </View>
+        );
+    }
 
-    const combinedTitles = [...new Set([...favoriteNames, ...trackedTitles])];
+    const fallbackSummary: BackupSummaryData = summary ?? {
+        hasPreferences: false,
+        chapterCount: 0,
+        favoriteCount: 0,
+        chapterTitles: [],
+        favoriteTitles: [],
+    };
+
+    const { hasPreferences, chapterCount, favoriteCount, chapterTitles, favoriteTitles } = fallbackSummary;
+
+    const chapterPreview = formatTitlePreview(chapterTitles);
+    const favoritePreview = formatTitlePreview(favoriteTitles);
 
     return (
-        <PaperList.Section style={{ marginTop: 12 }}>
-            <PaperList.Item
+        <List.Section style={{ marginTop: 12 }}>
+            <List.Item
                 title="Editor preferences"
-                description={userPref ? 'Theme, reader, and voice settings' : 'No preferences saved'}
-                left={(props) => <PaperList.Icon {...props} icon="tune" />}
+                description={hasPreferences ? 'Theme, reader, and voice settings' : 'No preferences saved'}
+                left={(props) => <List.Icon {...props} icon="tune" />}
             />
             <Divider />
-            <PaperList.Item
+            <List.Item
                 title={`${chapterCount} chapter${chapterCount === 1 ? '' : 's'}`}
-                description={
-                    combinedTitles.length
-                        ? combinedTitles.slice(0, 3).join(', ') + (combinedTitles.length > 3 ? '…' : '')
-                        : 'No chapters tracked'
-                }
-                left={(props) => <PaperList.Icon {...props} icon="book-open-variant" />}
+                description={chapterCount > 0 ? chapterPreview : 'No chapters tracked'}
+                left={(props) => <List.Icon {...props} icon="book-open-variant" />}
             />
             <Divider />
-            <PaperList.Item
-                title={`${novelCount} favorite${novelCount === 1 ? '' : 's'}`}
-                description={
-                    favoriteNames.length
-                        ? favoriteNames.slice(0, 3).join(', ') + (favoriteNames.length > 3 ? '…' : '')
-                        : 'No favorites saved'
-                }
-                left={(props) => <PaperList.Icon {...props} icon="star" />}
+            <List.Item
+                title={`${favoriteCount} favorite${favoriteCount === 1 ? '' : 's'}`}
+                description={favoriteCount > 0 ? favoritePreview : 'No favorites saved'}
+                left={(props) => <List.Icon {...props} icon="star" />}
             />
-        </PaperList.Section>
+        </List.Section>
     );
+}
+
+type BackupSummaryData = {
+    hasPreferences: boolean;
+    chapterCount: number;
+    favoriteCount: number;
+    chapterTitles: string[];
+    favoriteTitles: string[];
+};
+
+function buildSummaryFromLocal(
+    userPref: UserPreferences,
+    chapterStore: Map<string, any>,
+    favoriteStore: Map<string, any>,
+): BackupSummaryData {
+    const chapterTrackers = chapterStore
+        ? Array.from(chapterStore.values())
+            .map((store: any) => store?.getState?.()?.content)
+            .filter((item: ChapterTracker | undefined): item is ChapterTracker => Boolean(item))
+        : [];
+
+    const favoriteTrackers = favoriteStore
+        ? Array.from(favoriteStore.values())
+            .map((store: any) => store?.getState?.()?.content)
+            .filter((item: NovelTracker | undefined): item is NovelTracker => Boolean(item))
+        : [];
+
+    const chapterTitles = new Set<string>();
+    chapterTrackers.forEach((tracker) => {
+        if (tracker?.novel?.title) {
+            chapterTitles.add(tracker.novel.title);
+        }
+    });
+
+    const favoriteTitles = new Set<string>();
+    favoriteTrackers.forEach((tracker) => {
+        if (tracker?.novel?.title) {
+            favoriteTitles.add(tracker.novel.title);
+        }
+    });
+
+    return {
+        hasPreferences: userPref ? Object.keys(userPref ?? {}).length > 0 : false,
+        chapterCount: chapterTrackers.length,
+        favoriteCount: favoriteTrackers.length,
+        chapterTitles: Array.from(chapterTitles),
+        favoriteTitles: Array.from(favoriteTitles),
+    };
+}
+
+function buildSummaryFromPreview(preview: BackupPreviewData): BackupSummaryData {
+    const chapterEntries = Object.values(preview.chapters ?? {});
+    const favoriteEntries = Object.values(preview.favorites ?? {});
+    const chapterTitleSet = new Set<string>();
+    const favoriteTitleSet = new Set<string>();
+
+    const resolveTitle = (tracker: any) => {
+        if (tracker?.novel?.title) {
+            return tracker.novel.title;
+        }
+        if (tracker?.novelId && tracker?.repoId) {
+            const reference = preview.novelIndex?.[`${tracker.repoId}::${tracker.novelId}`];
+            return reference?.novel?.title ?? String(tracker.novelId);
+        }
+        return undefined;
+    };
+
+    chapterEntries.forEach((tracker) => {
+        const title = resolveTitle(tracker);
+        if (title) {
+            chapterTitleSet.add(title);
+        }
+    });
+
+    favoriteEntries.forEach((tracker) => {
+        const title = resolveTitle(tracker);
+        if (title) {
+            favoriteTitleSet.add(title);
+        }
+    });
+
+    return {
+        hasPreferences: Boolean(preview.userPref),
+        chapterCount: chapterEntries.length,
+        favoriteCount: favoriteEntries.length,
+        chapterTitles: Array.from(chapterTitleSet),
+        favoriteTitles: Array.from(favoriteTitleSet),
+    };
+}
+
+function formatTitlePreview(titles: string[]): string {
+    if (!titles.length) {
+        return '';
+    }
+    const preview = titles.slice(0, 3).join(', ');
+    return preview + (titles.length > 3 ? '...' : '');
 }
 
 const styles = StyleSheet.create({
