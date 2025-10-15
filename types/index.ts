@@ -101,33 +101,60 @@ export interface Content {
 }
 
 export function processData(data: any, selector: Selector): string {
-    let content = data;
-    if (selector.selector) {
-        content = data.querySelector(selector.selector);
+    if (!selector) {
+        return '';
     }
+
+    let content = data;
+
+    if (selector.selector) {
+        if (!content || typeof content.querySelector !== 'function') {
+            return '';
+        }
+        content = content.querySelector(selector.selector);
+    }
+
+    if (!content) {
+        return '';
+    }
+
+    let result: any = content;
+
     if (selector.attribute) {
-        content = content.getAttribute(selector.attribute);
+        if (typeof content.getAttribute !== 'function') {
+            return '';
+        }
+        const attributeValue = content.getAttribute(selector.attribute);
+        if (attributeValue == null) {
+            return '';
+        }
+        result = attributeValue;
     } else {
-        if (selector.filters) {
+        if (selector.filters && typeof content.querySelectorAll === 'function') {
             for (const filter of selector.filters) {
-                if (filter.selector) {
-                    content.querySelectorAll(filter.selector)
-                        .forEach((element: any) => {
-                            element.remove();
-                        });
+                if (!filter.selector) {
+                    continue;
                 }
+                const removable = content.querySelectorAll(filter.selector) ?? [];
+                removable.forEach((element: any) => {
+                    if (typeof element.remove === 'function') {
+                        element.remove();
+                    }
+                });
             }
         }
+
         if (selector.type === SelectorType.html) {
-            content = content.innerHTML;
+            result = content.innerHTML ?? '';
         } else {
-            content = content.textContent;
+            result = content.textContent ?? '';
         }
     }
-    if (selector.regex) {
-        const match = new String(content).match(selector.regex);
-        content = match ? match[1] : '';
-    }
-    return content;
 
+    if (selector.regex) {
+        const match = String(result ?? '').match(selector.regex);
+        result = match ? match[1] ?? '' : '';
+    }
+
+    return typeof result === 'string' ? result : String(result ?? '');
 }

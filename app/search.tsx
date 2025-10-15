@@ -1,15 +1,13 @@
 import { Content, Repo, SelectorType, processData } from "@/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
+import BookItem from "./repos/bookItem";
 import {
     ActivityIndicator,
-    Avatar,
     Chip,
     HelperText,
-    List,
     TextInput,
 } from "react-native-paper";
-import { router } from "expo-router";
 import UseRepositoryLayout from "./_repos";
 import { emptyPlaceholder } from "./placeholders";
 import IDOMParser from "advanced-html-parser";
@@ -319,55 +317,31 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
                     {showEmptyState && emptyPlaceholder("No results found")}
 
                     {canSearch && !isLoading && !showEmptyState && results.length > 0 && (
-                        <List.Section>
+                        <View style={styles.cardsStack}>
                             {results.map((item) => {
-                                const subtitle = resolveResultSubtitle(item);
+                                const repo = repos.find((candidate) => candidate.id === item.sourceId) ?? selectedRepo;
                                 return (
-                                    <List.Item
+                                    <BookItem
                                         key={item.id}
-                                        title={item.title}
-                                        description={subtitle}
-                                        left={() => (
-                                            <Avatar.Image
-                                                size={48}
-                                                source={{ uri: item.coverUrl || `https://picsum.photos/seed/${item.id}/200/200` }}
-                                            />
-                                        )}
-                                        onPress={() =>
-                                            handleOpenContent(
-                                                repos.find((repo) => repo.id === item.sourceId) ?? selectedRepo,
-                                                item
-                                            )
-                                        }
+                                        repo={repo}
+                                        item={convertToContent(item)}
                                     />
                                 );
                             })}
-                        </List.Section>
+                        </View>
                     )}
 
                     {isHomeMode && !isLoading && !error && (
                         homeResults.length > 0 ? (
-                            <List.Section>
-                                {homeResults.map((item) => {
-                                    const subtitle = resolveResultSubtitle(item);
-                                    return (
-                                        <List.Item
-                                            key={item.id}
-                                            title={item.title}
-                                            description={subtitle}
-                                            left={() => (
-                                                <Avatar.Image
-                                                    size={48}
-                                                    source={{
-                                                        uri: item.coverUrl || `https://picsum.photos/seed/${item.id}/200/200`,
-                                                    }}
-                                                />
-                                            )}
-                                            onPress={() => handleOpenContent(selectedRepo, item)}
-                                        />
-                                    );
-                                })}
-                            </List.Section>
+                            <View style={styles.cardsStack}>
+                                {homeResults.map((item) => (
+                                    <BookItem
+                                        key={item.id}
+                                        repo={selectedRepo}
+                                        item={convertToContent(item)}
+                                    />
+                                ))}
+                            </View>
                         ) : (
                             emptyPlaceholder("Browse your library")
                         )
@@ -531,32 +505,14 @@ async function fetchRepositoryHome({
 
     return items.filter((item) => !!item.title);
 }
-
-function handleOpenContent(repo: Repo | undefined, item: SearchResultItem) {
-    if (!repo) {
-        return;
-    }
-
-    const content: Content = {
+function convertToContent(item: SearchResultItem): Content {
+    return {
         title: item.title,
         bookImage: item.coverUrl ?? "",
         bookLink: item.link ?? "",
         bookId: item.bookId ?? item.id,
         rating: item.rating,
     };
-
-    router.push({
-        pathname: "/contents",
-        params: {
-            content: JSON.stringify(content),
-            repo: JSON.stringify(repo),
-        },
-    } as never);
-}
-
-function resolveResultSubtitle(item: SearchResultItem) {
-    const subtitle = item.summary?.trim() || item.rating?.trim() || item.link?.trim() || item.bookId?.trim();
-    return subtitle?.length ? subtitle : undefined;
 }
 
 const styles = StyleSheet.create({
@@ -584,6 +540,9 @@ const styles = StyleSheet.create({
     },
     resultsContent: {
         paddingBottom: 120,
+    },
+    cardsStack: {
+        gap: 12,
     },
     helperText: {
         marginTop: 8,
