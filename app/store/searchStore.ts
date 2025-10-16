@@ -43,3 +43,7 @@ export const useSearchStore = create<SearchState>((set) => ({
   updateCache: (key, entry) =>
     set((state) => ({ cache: { ...state.cache, [key]: entry } })),
 }));
+
+export default function SearchStoreRoute(): null {
+  return null;
+}

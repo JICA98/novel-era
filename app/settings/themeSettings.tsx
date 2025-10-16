@@ -85,3 +85,7 @@ export function getTheme({ colorScheme, themeOptions, theme }: {
     }
 }
 
+export default function ThemeSettingsRoute() {
+    return null;
+}
+

@@ -659,3 +659,7 @@ export async function fetchBackupPreview(
     return { error };
   }
 }
+
+export default function FirebaseBackupRoute(): null {
+  return null;
+}

@@ -94,3 +94,7 @@ export async function httpGet<T>(
         throw new Error('Failed to fetch content');
     }
 }
+
+export default function StorageRoute(): null {
+    return null;
+}

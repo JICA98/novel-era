@@ -91,3 +91,7 @@ export async function getUserPreference(): Promise<UserPreferences> {
 async function setUserPreference(userPref: UserPreferences) {
     await storeData('userPreference', userPref);
 }
+
+export default function UserPrefRoute() {
+    return null;
+}
