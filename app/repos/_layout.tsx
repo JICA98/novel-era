@@ -43,8 +43,12 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; sea
                     const bookImage = processData(item, selector.bookImage);
                     const bookLink = processData(item, selector.bookLink);
                     const bookId = processData(item, selector.bookId);
-                    // const rating = processData(item, selector.rating);
-                    return { title, bookImage, bookLink, bookId };
+                    let rating = undefined;
+                    if ('rating' in selector) {
+                        rating = processData(item, selector.rating);
+                    }
+                    console.log({ title, bookImage, bookLink, bookId, rating });
+                    return { title, bookImage, bookLink, bookId, rating };
                 });
             }
         }) ?? [];
