@@ -42,7 +42,6 @@ function ExportDialog({
 
     const totalSelected = useMemo(() => range[1] - range[0] + 1, [range]);
     const hasMultipleChapters = maxChapters > 1;
-    const isPdfDisabled = true;
 
     const handleQuickSelect = (type: "all" | "recent") => {
         if (type === "all") {
@@ -135,11 +134,7 @@ function ExportDialog({
                         <Text variant="titleSmall">Format</Text>
                         <RadioButton.Group onValueChange={(value) => setFormat(value as ExportFormat)} value={format}>
                             <RadioButton.Item label="EPUB" value="epub" disabled={isExporting} />
-                            <RadioButton.Item
-                                label="PDF (Coming soon)"
-                                value="pdf"
-                                disabled={isExporting || isPdfDisabled}
-                            />
+                            <RadioButton.Item label="PDF" value="pdf" disabled={isExporting} />
                         </RadioButton.Group>
                     </View>
 
@@ -149,12 +144,7 @@ function ExportDialog({
                     <Button onPress={onDismiss} disabled={isExporting}>
                         Cancel
                     </Button>
-                    <Button
-                        mode="contained"
-                        onPress={handleExport}
-                        disabled={isExporting || format === "pdf"}
-                        loading={isExporting}
-                    >
+                    <Button mode="contained" onPress={handleExport} disabled={isExporting} loading={isExporting}>
                         {isExporting ? "Exporting…" : "Export"}
                     </Button>
                 </Dialog.Actions>

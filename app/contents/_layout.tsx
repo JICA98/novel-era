@@ -80,15 +80,6 @@ export default function ContentLayout() {
                 return;
             }
 
-            if (format === "pdf") {
-                setSnackBarData({
-                    visible: true,
-                    severity: "error",
-                    message: "PDF export isn't available yet. Please choose EPUB.",
-                });
-                return;
-            }
-
             const total = range[1] - range[0] + 1;
             setExportState({ isExporting: true, completed: 0, total });
 

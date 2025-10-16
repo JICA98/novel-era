@@ -2,6 +2,7 @@ import { Repo, Content, SnackBarData } from "@/types";
 import { ChapterData, chapterKey, fetchChapter } from "../chapters/common";
 import { readFile, moveToAlbum, createStore } from "../downloads/utils";
 import { saveAsEpub } from "./epubUtil";
+import { saveAsPdf } from "./pdfUtil";
 import { pLimitLit } from "../_layout";
 
 type ExportFormat = "epub" | "pdf";
@@ -51,21 +52,38 @@ export async function exportChapters(
     }
 
     if (format === "pdf") {
-        throw new Error("PDF export is not available yet. Please choose EPUB.");
-    }
-
-    if (format === "epub") {
-        const uri = await saveAsEpub({
+        const fileName = await saveAsPdf({
             author: content.author ?? "Unknown",
             title: content.title,
             content: collectedChapters,
         });
 
-        await moveToAlbum(uri, "application/epub+zip");
+        const savedUri = await moveToAlbum(fileName, "application/pdf");
 
         setSnackBarData({
             visible: true,
-            message: `Exported as EPUB to ${uri}`,
+            message: `Exported as PDF to ${savedUri}`,
+            severity: "success",
+            action: {
+                label: "OK",
+                onPress: () => setSnackBarData({ visible: false }),
+            },
+        });
+        return;
+    }
+
+    if (format === "epub") {
+        const fileName = await saveAsEpub({
+            author: content.author ?? "Unknown",
+            title: content.title,
+            content: collectedChapters,
+        });
+
+        const savedUri = await moveToAlbum(fileName, "application/epub+zip");
+
+        setSnackBarData({
+            visible: true,
+            message: `Exported as EPUB to ${savedUri}`,
             severity: "success",
             action: {
                 label: "OK",
