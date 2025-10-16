@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import { backupPreferences, restorePreferences, fetchBackupPreview, type BackupPreviewData } from '../lib/firebaseBackup'
 import { ActivityIndicator, Button, Divider, List, Text, TextInput, Title, useTheme } from 'react-native-paper'
-import { ChapterTracker, NovelTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
+import { ChapterTracker, NovelTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../../lib/favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import PaperDialog from '../components/dialog'
 import {

@@ -1,6 +1,6 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
-import { createStore } from "../downloads/utils";
+import { createStore } from "../../lib/downloads/utils";
 import { auth } from "../firebase";
 import {
   GoogleAuthProvider,
@@ -240,4 +240,9 @@ function resolveGoogleNativeError(error: unknown): string | undefined {
   }
 
   return undefined;
+}
+
+// Default export to satisfy Expo Router
+export default function AuthRoute(): null {
+  return null;
 }

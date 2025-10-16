@@ -1,7 +1,7 @@
 import { Content, processData, Repo } from "@/types";
 import { router } from "expo-router";
 import IDOMParser from "advanced-html-parser";
-import { saveFile } from "../downloads/utils";
+import { saveFile } from "../../lib/downloads/utils";
 import { View } from "react-native";
 import TimeAgo from '@andordavoti/react-native-timeago';
 import { SpeechAction } from "./tts";
@@ -73,3 +73,8 @@ export const timeAgo = (timeInMillis: number): JSX.Element => {
     if (!timeInMillis) return <View />;
     return <TimeAgo dateTo={new Date(timeInMillis)} />;;
 };
+
+// Default export to satisfy Expo Router
+export default function ChapterCommon() {
+    return null;
+}

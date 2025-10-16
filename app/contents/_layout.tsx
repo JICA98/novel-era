@@ -6,13 +6,13 @@ import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackgr
 import { ActivityIndicator, Snackbar, useTheme, MD3Theme, FAB } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
-import { allDownloadsStore } from "../downloads/utils";
+import { allDownloadsStore } from "../../lib/downloads/utils";
 import ExportDialog from "../exports/_layout";
 import { ChapterCard } from "./chapterCard";
-import { exportChapters } from "../exports/exportUtils";
+import { exportChapters } from "../../lib/exports/exportUtils";
 import { Tab, TabBar } from "../components/tabs";
 import { AppBar } from "../components/appbar";
-import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, NovelTracker } from "../favorites/tracker";
+import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, NovelTracker } from "../../lib/favorites/tracker";
 import { errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 

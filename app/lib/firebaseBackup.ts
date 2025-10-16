@@ -1,7 +1,7 @@
 import { Alert } from 'react-native';
 import * as Device from 'expo-device';
 import { getDatabase, onValue, ref, get, set } from 'firebase/database';
-import { createStore } from '../downloads/utils';
+import { createStore } from "../../lib/downloads/utils";
 import { UserPreferences } from '../userpref';
 import {
   ChapterTracker,
@@ -12,7 +12,7 @@ import {
   saveNovelTracker,
   trackerKey,
   novelKey,
-} from '../favorites/tracker';
+} from '../../lib/favorites/tracker';
 import { getAllKeys, removeMany } from '../storage';
 import { AuthState, AuthUser } from '../lib/auth';
 import { app } from '../firebase';

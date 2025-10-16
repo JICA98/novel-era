@@ -3,7 +3,7 @@ import { View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, Fla
 import PagerView from 'react-native-pager-view';
 import { IconButton } from 'react-native-paper';
 import { RenderChapterProps, navigateToNextChapter } from './common';
-import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../favorites/tracker';
+import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../../lib/favorites/tracker';
 import * as Speech from 'expo-speech';
 import { htmlToIdSentences, indexOfSentence, isSpeechOrPause, Sentence, setTTS, toQueue, TTS, ttsStore } from './tts';
 import { UserPreferences, userPrefStore } from '../userpref';
@@ -209,5 +209,10 @@ function getCurrentSentence(viewables: ViewToken<Sentence>[]): Sentence | undefi
         return currentSentence;
     }
     return undefined;
+}
+
+// Default export to satisfy Expo Router
+export default function ChapterContent() {
+    return null;
 }
 

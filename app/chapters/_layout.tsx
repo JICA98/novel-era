@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
 import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
-import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
+import { allDownloadsStore, useDownloadStore } from "../../lib/downloads/utils";
 import { AppBar } from "../components/appbar";
 import { RenderPagedContent } from "./content";
 import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNextChapter } from "./common";

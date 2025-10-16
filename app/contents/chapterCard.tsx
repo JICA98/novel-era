@@ -2,9 +2,9 @@ import { Content, Repo } from "@/types";
 import { router } from "expo-router";
 import { View, StyleSheet } from "react-native";
 import { List, Title, IconButton, Divider, ActivityIndicator } from "react-native-paper";
-import { useDownloadStore, startDownload, removeFromStore, allDownloadsStore } from "../downloads/utils";
+import { useDownloadStore, startDownload, removeFromStore, allDownloadsStore } from "../../lib/downloads/utils";
 import { chapterKey, RenderChapterProps, fetchChapter } from "../chapters/common";
-import { getOrCreateTrackerStore, chapterTrackerStore, ChapterTracker } from "../favorites/tracker";
+import { getOrCreateTrackerStore, chapterTrackerStore, ChapterTracker } from "../../lib/favorites/tracker";
 
 interface ChapterCardProps {
     chapterId: string;
@@ -185,3 +185,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 });
+
+// Default export to satisfy Expo Router
+export default ChapterCard;

@@ -52,3 +52,8 @@ if (Platform.OS === "web") {
 }
 
 export { app, analytics, auth, db, firebaseConfig };
+
+// Default export to satisfy Expo Router
+export default function Firebase() {
+    return null;
+}

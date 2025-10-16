@@ -254,3 +254,8 @@ export function toQueue(sentences: Sentence[]): Sentence[] {
     });
     return queue;
 }
+
+// Default export to satisfy Expo Router
+export default function ChapterTTS() {
+    return null;
+}

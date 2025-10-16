@@ -61,3 +61,6 @@ const styles = StyleSheet.create({
 
     },
 });
+
+// Default export to satisfy Expo Router
+export default AppBar;

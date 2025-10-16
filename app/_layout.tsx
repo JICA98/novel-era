@@ -1,9 +1,9 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
-import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
+import { allDownloadsStore, setupDownloadStores } from "../lib/downloads/utils";
 import * as p from "plimit-lit";
-import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "./favorites/tracker";
+import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "../lib/favorites/tracker";
 import { useMaterial3Theme } from '@pchmn/expo-material3-theme';
 import { useColorScheme } from "react-native";
 import { getTheme } from "./settings/themeSettings";

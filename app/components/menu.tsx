@@ -33,3 +33,6 @@ export function MenuFunction({ items, children }: { items?: MenuItem[]; children
         </View>
     );
 }
+
+// Default export to satisfy Expo Router
+export default MenuFunction;

@@ -33,3 +33,6 @@ export const Refresh = () => {
       justifyContent: 'center',
     },
   });
+
+// Default export to satisfy Expo Router
+export default Refresh;

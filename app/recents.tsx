@@ -1,6 +1,6 @@
 import { RefreshControl, SafeAreaView, ScrollView, View, Image, Text, FlatList, ImageBackground } from "react-native";
 import { FAB, IconButton, List, SegmentedButtons, Title, useTheme } from "react-native-paper";
-import { ChapterTracker, getAllTrackersAsync, saveTracker } from "./favorites/tracker";
+import { ChapterTracker, getAllTrackersAsync, saveTracker } from "../lib/favorites/tracker";
 import React, { useState, useCallback, useEffect } from 'react';
 import { ChapterCard } from "./contents/chapterCard";
 import { timeAgo, RenderChapterProps } from "./chapters/common";
