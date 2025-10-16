@@ -2,17 +2,33 @@ import { Repo, Content, SnackBarData } from "@/types";
 import { ChapterData, chapterKey, fetchChapter } from "../chapters/common";
 import { readFile, moveToAlbum, createStore } from "../downloads/utils";
 import { saveAsEpub } from "./epubUtil";
+import { saveAsPdf } from "./pdfUtil";
 import { pLimitLit } from "../_layout";
 
-export function exportChapters(range: any[], format: string, repo: Repo, content: Content,
-    downloads: any, setDownloads: any, setSnackBarData: React.Dispatch<React.SetStateAction<SnackBarData>>) {
-    console.log(range, format);
-    const endRange = range[1];
-    const startRange = range[0];
+type ExportFormat = "epub" | "pdf";
+
+interface ExportOptions {
+    onProgress?: (completed: number, total: number) => void;
+}
+
+export async function exportChapters(
+    range: [number, number],
+    format: ExportFormat,
+    repo: Repo,
+    content: Content,
+    downloads: any,
+    setDownloads: any,
+    setSnackBarData: React.Dispatch<React.SetStateAction<SnackBarData>>,
+    options: ExportOptions = {}
+): Promise<void> {
+    const [startRange, endRange] = range;
+    const total = endRange - startRange + 1;
     const limit = pLimitLit(1);
-    const promises: Promise<ChapterData>[] = Array.from({ length: endRange - startRange + 1 }).map((_, index) => {
-        const id = (range[0] + index).toString();
-        return limit(async () => {
+    const collectedChapters: ChapterData[] = [];
+
+    for (let offset = 0; offset < total; offset += 1) {
+        const id = (startRange + offset).toString();
+        const chapterData = await limit(async () => {
             const key = chapterKey(repo, content, id);
             if (downloads.has(key)) {
                 const stateData = await readFile(key);
@@ -20,41 +36,59 @@ export function exportChapters(range: any[], format: string, repo: Repo, content
                     return stateData;
                 }
             }
-            console.log('Downloading ', key);
-            const chapterData = await fetchChapter(repo, content, id);
-            if (chapterData.chapterContent) {
-                const store = createStore(chapterData);
+
+            const fetchedChapter = await fetchChapter(repo, content, id);
+            if (fetchedChapter.chapterContent) {
+                const store = createStore(fetchedChapter);
                 downloads.set(key, store);
                 setDownloads(downloads);
             }
-            return chapterData;
+
+            return fetchedChapter;
         });
-    });
 
-    Promise.all(promises).then(async (data) => {
-        if (format === 'epub') {
-            const uri = await saveAsEpub({
-                author: content!.author!,
-                title: content.title,
-                content: data,
-                // cover: content.bookImage,
-            });
+        collectedChapters.push(chapterData);
+        options.onProgress?.(offset + 1, total);
+    }
 
-            await moveToAlbum(uri, 'application/epub+zip');
+    if (format === "pdf") {
+        const fileName = await saveAsPdf({
+            author: content.author ?? "Unknown",
+            title: content.title,
+            content: collectedChapters,
+        });
 
-            setSnackBarData({
-                visible: true,
-                message: `Exported as EPUB under ${uri}`,
-                severity: 'success',
-                action: {
-                    label: 'Ok',
-                    onPress: () => {
-                        setSnackBarData({ visible: false });
-                    }
-                }
-            });
-        }
-    }).catch((error) => {
-        console.error(error);
-    });
+        const savedUri = await moveToAlbum(fileName, "application/pdf");
+
+        setSnackBarData({
+            visible: true,
+            message: `Exported as PDF to ${savedUri}`,
+            severity: "success",
+            action: {
+                label: "OK",
+                onPress: () => setSnackBarData({ visible: false }),
+            },
+        });
+        return;
+    }
+
+    if (format === "epub") {
+        const fileName = await saveAsEpub({
+            author: content.author ?? "Unknown",
+            title: content.title,
+            content: collectedChapters,
+        });
+
+        const savedUri = await moveToAlbum(fileName, "application/epub+zip");
+
+        setSnackBarData({
+            visible: true,
+            message: `Exported as EPUB to ${savedUri}`,
+            severity: "success",
+            action: {
+                label: "OK",
+                onPress: () => setSnackBarData({ visible: false }),
+            },
+        });
+    }
 }

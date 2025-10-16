@@ -3,20 +3,25 @@ import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Content, FetchData, processData, Repo, SelectorType } from "@/types";
-import { useEffect, useState } from "react";
-import { create } from "zustand";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import IDOMParser from "advanced-html-parser";
 import { Searchbar } from 'react-native-paper';
 import jsonpath from 'jsonpath';
 import { MenuFunction } from "../components/menu";
 import BookItem from "./bookItem";
 import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
-import { cacheValue, getCachedValue, httpGet } from "../storage";
+import { httpGet } from "../storage";
 
-async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo, searchQuery?: string, cached?: boolean }): Promise<Content[]> {
+async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
     try {
         const selector = searchQuery ? repo.repoSearch : repo.listSelector;
-        const url = repo.repoUrl + selector.path.replace('[text]', searchQuery || '');
+        if (!selector) {
+            return [];
+        }
+
+        const safePath = selector.path?.replace('[text]', encodeURIComponent(searchQuery ?? '')) ?? '';
+        const url = `${repo.repoUrl}${safePath}`;
         return await httpGet<Content[]>(url, {
             cached,
             cachedKey: `content-storage-${repo.id}-${url}`,
@@ -25,11 +30,12 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo, sea
                 let html = '';
                 if (selector.type === SelectorType.http) {
                     const json = await response.json();
-                    html = jsonpath.query(json, selector.jsonPath)[0];
+                    const extracted = jsonpath.query(json, selector.jsonPath);
+                    html = Array.isArray(extracted) ? extracted.join('\n') : String(extracted?.[0] ?? '');
                 } else {
                     html = await response.text();
                 }
-                var dom = IDOMParser.parse(html).documentElement;
+                const dom = IDOMParser.parse(html).documentElement;
                 const list = dom.querySelectorAll(selector.selector);
 
                 return Array.from(list).map((item) => {
@@ -37,8 +43,12 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo, sea
                     const bookImage = processData(item, selector.bookImage);
                     const bookLink = processData(item, selector.bookLink);
                     const bookId = processData(item, selector.bookId);
-                    // const rating = processData(item, selector.rating);
-                    return { title, bookImage, bookLink, bookId };
+                    let rating = undefined;
+                    if ('rating' in selector) {
+                        rating = processData(item, selector.rating);
+                    }
+                    console.log({ title, bookImage, bookLink, bookId, rating });
+                    return { title, bookImage, bookLink, bookId, rating };
                 });
             }
         }) ?? [];
@@ -48,96 +58,194 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo, sea
     }
 }
 
-const useContentStore = create((set) => ({
-    content: { isLoading: true } as FetchData<Content[]>,
-    setContent: (content: FetchData<Content[]>) => set({ content }),
-    setLoading: () => set({ content: { isLoading: true } }),
-}));
+interface RepoContentLayoutProps {
+    repo: Repo;
+    showHeader?: boolean;
+    onBackPress?: () => void;
+    enableSearchToggle?: boolean;
+    initialSearchBarVisible?: boolean;
+    topAccessory?: ReactNode;
+}
 
-export default function RepositorLayout() {
-    const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
-    const setContent = useContentStore((state: any) => state.setContent);
-    const content = useContentStore((state: any) => state.content);
-    const setLoading = useContentStore((state: any) => state.setLoading);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchBarVisible, setSearchBarVisible] = useState(false);
+export function RepoContentLayout({
+    repo,
+    showHeader = true,
+    onBackPress,
+    enableSearchToggle = true,
+    initialSearchBarVisible = false,
+    topAccessory,
+}: RepoContentLayoutProps) {
     const theme = useTheme();
-    let child;
+    const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchBarVisible, setSearchBarVisible] = useState(initialSearchBarVisible);
+    const previousQueryRef = useRef('');
 
-    function fetchContent({ cached, searchQuery }: { cached: boolean, searchQuery?: string }) {
-        setLoading();
-        fetchContentList({ repo, searchQuery, cached })
-            .then(data => setContent({ data }))
-            .catch(error => setContent({ error }));
-    }
+    const fetchContent = useCallback(
+        async ({ cached, searchQuery: query }: { cached: boolean; searchQuery?: string }) => {
+            setContent({ isLoading: true });
+            try {
+                const data = await fetchContentList({ repo, searchQuery: query, cached });
+                setContent({ data, isLoading: false });
+            } catch (error) {
+                setContent({ error, isLoading: false });
+            }
+        },
+        [repo]
+    );
+
     useEffect(() => {
         fetchContent({ cached: true });
-    }, []);
-    const hasDataLoaded = content.data && !content.isLoading;
+    }, [fetchContent]);
 
-    if (content.isLoading) {
-        child = (
-            <View style={styles.listPadding}>
-                <ActivityIndicator animating={true} size="large" />
-            </View>
-        );
-    } else if (content.error) {
-        child = errorPlaceholder({ onRetry: () => fetchContent({ cached: false }) });
-    } else {
-        child = (
+    const hasDataLoaded = !!content.data && !content.isLoading;
+
+    const child = useMemo(() => {
+        if (content.isLoading) {
+            return (
+                <View style={styles.listPadding}>
+                    <ActivityIndicator animating size="large" />
+                </View>
+            );
+        }
+
+        if (content.error) {
+            return errorPlaceholder({ onRetry: () => fetchContent({ cached: false }) });
+        }
+
+        return (
             <FlatList
                 data={content.data}
-                renderItem={({ item }) => (<BookItem repo={repo} item={item} />)}
+                renderItem={({ item }) => <BookItem repo={repo} item={item} />}
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
                 ListEmptyComponent={emptyPlaceholder('No content found')}
                 ListFooterComponent={<View style={{ height: 120 }} />}
                 ListHeaderComponent={<View style={{ height: 20 }} />}
-                refreshControl={<RefreshControl refreshing={content.isLoading} onRefresh={() => fetchContent({ cached: false })} />}
+                refreshControl={
+                    <RefreshControl refreshing={content.isLoading} onRefresh={() => fetchContent({ cached: false })} />
+                }
             />
         );
-    }
+    }, [content, fetchContent, repo]);
+
+    const handleBack = useCallback(() => {
+        if (onBackPress) {
+            onBackPress();
+        } else {
+            router.back();
+        }
+    }, [onBackPress]);
+
+    const ContainerComponent = showHeader ? SafeAreaView : View;
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <Appbar.Header>
-                <Appbar.BackAction onPress={() => router.back()} />
-                <Appbar.Content title={repo.name} />
-                {!content.isLoading &&
-                    <Appbar.Action icon={searchBarVisible ? 'close' : 'magnify'} onPress={() => setSearchBarVisible(!searchBarVisible)} />}
-                {hasDataLoaded && <MenuFunction
-                    children={[
-                        { title: 'Refresh', leadingIcon: 'refresh', onPress: () => fetchContent({ cached: false }) },
-                    ]}
-                />}
-            </Appbar.Header>
+        <ContainerComponent style={[styles.container, { backgroundColor: theme.colors.background }]}>
+            {showHeader && (
+                <Appbar.Header>
+                    <Appbar.BackAction onPress={handleBack} />
+                    <Appbar.Content title={repo.name} />
+                    {enableSearchToggle && !content.isLoading && (
+                        <Appbar.Action
+                            icon={searchBarVisible ? 'close' : 'magnify'}
+                            onPress={() => setSearchBarVisible((value) => !value)}
+                        />
+                    )}
+                    {hasDataLoaded && (
+                        <MenuFunction
+                            items={[{
+                                title: 'Refresh',
+                                leadingIcon: 'refresh',
+                                onPress: () => fetchContent({ cached: false }),
+                            }]}
+                        />
+                    )}
+                </Appbar.Header>
+            )}
 
-            {searchBarVisible && !content.isLoading && <View style={styles.searchBar}>
-                <Searchbar
-                    placeholder="Search"
-                    onChangeText={setSearchQuery}
-                    value={searchQuery}
-                    onEndEditing={() => searchQuery && fetchContent({ cached: false, searchQuery })}
-                    traileringIcon={searchQuery.length ? 'close' : undefined}
-                    onTraileringIconPress={() => setSearchQuery('')}
-                />
-            </View>}
+            {topAccessory && (
+                <View style={styles.accessoryContainer}>{topAccessory}</View>
+            )}
+
+            {(searchBarVisible || (!enableSearchToggle && !content.isLoading)) && (
+                <View style={styles.searchBar}>
+                    <Searchbar
+                        placeholder="Search"
+                        onChangeText={(text) => {
+                            setSearchQuery(text);
+                            const trimmed = text.trim();
+                            const previousTrimmed = previousQueryRef.current.trim();
+
+                            if (trimmed.length === 0 && previousTrimmed.length > 0) {
+                                fetchContent({ cached: true });
+                            }
+
+                            previousQueryRef.current = text;
+                        }}
+                        value={searchQuery}
+                        onSubmitEditing={() => {
+                            const trimmed = searchQuery.trim();
+                            if (trimmed.length) {
+                                fetchContent({ cached: false, searchQuery: trimmed });
+                            }
+                        }}
+                        returnKeyType="search"
+                        traileringIcon={searchQuery.length ? 'close' : undefined}
+                        onTraileringIconPress={() => {
+                            setSearchQuery('');
+                            previousQueryRef.current = '';
+                            fetchContent({ cached: true });
+                        }}
+                    />
+                </View>
+            )}
 
             {child}
-
-        </SafeAreaView>
+        </ContainerComponent>
     );
+}
 
+export default function RepositorLayout() {
+    const params = useLocalSearchParams();
+    const repoParam = params.repo;
+
+    const repo: Repo | undefined = useMemo(() => {
+        if (!repoParam) {
+            return undefined;
+        }
+        try {
+            if (Array.isArray(repoParam)) {
+                return JSON.parse(repoParam[0]) as Repo;
+            }
+            return JSON.parse(repoParam) as Repo;
+        } catch (error) {
+            console.error('Failed to parse repo param', error);
+            return undefined;
+        }
+    }, [repoParam]);
+
+    if (!repo) {
+        return errorPlaceholder({ onRetry: () => router.back() });
+    }
+
+    return <RepoContentLayout repo={repo} />;
 }
 
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
+        flex: 1,
+    },
+    accessoryContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 4,
+        paddingBottom: 4,
     },
     searchBar: {
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 12,
     },
     listPadding: {
         padding: 16,

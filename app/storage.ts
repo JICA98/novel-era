@@ -9,6 +9,25 @@ export const storeData = async (key: string, value: any) => {
     }
 };
 
+export const removeData = async (key: string) => {
+    try {
+        await AsyncStorage.removeItem(key);
+    } catch (e) {
+        console.error(e);
+    }
+};
+
+export const removeMany = async (keys: string[]) => {
+    if (!keys.length) {
+        return;
+    }
+    try {
+        await AsyncStorage.multiRemove(keys);
+    } catch (e) {
+        console.error(e);
+    }
+};
+
 export const getData = async <T>(key: string): Promise<T | null> => {
     try {
         const jsonValue = await AsyncStorage.getItem(key);
@@ -74,4 +93,8 @@ export async function httpGet<T>(
         console.error(error);
         throw new Error('Failed to fetch content');
     }
+}
+
+export default function StorageRoute(): null {
+    return null;
 }

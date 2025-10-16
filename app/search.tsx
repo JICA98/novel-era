@@ -1,113 +1,99 @@
-import { FetchData, Repo, ReposData } from "@/types";
-import { useEffect, useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
-import { ActivityIndicator, Avatar, Button, List, TextInput, Title, useTheme } from "react-native-paper";
-import { create } from "zustand";
-import { router } from 'expo-router';
+import { Repo } from "@/types";
+import { useEffect, useMemo } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { Chip } from "react-native-paper";
 import UseRepositoryLayout from "./_repos";
-import { MD3Colors } from "react-native-paper/lib/typescript/types";
-import { emptyPlaceholder as emptyStatePlaceholder } from "./placeholders";
-
+import { RepoContentLayout } from "./repos/_layout";
+import { useSearchStore } from "./store/searchStore";
+import { userPrefStore } from "./userpref";
+import { useShallow } from "zustand/react/shallow";
 
 export default function SearchLayout() {
-
     return (
-        <UseRepositoryLayout props={{ renderRepositories: (repos) => (<SearchBarLayout repos={repos} />) }} />
+        <UseRepositoryLayout props={{ renderRepositories: (repos) => <SearchBarLayout repos={repos} /> }} />
     );
 }
 
 function SearchBarLayout({ repos }: { repos: Repo[] }) {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filteredRepos, setFilteredRepos] = useState<Repo[]>(repos);
-    const colors = useTheme().colors;
-    const handleSearch = (query: string) => {
-        setSearchQuery(query);
-        if (repos) {
-            const filtered = repos.filter(repo =>
-                repo.name.toLowerCase().includes(query.toLowerCase())
-            );
-            setFilteredRepos(filtered);
+    const { selectedRepositoryId, setSelectedRepository } = useSearchStore(
+        useShallow((state) => ({
+            selectedRepositoryId: state.selectedRepositoryId,
+            setSelectedRepository: state.setSelectedRepository,
+        }))
+    );
+
+    const userPref = userPrefStore((state: any) => state.userPref);
+    const setPreferredRepository = userPrefStore((state: any) => state.setPreferredRepository);
+
+    useEffect(() => {
+        const preferredRepoId = userPref?.preferredRepositoryId;
+        if (!repos.length) {
+            return;
         }
-    };
+        const fallbackRepoId = repos[0].id;
+        const resolvedRepoId = repos.some((repo) => repo.id === preferredRepoId)
+            ? preferredRepoId
+            : fallbackRepoId;
+        if (!selectedRepositoryId && resolvedRepoId) {
+            setSelectedRepository(resolvedRepoId);
+        }
+    }, [repos, userPref?.preferredRepositoryId, selectedRepositoryId, setSelectedRepository]);
+
+    const selectedRepo = useMemo(() => {
+        return repos.find((repo) => repo.id === selectedRepositoryId) ?? repos[0];
+    }, [repos, selectedRepositoryId]);
+
+    if (!selectedRepo) {
+        return null;
+    }
+
     return (
         <View style={styles.container}>
-            {<TextInput
-                style={styles.searchBar}
-                placeholder="Search Repositories"
-                value={searchQuery}
-                onChangeText={handleSearch}
-            />}
-            {filteredRepos.length === 0 ? (
-                emptyStatePlaceholder('No repositories found')
-            ) : (
-                <List.Section>
-                    {filteredRepos.map((item) => (
-                        <List.Item
-                            key={item.id}
-                            title={() => highlightText(item.name, searchQuery, colors)}
-                            description={item.repoUrl}
-                            style={styles.repoItem}
-                            left={_ => <Avatar.Image size={48}
-                                source={{ uri: `https://picsum.photos/seed/${item.idName}/100/100` }} />}
-                            onPress={() => router.push({ pathname: '/repos', params: { repo: JSON.stringify(item) } })}
-                        />
-                    ))}
-                </List.Section>
-            )}
+            <RepoContentLayout
+                key={selectedRepo.id}
+                repo={selectedRepo}
+                showHeader={false}
+                enableSearchToggle={false}
+                initialSearchBarVisible
+                topAccessory={(
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.repoChips}
+                    >
+                        {repos.map((repo) => {
+                            const isSelected = selectedRepo?.id === repo.id;
+                            return (
+                                <Chip
+                                    key={repo.id}
+                                    selected={isSelected}
+                                    onPress={() => {
+                                        setSelectedRepository(repo.id);
+                                        setPreferredRepository(repo.id);
+                                    }}
+                                    style={styles.repoChip}
+                                >
+                                    {repo.name}
+                                </Chip>
+                            );
+                        })}
+                    </ScrollView>
+                )}
+            />
         </View>
     );
 }
 
-const highlightText = (text: string, highlight: string, colors: MD3Colors) => {
-    if (!highlight.trim()) {
-        return <Title>{text}</Title>;
-    }
-    const regex = new RegExp(`(${highlight})`, 'gi');
-    const parts = text.split(regex);
-    return (
-        <Title>
-            {parts.map((part, index) =>
-                part.toLowerCase() === highlight.toLowerCase() ? (
-                    <Text key={index} style={[styles.highlight]}>
-                        {part}
-                    </Text>
-                ) : (
-                    part
-                )
-            )}
-        </Title>
-    );
-};
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
     },
-    searchBar: {
-        height: 40,
-        borderWidth: 1,
-        borderRadius: 5,
-        paddingLeft: 8,
-        marginBottom: 16,
+    repoChips: {
+        paddingVertical: 4,
+        paddingRight: 16,
+        alignItems: "center",
     },
-    repoItem: {
-        padding: 16,
-    },
-    repoName: {
-        fontSize: 16,
-    },
-    errorText: {
-        color: 'red',
-        marginBottom: 16,
-    },
-    nothingFound: {
-        textAlign: 'center',
-        marginTop: 20,
-        fontSize: 18,
-        color: 'gray',
-    },
-    highlight: {
-        backgroundColor: 'yellow',
+    repoChip: {
+        marginRight: 8,
     },
 });

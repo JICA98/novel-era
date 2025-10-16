@@ -144,7 +144,7 @@ async function getDataByKeyPrefix<T>(prefix: string) {
         if (key.startsWith(prefix)) {
             const tracker = await getData(key);
             if (tracker) {
-                trackers[key] = tracker;
+                trackers[key] = tracker as T;
             }
         }
     }

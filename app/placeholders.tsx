@@ -46,3 +46,7 @@ export const errorPlaceholder = ({ message, onRetry }: { message?: string, onRet
         {onRetry && <Button mode="contained" onPress={onRetry} style={{ marginTop: 20 }}>Retry</Button>}
     </View>
 );
+
+export default function PlaceholdersRoute() {
+    return null;
+}

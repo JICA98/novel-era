@@ -9,6 +9,8 @@ import { useColorScheme } from "react-native";
 import { getTheme } from "./settings/themeSettings";
 import { userPrefStore, getUserPreference } from "./userpref";
 import { setUpVoices, voicesStore } from "./chapters/ttscontrols";
+import { authStateStore, setUpAuthUser } from "./lib/auth";
+import { setUpFirebaseUser, firebaseStore } from "./lib/firebaseBackup";
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);
@@ -26,8 +28,12 @@ export default function RootLayout() {
   const userPref = userPrefStore((state: any) => state.userPref);
   const setUserPref = userPrefStore((state: any) => state.setUserPref);
   const setVoices = voicesStore((state: any) => state.setContent);
+  const setAuthState = authStateStore((state: any) => state.setContent);
+  const setFirebaseUser = firebaseStore((state: any) => state.setContent);
 
   useEffect(() => {
+    let unsubscribeFromBackup: (() => void) | undefined;
+
     try {
       async function fetchUserPreferences() {
         const preferences = await getUserPreference();
@@ -38,9 +44,21 @@ export default function RootLayout() {
       setupTrackingStores(allTrackers, setAllTrackers);
       setupFavoriteStores(allNovelTrackerStore, setAllNovelTracker);
       setUpVoices(setVoices);
+      setUpAuthUser(setAuthState).then((authUser) => {
+        const teardown = setUpFirebaseUser(setFirebaseUser, authUser);
+        if (typeof teardown === 'function') {
+          unsubscribeFromBackup = teardown;
+        }
+      });
     } catch (error) {
       console.error(error);
     }
+
+    return () => {
+      if (unsubscribeFromBackup) {
+        unsubscribeFromBackup();
+      }
+    };
   }, []);
   console.log(userPref);
   return (
@@ -50,6 +68,7 @@ export default function RootLayout() {
         <Stack.Screen name="repos" options={{ headerShown: false }} />
         <Stack.Screen name="contents" options={{ headerShown: false }} />
         <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="browser" options={{ headerShown: false }} />
       </Stack>
     </PaperProvider>)
   );

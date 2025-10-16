@@ -41,6 +41,8 @@ export interface UserPreferences {
     theme: ThemeOptions;
     editorPreferences: EditorPreferences;
     ttsConfig: TTSConfig;
+    preferredRepositoryId?: string;
+    defaultUniversalSearch?: boolean;
 }
 
 export const userPrefStore = create((set, get: any) => ({
@@ -48,6 +50,24 @@ export const userPrefStore = create((set, get: any) => ({
     setUserPref: (userPref: UserPreferences) => {
         set({ userPref });
         setUserPreference(userPref).then(() => { });
+    },
+    setPreferredRepository: (repoId?: string) => {
+        const current: UserPreferences | null = get().userPref;
+        if (!current) {
+            return;
+        }
+        const updated = { ...current, preferredRepositoryId: repoId };
+        set({ userPref: updated });
+        setUserPreference(updated).then(() => { });
+    },
+    setDefaultUniversalSearch: (enabled: boolean) => {
+        const current: UserPreferences | null = get().userPref;
+        if (!current) {
+            return;
+        }
+        const updated = { ...current, defaultUniversalSearch: enabled };
+        set({ userPref: updated });
+        setUserPreference(updated).then(() => { });
     },
     setTTSConfig: (ttsConfig: TTSConfig) => {
         const userPref: UserPreferences = get().userPref;
@@ -62,10 +82,16 @@ export async function getUserPreference(): Promise<UserPreferences> {
         theme: userPref?.theme ?? ThemeOptions.System,
         editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
+        preferredRepositoryId: userPref?.preferredRepositoryId,
+        defaultUniversalSearch: userPref?.defaultUniversalSearch ?? false,
     };
 }
 
 
 async function setUserPreference(userPref: UserPreferences) {
     await storeData('userPreference', userPref);
+}
+
+export default function UserPrefRoute() {
+    return null;
 }
