@@ -1,9 +1,9 @@
 import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
-import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl, StatusBar } from "react-native";
-import { ActivityIndicator, Button, Title, Snackbar, useTheme, MD3Theme, SegmentedButtons } from "react-native-paper";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl } from "react-native";
+import { ActivityIndicator, Snackbar, useTheme, MD3Theme, FAB } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
@@ -12,8 +12,7 @@ import { ChapterCard } from "./chapterCard";
 import { exportChapters } from "../exports/exportUtils";
 import { Tab, TabBar } from "../components/tabs";
 import { AppBar } from "../components/appbar";
-import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, novelKey, NovelTracker } from "../favorites/tracker";
-import { FAB } from 'react-native-paper';
+import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, NovelTracker } from "../favorites/tracker";
 import { errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 
@@ -29,7 +28,7 @@ async function fetchContentChapters(repo: Repo, content: Content, cached: boolea
             onCache: (data) => !!data.latestChapter,
             onResponse: async (response) => {
                 const html = await response.text();
-                var dom = IDOMParser.parse(html).documentElement;
+                const dom = IDOMParser.parse(html).documentElement;
                 const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
                 const summary = processData(dom, repo.homeSelector.summarySelector);
                 const author = processData(dom, repo.homeSelector.authorSelector);
@@ -59,6 +58,7 @@ export default function ContentLayout() {
     const setDownloads = allDownloadsStore((state: any) => state.setDownloads);
     const content = contentData.data;
     const [exportsVisible, setExportsVisible] = useState(false);
+    const [exportState, setExportState] = useState({ isExporting: false, completed: 0, total: 0 });
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
     const theme = useTheme();
     const tabLength = Math.ceil((content?.latestChapter ?? 1) / PAGE_SIZE);
@@ -73,6 +73,53 @@ export default function ContentLayout() {
     });
     const novelTracker = novelTrackerStore((state: any) => state.content) as NovelTracker;
     const setNovelTracker = novelTrackerStore((state: any) => state.setContent);
+
+    const handleExportRequest = useCallback(
+        async (range: [number, number], format: "epub" | "pdf") => {
+            if (!content) {
+                return;
+            }
+
+            if (format === "pdf") {
+                setSnackBarData({
+                    visible: true,
+                    severity: "error",
+                    message: "PDF export isn't available yet. Please choose EPUB.",
+                });
+                return;
+            }
+
+            const total = range[1] - range[0] + 1;
+            setExportState({ isExporting: true, completed: 0, total });
+
+            let shouldClose = false;
+            try {
+                await exportChapters(range, format, repo, content, downloads, setDownloads, setSnackBarData, {
+                    onProgress: (completed, totalCount) => {
+                        setExportState((prev) => ({
+                            ...prev,
+                            completed,
+                            total: totalCount,
+                        }));
+                    },
+                });
+                shouldClose = true;
+            } catch (error) {
+                console.error(error);
+                setSnackBarData({
+                    visible: true,
+                    severity: "error",
+                    message: error instanceof Error ? error.message : "Failed to export chapters.",
+                });
+            } finally {
+                setExportState({ isExporting: false, completed: 0, total: 0 });
+                if (shouldClose) {
+                    setExportsVisible(false);
+                }
+            }
+        },
+        [content, downloads, repo, setDownloads, setSnackBarData, setExportsVisible, setExportState]
+    );
 
     function handleContentFetch(cached = false) {
         setLoading();
@@ -144,13 +191,20 @@ export default function ContentLayout() {
             >
                 {tabBar}
             </Animated.View>
-            {hasDataLoaded && (<ExportDialog
-                visible={exportsVisible}
-                onDismiss={() => setExportsVisible(false)}
-                maxChapters={contentData.data?.latestChapter}
-                onExport={(range, format) => {
-                    exportChapters(range, format, repo, content!, downloads, setDownloads, setSnackBarData);
-                }} />)}
+            {hasDataLoaded && (
+                <ExportDialog
+                    visible={exportsVisible}
+                    onDismiss={() => {
+                        if (!exportState.isExporting) {
+                            setExportsVisible(false);
+                        }
+                    }}
+                    maxChapters={contentData.data?.latestChapter ?? 1}
+                    isExporting={exportState.isExporting}
+                    progress={exportState.isExporting ? exportState : undefined}
+                    onExport={handleExportRequest}
+                />
+            )}
             <ShowSnackbar />
         </SafeAreaView>;
     }
