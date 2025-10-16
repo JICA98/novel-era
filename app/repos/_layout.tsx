@@ -3,7 +3,8 @@ import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Content, FetchData, processData, Repo, SelectorType } from "@/types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import IDOMParser from "advanced-html-parser";
 import { Searchbar } from 'react-native-paper';
 import jsonpath from 'jsonpath';
@@ -59,6 +60,7 @@ interface RepoContentLayoutProps {
     onBackPress?: () => void;
     enableSearchToggle?: boolean;
     initialSearchBarVisible?: boolean;
+    topAccessory?: ReactNode;
 }
 
 export function RepoContentLayout({
@@ -67,11 +69,13 @@ export function RepoContentLayout({
     onBackPress,
     enableSearchToggle = true,
     initialSearchBarVisible = false,
+    topAccessory,
 }: RepoContentLayoutProps) {
     const theme = useTheme();
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
     const [searchQuery, setSearchQuery] = useState('');
     const [searchBarVisible, setSearchBarVisible] = useState(initialSearchBarVisible);
+    const previousQueryRef = useRef('');
 
     const fetchContent = useCallback(
         async ({ cached, searchQuery: query }: { cached: boolean; searchQuery?: string }) => {
@@ -130,8 +134,10 @@ export function RepoContentLayout({
         }
     }, [onBackPress]);
 
+    const ContainerComponent = showHeader ? SafeAreaView : View;
+
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <ContainerComponent style={[styles.container, { backgroundColor: theme.colors.background }]}>
             {showHeader && (
                 <Appbar.Header>
                     <Appbar.BackAction onPress={handleBack} />
@@ -143,22 +149,36 @@ export function RepoContentLayout({
                         />
                     )}
                     {hasDataLoaded && (
-                        <MenuFunction>
-                            {[{
+                        <MenuFunction
+                            items={[{
                                 title: 'Refresh',
                                 leadingIcon: 'refresh',
                                 onPress: () => fetchContent({ cached: false }),
                             }]}
-                        </MenuFunction>
+                        />
                     )}
                 </Appbar.Header>
+            )}
+
+            {topAccessory && (
+                <View style={styles.accessoryContainer}>{topAccessory}</View>
             )}
 
             {(searchBarVisible || (!enableSearchToggle && !content.isLoading)) && (
                 <View style={styles.searchBar}>
                     <Searchbar
                         placeholder="Search"
-                        onChangeText={setSearchQuery}
+                        onChangeText={(text) => {
+                            setSearchQuery(text);
+                            const trimmed = text.trim();
+                            const previousTrimmed = previousQueryRef.current.trim();
+
+                            if (trimmed.length === 0 && previousTrimmed.length > 0) {
+                                fetchContent({ cached: true });
+                            }
+
+                            previousQueryRef.current = text;
+                        }}
                         value={searchQuery}
                         onSubmitEditing={() => {
                             const trimmed = searchQuery.trim();
@@ -170,14 +190,15 @@ export function RepoContentLayout({
                         traileringIcon={searchQuery.length ? 'close' : undefined}
                         onTraileringIconPress={() => {
                             setSearchQuery('');
-                            fetchContent({ cached: false });
+                            previousQueryRef.current = '';
+                            fetchContent({ cached: true });
                         }}
                     />
                 </View>
             )}
 
             {child}
-        </SafeAreaView>
+        </ContainerComponent>
     );
 }
 
@@ -210,10 +231,17 @@ export default function RepositorLayout() {
 
 const styles = StyleSheet.create({
     container: {
-        flexGrow: 1,
+        flex: 1,
+    },
+    accessoryContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 4,
+        paddingBottom: 4,
     },
     searchBar: {
-        padding: 16,
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 12,
     },
     listPadding: {
         padding: 16,

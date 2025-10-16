@@ -28,9 +28,11 @@ export const AppBar: React.FC<AppBarProps> = ({ title, actions, transparent }) =
             { color: colors.onBackground }]} numberOfLines={1} ellipsizeMode="tail">
                 {title}
             </Text>
-            {actions && (<View style={{ paddingVertical: 4.0 }}>
-                <MenuFunction children={actions} />
-            </View>)}
+            {actions && (
+                <View style={{ paddingVertical: 4.0 }}>
+                    <MenuFunction items={actions} />
+                </View>
+            )}
         </View>
     );
 };

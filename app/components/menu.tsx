@@ -9,11 +9,12 @@ export interface MenuItem {
     onPress: () => void;
 }
 
-export function MenuFunction({ children }: { children: MenuItem[] }) {
+export function MenuFunction({ items, children }: { items?: MenuItem[]; children?: MenuItem[] }) {
     const [visible, setVisible] = useState(false);
     const openMenu = () => setVisible(true);
     const closeMenu = () => setVisible(false);
     const color = useTheme().colors.onBackground;
+    const menuItems = items ?? children ?? [];
     return (
         <View
             style={{
@@ -23,7 +24,7 @@ export function MenuFunction({ children }: { children: MenuItem[] }) {
                 onDismiss={closeMenu}
                 anchorPosition="bottom"
                 anchor={<Button onPress={openMenu}><FontAwesome name="ellipsis-v" size={18} style={{ color }}></FontAwesome ></Button>}>
-                {children.map((item, index) => (
+                {menuItems.map((item, index) => (
                     <Menu.Item key={index} onPress={() => {
                         item.onPress(); closeMenu();
                     }} title={item.title} leadingIcon={item.leadingIcon} />

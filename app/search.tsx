@@ -15,10 +15,7 @@ export default function SearchLayout() {
 }
 
 function SearchBarLayout({ repos }: { repos: Repo[] }) {
-    const {
-        selectedRepositoryId,
-        setSelectedRepository,
-    } = useSearchStore(
+    const { selectedRepositoryId, setSelectedRepository } = useSearchStore(
         useShallow((state) => ({
             selectedRepositoryId: state.selectedRepositoryId,
             setSelectedRepository: state.setSelectedRepository,
@@ -46,49 +43,50 @@ function SearchBarLayout({ repos }: { repos: Repo[] }) {
         return repos.find((repo) => repo.id === selectedRepositoryId) ?? repos[0];
     }, [repos, selectedRepositoryId]);
 
+    if (!selectedRepo) {
+        return null;
+    }
+
     return (
         <View style={styles.container}>
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.repoChips}
-            >
-                {repos.map((repo) => {
-                    const isSelected = selectedRepo?.id === repo.id;
-                    return (
-                        <Chip
-                            key={repo.id}
-                            selected={isSelected}
-                            onPress={() => {
-                                setSelectedRepository(repo.id);
-                                setPreferredRepository(repo.id);
-                            }}
-                            style={styles.repoChip}
-                        >
-                            {repo.name}
-                        </Chip>
-                    );
-                })}
-            </ScrollView>
-
-            {selectedRepo && (
-                <View style={styles.repoLayoutContainer}>
-                    <RepoContentLayout
-                        key={selectedRepo.id}
-                        repo={selectedRepo}
-                        showHeader={false}
-                        enableSearchToggle={false}
-                        initialSearchBarVisible
-                    />
-                </View>
-            )}
+            <RepoContentLayout
+                key={selectedRepo.id}
+                repo={selectedRepo}
+                showHeader={false}
+                enableSearchToggle={false}
+                initialSearchBarVisible
+                topAccessory={(
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.repoChips}
+                    >
+                        {repos.map((repo) => {
+                            const isSelected = selectedRepo?.id === repo.id;
+                            return (
+                                <Chip
+                                    key={repo.id}
+                                    selected={isSelected}
+                                    onPress={() => {
+                                        setSelectedRepository(repo.id);
+                                        setPreferredRepository(repo.id);
+                                    }}
+                                    style={styles.repoChip}
+                                >
+                                    {repo.name}
+                                </Chip>
+                            );
+                        })}
+                    </ScrollView>
+                )}
+            />
         </View>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
     },
     repoChips: {
         paddingVertical: 4,
@@ -97,9 +95,5 @@ const styles = StyleSheet.create({
     },
     repoChip: {
         marginRight: 8,
-    },
-    repoLayoutContainer: {
-        flex: 1,
-        marginTop: 8,
     },
 });
