@@ -118,6 +118,25 @@ const roundToStep = (value: number, step: number): number => {
 };
 
 /**
+ * Shallow comparison function to prevent unnecessary re-renders
+ */
+const shallowEqual = (obj1: any, obj2: any): boolean => {
+    if (obj1 === obj2) return true;
+    if (!obj1 || !obj2) return false;
+    
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+    
+    if (keys1.length !== keys2.length) return false;
+    
+    for (let key of keys1) {
+        if (obj1[key] !== obj2[key]) return false;
+    }
+    
+    return true;
+};
+
+/**
  * Debounce utility for preventing excessive updates
  */
 const useDebounce = (callback: Function, delay: number) => {
@@ -179,19 +198,30 @@ export async function setUpVoices(retryCount = 0): Promise<void> {
 const TTSControls: React.FC = React.memo(() => {
     const [isUpdating, setIsUpdating] = useState(false);
     
-    // Store subscriptions with proper error boundaries
-    const ttsConfig = useMemo(() => {
-        try {
-            return (userPrefStore((state: any) => state.userPref) as UserPreferences)?.ttsConfig || defaultTTSConfig;
-        } catch (error) {
-            console.error('Error accessing TTS config:', error);
-            return defaultTTSConfig;
-        }
-    }, []);
+    // Store subscriptions at the top level (cached selectors to prevent infinite loops)
+    const userPref = userPrefStore(useCallback((state: any) => state.userPref, [])) as UserPreferences;
+    const ttsConfig = useMemo(() => userPref?.ttsConfig || defaultTTSConfig, [userPref?.ttsConfig]);
     
-    const setUserPref: SetTTSConfig = useCallback((config: TTSConfig) => {
+    const tts: TTS = ttsStore(useCallback((state: any) => state.tts, [])) || useMemo(() => ({ 
+        state: 'unknown' as SpeechAction, 
+        sentences: [], 
+        ttsQueue: [], 
+        index: 0 
+    }), []);
+    
+    const voices = voicesStore(useCallback((state) => state.content, []));
+    const voicesLoading = voicesStore(useCallback((state) => state.isLoading, []));
+    const voicesError = voicesStore(useCallback((state) => state.error, []));
+    
+    const colors = useTheme().colors;
+
+    // Memoized derived values
+    const controlVisible = useMemo(() => isSpeechOrPause(tts.state), [tts.state]);
+    
+    // Store action creators with error handling (memoized to prevent re-creation)
+    const setUserPref: SetTTSConfig = useMemo(() => (config: TTSConfig) => {
         try {
-            const setter = userPrefStore((state: any) => state.setTTSConfig);
+            const setter = (userPrefStore.getState() as any).setTTSConfig;
             setter(config);
         } catch (error) {
             console.error('Error setting user preferences:', error);
@@ -199,18 +229,9 @@ const TTSControls: React.FC = React.memo(() => {
         }
     }, []);
     
-    const tts: TTS = useMemo(() => {
+    const setTTStore: (tts: TTS) => void = useMemo(() => (ttsState: TTS) => {
         try {
-            return ttsStore((state: any) => state.tts) || { state: 'unknown', sentences: [], ttsQueue: [], index: 0 };
-        } catch (error) {
-            console.error('Error accessing TTS state:', error);
-            return { state: 'unknown', sentences: [], ttsQueue: [], index: 0 };
-        }
-    }, []);
-    
-    const setTTStore: (tts: TTS) => void = useCallback((ttsState: TTS) => {
-        try {
-            const setter = ttsStore((state: any) => state.setTTS);
+            const setter = (ttsStore.getState() as any).setTTS;
             setter(ttsState);
         } catch (error) {
             console.error('Error setting TTS state:', error);
@@ -218,24 +239,15 @@ const TTSControls: React.FC = React.memo(() => {
         }
     }, []);
     
-    const updateTTSConfig: SetTTSConfig = useCallback((config: TTSConfig) => {
+    const updateTTSConfig: SetTTSConfig = useMemo(() => (config: TTSConfig) => {
         try {
-            const updater = ttsStore((state: any) => state.updateTTSConfig);
+            const updater = (ttsStore.getState() as any).updateTTSConfig;
             updater(config);
         } catch (error) {
             console.error('Error updating TTS config:', error);
             Alert.alert('Error', 'Failed to update TTS configuration. Please try again.');
         }
     }, []);
-    
-    const controlVisible = useMemo(() => isSpeechOrPause(tts.state), [tts.state]);
-    
-    const { content: voices, isLoading: voicesLoading, error: voicesError } = voicesStore((state) => ({
-        content: state.content,
-        isLoading: state.isLoading,
-        error: state.error
-    }));
-    const colors = useTheme().colors;
 
     // Initialize voices on component mount
     useEffect(() => {
@@ -246,6 +258,8 @@ const TTSControls: React.FC = React.memo(() => {
      * Safely update TTS state with error handling
      */
     const updateTTS = useCallback(async (state: SpeechAction) => {
+        if (isUpdating || tts.state === state) return; // Prevent duplicate updates
+        
         try {
             setIsUpdating(true);
             const updatedTTS: TTS = { ...tts, state };
@@ -256,16 +270,19 @@ const TTSControls: React.FC = React.memo(() => {
         } finally {
             setIsUpdating(false);
         }
-    }, [tts, setTTStore]);
+    }, [tts, setTTStore, isUpdating]);
 
     /**
      * Debounced TTS config update to prevent excessive calls
      */
     const debouncedUpdateTTSConfig = useDebounce(
         useCallback((newConfig: TTSConfig) => {
+            // Only update if config actually changed (using shallow comparison)
+            if (shallowEqual(newConfig, ttsConfig)) return;
+            
             setUserPref(newConfig);
             updateTTSConfig(newConfig);
-        }, [setUserPref, updateTTSConfig]),
+        }, [setUserPref, updateTTSConfig, ttsConfig]),
         DEBOUNCE_DELAY
     );
 
@@ -281,8 +298,11 @@ const TTSControls: React.FC = React.memo(() => {
             voice: newConfig.voice || defaultTTSConfig.voice,
         };
 
-        debouncedUpdateTTSConfig(validatedConfig);
-    }, [debouncedUpdateTTSConfig]);
+        // Only update if different from current config (using shallow comparison)
+        if (!shallowEqual(validatedConfig, ttsConfig)) {
+            debouncedUpdateTTSConfig(validatedConfig);
+        }
+    }, [debouncedUpdateTTSConfig, ttsConfig]);
 
     /**
      * Memoized voice selection component
@@ -314,29 +334,41 @@ const TTSControls: React.FC = React.memo(() => {
             );
         }
 
-        if (!voices?.length) {
-            return null;
+        if (!voices || !Array.isArray(voices) || voices.length === 0) {
+            return (
+                <Button mode="contained-tonal" style={styles.dropdownButtonStyle} disabled>
+                    <Icon source="microphone-off" size={20} />
+                    <View style={{ width: 8 }} />
+                    <Title style={{ fontSize: 16 }}>No Voices</Title>
+                </Button>
+            );
         }
+
+        // Memoize the voice data to prevent recreation
+        const voiceData = voices.map((voice) => ({ 
+            title: voice.name, 
+            id: voice.identifier, 
+            label: voice.speaker 
+        }));
+
+        const selectedVoiceIndex = Math.max(0, voices.findIndex((voice) => voice.identifier === ttsConfig.voice));
+        const selectedVoice = voices.find((voice) => voice.identifier === ttsConfig.voice) || voices[0];
 
         return (
             <SelectDropdown
                 defaultValue={ttsConfig.voice}
-                data={voices.map((voice) => ({ 
-                    title: voice.name, 
-                    id: voice.identifier, 
-                    label: voice.speaker 
-                }))}
+                data={voiceData}
                 onSelect={(item) => {
                     updateTTSConfigBoth({ ...ttsConfig, voice: item.id });
                 }}
-                defaultValueByIndex={voices.findIndex((voice) => voice.identifier === ttsConfig.voice)}
+                defaultValueByIndex={selectedVoiceIndex}
                 renderButton={(__, _) => {
-                    const voice = voices.find((voice) => voice.identifier === ttsConfig.voice) || voices[0];
+                    if (!selectedVoice) return null;
                     return (
                         <Button mode="contained-tonal" style={styles.dropdownButtonStyle}>
                             <Icon source="microphone" size={20} />
                             <View style={{ width: 8 }} />
-                            <Title style={{ fontSize: 16 }}>{voice.speaker}</Title>
+                            <Title style={{ fontSize: 16 }}>{selectedVoice.speaker}</Title>
                         </Button>
                     );
                 }}
@@ -391,43 +423,50 @@ const TTSControls: React.FC = React.memo(() => {
     /**
      * Memoized TTS configuration options
      */
-    const ttsConfigOptions = useMemo(() => (
-        <View style={{ paddingHorizontal: 10 }}>
-            <SliderControl
-                label="Rate"
-                value={ttsConfig.rate}
-                onValueChange={(value) => updateTTSConfigBoth({ ...ttsConfig, rate: value })}
-                min={VALIDATION_RANGES.rate.min}
-                max={VALIDATION_RANGES.rate.max}
-                step={VALIDATION_RANGES.rate.step}
-                colors={colors}
-                defaultValue={defaultTTSConfig.rate}
-                multiplier={DISPLAY_MULTIPLIERS.rate}
-            />
-            <SliderControl
-                label="Volume"
-                value={ttsConfig.volume}
-                onValueChange={(value) => updateTTSConfigBoth({ ...ttsConfig, volume: value })}
-                min={VALIDATION_RANGES.volume.min}
-                max={VALIDATION_RANGES.volume.max}
-                step={VALIDATION_RANGES.volume.step}
-                colors={colors}
-                defaultValue={defaultTTSConfig.volume}
-                multiplier={DISPLAY_MULTIPLIERS.volume}
-            />
-            <SliderControl
-                label="Pitch"
-                value={ttsConfig.pitch}
-                onValueChange={(value) => updateTTSConfigBoth({ ...ttsConfig, pitch: value })}
-                min={VALIDATION_RANGES.pitch.min}
-                max={VALIDATION_RANGES.pitch.max}
-                step={VALIDATION_RANGES.pitch.step}
-                colors={colors}
-                defaultValue={defaultTTSConfig.pitch}
-                multiplier={DISPLAY_MULTIPLIERS.pitch}
-            />
-        </View>
-    ), [ttsConfig, colors, updateTTSConfigBoth]);
+    const ttsConfigOptions = useMemo(() => {
+        // Create stable change handlers to prevent re-renders
+        const handleRateChange = (value: number) => updateTTSConfigBoth({ ...ttsConfig, rate: value });
+        const handleVolumeChange = (value: number) => updateTTSConfigBoth({ ...ttsConfig, volume: value });
+        const handlePitchChange = (value: number) => updateTTSConfigBoth({ ...ttsConfig, pitch: value });
+
+        return (
+            <View style={{ paddingHorizontal: 10 }}>
+                <SliderControl
+                    label="Rate"
+                    value={ttsConfig.rate}
+                    onValueChange={handleRateChange}
+                    min={VALIDATION_RANGES.rate.min}
+                    max={VALIDATION_RANGES.rate.max}
+                    step={VALIDATION_RANGES.rate.step}
+                    colors={colors}
+                    defaultValue={defaultTTSConfig.rate}
+                    multiplier={DISPLAY_MULTIPLIERS.rate}
+                />
+                <SliderControl
+                    label="Volume"
+                    value={ttsConfig.volume}
+                    onValueChange={handleVolumeChange}
+                    min={VALIDATION_RANGES.volume.min}
+                    max={VALIDATION_RANGES.volume.max}
+                    step={VALIDATION_RANGES.volume.step}
+                    colors={colors}
+                    defaultValue={defaultTTSConfig.volume}
+                    multiplier={DISPLAY_MULTIPLIERS.volume}
+                />
+                <SliderControl
+                    label="Pitch"
+                    value={ttsConfig.pitch}
+                    onValueChange={handlePitchChange}
+                    min={VALIDATION_RANGES.pitch.min}
+                    max={VALIDATION_RANGES.pitch.max}
+                    step={VALIDATION_RANGES.pitch.step}
+                    colors={colors}
+                    defaultValue={defaultTTSConfig.pitch}
+                    multiplier={DISPLAY_MULTIPLIERS.pitch}
+                />
+            </View>
+        );
+    }, [ttsConfig.rate, ttsConfig.volume, ttsConfig.pitch, colors, updateTTSConfigBoth]);
 
     if (!controlVisible) {
         return null;
