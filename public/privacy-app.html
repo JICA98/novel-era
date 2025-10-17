@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novel Era Privacy - Mobile App</title>
+    <meta name="description" content="Novel Era mobile app privacy information and account management portal.">
+    
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Roboto Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --md-primary: #1976D2;
+            --md-primary-dark: #1565C0;
+            --md-primary-light: #42A5F5;
+            --md-secondary: #FF9800;
+            --md-error: #F44336;
+            --md-success: #4CAF50;
+            --md-warning: #FF9800;
+            --md-surface: #FFFFFF;
+            --md-background: #FAFAFA;
+            --md-on-primary: #FFFFFF;
+            --md-on-surface: #212121;
+            --md-on-background: #212121;
+            --md-outline: #E0E0E0;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --md-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --md-elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--md-on-background);
+            background-color: var(--md-background);
+            min-height: 100vh;
+        }
+        
+        .material-card {
+            background: var(--md-surface);
+            border-radius: 12px;
+            box-shadow: var(--md-elevation-2);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .material-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 24px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 8px;
+            min-width: 64px;
+            box-shadow: var(--md-elevation-1);
+        }
+        
+        .material-button:hover {
+            box-shadow: var(--md-elevation-2);
+        }
+        
+        .material-button.primary {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+        }
+        
+        .material-button.primary:hover {
+            background: var(--md-primary-dark);
+        }
+        
+        .material-button.outlined {
+            background: transparent;
+            color: var(--md-primary);
+            border: 1px solid var(--md-primary);
+            box-shadow: none;
+        }
+        
+        .material-button.outlined:hover {
+            background: rgba(25, 118, 210, 0.04);
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        
+        .app-bar {
+            background: var(--md-surface);
+            box-shadow: var(--md-elevation-1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            min-height: 64px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-primary);
+            text-decoration: none;
+        }
+        
+        .main-content {
+            padding: 32px 0;
+        }
+        
+        .hero-section {
+            text-align: center;
+            padding: 80px 24px;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-dark) 100%);
+            color: var(--md-on-primary);
+            border-radius: 16px;
+            margin-bottom: 48px;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .hero-title .material-icons {
+            font-size: 3rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+            opacity: 0.9;
+            margin-bottom: 32px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-section {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .app-download {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 32px;
+            background: var(--md-surface);
+            color: var(--md-primary);
+            border-radius: 16px;
+            text-decoration: none;
+            box-shadow: var(--md-elevation-2);
+            transition: all 0.3s ease;
+        }
+        
+        .app-download:hover {
+            box-shadow: var(--md-elevation-3);
+            transform: translateY(-2px);
+        }
+        
+        .app-icon {
+            width: 56px;
+            height: 56px;
+            background: var(--md-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--md-on-primary);
+            font-size: 28px;
+        }
+        
+        .app-info h3 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .app-info p {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        
+        .privacy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin: 48px 0;
+        }
+        
+        .privacy-feature {
+            padding: 32px;
+            text-align: center;
+            border-radius: 12px;
+        }
+        
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: var(--md-on-primary);
+            font-size: 32px;
+        }
+        
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--md-on-surface);
+        }
+        
+        .feature-description {
+            color: rgba(33, 33, 33, 0.7);
+            line-height: 1.6;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            margin: 48px 0;
+        }
+        
+        .action-card {
+            padding: 32px 24px;
+            text-align: center;
+            border-radius: 12px;
+            border: 2px solid var(--md-outline);
+            transition: all 0.3s ease;
+        }
+        
+        .action-card:hover {
+            border-color: var(--md-primary);
+            box-shadow: var(--md-elevation-2);
+        }
+        
+        .action-icon {
+            font-size: 48px;
+            color: var(--md-primary);
+            margin-bottom: 16px;
+        }
+        
+        .action-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--md-on-surface);
+        }
+        
+        .action-description {
+            color: rgba(33, 33, 33, 0.7);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .redirect-notice {
+            background: linear-gradient(135deg, #E8F5E8 0%, #C8E6C9 100%);
+            border-left: 4px solid var(--md-success);
+            padding: 24px;
+            border-radius: 8px;
+            margin: 32px 0;
+            text-align: center;
+        }
+        
+        .notice-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--md-success);
+            margin-bottom: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+                flex-direction: column;
+                gap: 16px;
+            }
+            
+            .container {
+                padding: 0 16px;
+            }
+            
+            .cta-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .app-download {
+                width: 100%;
+                max-width: 320px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-bar">
+        <div class="container">
+            <div class="toolbar">
+                <a href="/" class="logo">
+                    <span class="material-icons">menu_book</span>
+                    Novel Era
+                </a>
+                <a href="/" class="material-button outlined">
+                    <span class="material-icons">home</span>
+                    Home
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="hero-section">
+                <h1 class="hero-title">
+                    <span class="material-icons">privacy_tip</span>
+                    Privacy in the App
+                </h1>
+                <p class="hero-subtitle">
+                    Access complete privacy controls and account management directly within the Novel Era mobile app for the most secure experience.
+                </p>
+                <div class="cta-section">
+                    <a href="https://play.google.com/store/apps/details?id=com.jica98.novelera" target="_blank" class="app-download">
+                        <div class="app-icon">
+                            <span class="material-icons">smartphone</span>
+                        </div>
+                        <div class="app-info">
+                            <h3>Download Novel Era</h3>
+                            <p>Available on Google Play Store</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="privacy-grid">
+                <div class="privacy-feature material-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">delete_forever</span>
+                    </div>
+                    <h3 class="feature-title">Instant Account Deletion</h3>
+                    <p class="feature-description">
+                        Delete your account and all associated data instantly from within the app. No waiting periods or email verification required.
+                    </p>
+                </div>
+
+                <div class="privacy-feature material-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">security</span>
+                    </div>
+                    <h3 class="feature-title">Secure Data Management</h3>
+                    <p class="feature-description">
+                        All your data is encrypted in transit and at rest. Manage your privacy settings with complete transparency and control.
+                    </p>
+                </div>
+
+                <div class="privacy-feature material-card">
+                    <div class="feature-icon">
+                        <span class="material-icons">file_download</span>
+                    </div>
+                    <h3 class="feature-title">Export Your Data</h3>
+                    <p class="feature-description">
+                        Download all your reading progress, favorites, and settings before account deletion. Your data belongs to you.
+                    </p>
+                </div>
+            </div>
+
+            <div class="redirect-notice">
+                <div class="notice-title">
+                    <span class="material-icons">info</span>
+                    Mobile App Required
+                </div>
+                <p>To access privacy controls and account deletion features, please use the Novel Era mobile app. This ensures the most secure authentication and immediate data processing.</p>
+            </div>
+
+            <div class="quick-actions">
+                <div class="action-card">
+                    <div class="action-icon">
+                        <span class="material-icons">description</span>
+                    </div>
+                    <h3 class="action-title">Privacy Policy</h3>
+                    <p class="action-description">Read our complete privacy policy to understand how we collect, use, and protect your data.</p>
+                    <a href="/privacy-policy" class="material-button outlined">
+                        <span class="material-icons">article</span>
+                        View Policy
+                    </a>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">
+                        <span class="material-icons">support_agent</span>
+                    </div>
+                    <h3 class="action-title">Contact Support</h3>
+                    <p class="action-description">Have questions about privacy or need help with account management? Our support team is here to help.</p>
+                    <a href="mailto:hindevstudios@gmail.com?subject=Privacy%20Support&body=I%20need%20help%20with%20privacy%20or%20account%20management%20in%20Novel%20Era." class="material-button outlined">
+                        <span class="material-icons">email</span>
+                        Email Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add ripple effect to buttons
+        document.querySelectorAll('.material-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    transform: scale(0);
+                    animation: ripple 600ms linear;
+                    background-color: rgba(255, 255, 255, 0.6);
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                    pointer-events: none;
+                `;
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
