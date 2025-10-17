@@ -238,7 +238,7 @@ export default function PrivacyPolicyScreen() {
         <Card.Content>
           <Text variant="bodySmall" style={styles.footerText}>
             Novel Era • Version 1.0.3 • © 2024{'\n'}
-            For support or privacy concerns: your-support-email@gmail.com
+            For support or privacy concerns: hindevstudios@gmail.com
           </Text>
         </Card.Content>
       </Card>

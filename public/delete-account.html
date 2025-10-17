@@ -3,8 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novel Era - Account Deletion Request</title>
+    <title>Delete Account - Novel Era</title>
+    <meta name="description" content="Delete your Novel Era account and remove all associated data instantly. Complete data privacy control.">
+    <meta name="keywords" content="delete account, privacy, data removal, Novel Era">
+    
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Roboto Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --md-primary: #1976D2;
+            --md-primary-dark: #1565C0;
+            --md-primary-light: #42A5F5;
+            --md-secondary: #FF9800;
+            --md-error: #F44336;
+            --md-error-dark: #D32F2F;
+            --md-success: #4CAF50;
+            --md-warning: #FF9800;
+            --md-surface: #FFFFFF;
+            --md-background: #FAFAFA;
+            --md-on-primary: #FFFFFF;
+            --md-on-surface: #212121;
+            --md-on-background: #212121;
+            --md-on-error: #FFFFFF;
+            --md-outline: #E0E0E0;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --md-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --md-elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            --md-elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,230 +42,570 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Roboto', sans-serif;
             line-height: 1.6;
-            color: #333;
-            background-color: #f8f9fa;
+            color: var(--md-on-background);
+            background-color: var(--md-background);
+            min-height: 100vh;
+        }
+        
+        .material-card {
+            background: var(--md-surface);
+            border-radius: 12px;
+            box-shadow: var(--md-elevation-2);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .material-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 24px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 8px;
+            min-width: 64px;
+            box-shadow: var(--md-elevation-1);
+        }
+        
+        .material-button:hover {
+            box-shadow: var(--md-elevation-2);
+        }
+        
+        .material-button.primary {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+        }
+        
+        .material-button.primary:hover {
+            background: var(--md-primary-dark);
+        }
+        
+        .material-button.error {
+            background: var(--md-error);
+            color: var(--md-on-error);
+        }
+        
+        .material-button.error:hover {
+            background: var(--md-error-dark);
+        }
+        
+        .material-button.outlined {
+            background: transparent;
+            color: var(--md-primary);
+            border: 1px solid var(--md-primary);
+            box-shadow: none;
+        }
+        
+        .material-button.outlined:hover {
+            background: rgba(25, 118, 210, 0.04);
+        }
+        
+        .material-button.text {
+            background: transparent;
+            color: var(--md-primary);
+            box-shadow: none;
+            padding: 8px 16px;
+        }
+        
+        .material-button.text:hover {
+            background: rgba(25, 118, 210, 0.04);
         }
         
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0 16px;
         }
         
-        .header {
-            background: linear-gradient(135deg, #1976d2, #42a5f5);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        .app-bar {
+            background: var(--md-surface);
+            box-shadow: var(--md-elevation-1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            min-height: 64px;
         }
         
-        .header p {
-            font-size: 1.2rem;
-            opacity: 0.9;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .card h2 {
-            color: #1976d2;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
+        .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-primary);
+            text-decoration: none;
         }
         
-        .steps {
-            background: #e3f2fd;
-            padding: 20px;
+        .main-content {
+            padding: 32px 0;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 400;
+            color: var(--md-on-background);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        
+        .page-title .material-icons {
+            font-size: 2.5rem;
+            color: var(--md-error);
+        }
+        
+        .page-subtitle {
+            font-size: 1.125rem;
+            color: rgba(33, 33, 33, 0.6);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .warning-section {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-left: 4px solid var(--md-warning);
             border-radius: 8px;
-            margin: 20px 0;
+            padding: 24px;
+            margin-bottom: 32px;
         }
         
-        .step {
-            margin: 10px 0;
-            padding: 8px 0;
-            font-size: 1.1rem;
+        .warning-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #E65100;
+            margin-bottom: 12px;
         }
         
-        .step strong {
-            color: #1976d2;
+        .warning-content {
+            color: #BF360C;
+            line-height: 1.6;
         }
         
-        .warning {
-            background: #fff3e0;
-            border-left: 4px solid #ff9800;
-            padding: 20px;
-            border-radius: 0 8px 8px 0;
-            margin: 20px 0;
-        }
-        
-        .warning h3 {
-            color: #f57c00;
-            margin-bottom: 10px;
-        }
-        
-        .data-types {
+        .deletion-options {
             display: grid;
-            gap: 15px;
-            margin: 20px 0;
+            gap: 24px;
+            margin-bottom: 32px;
         }
         
-        .data-type {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #4caf50;
+        .option-card {
+            padding: 32px 24px;
+            border: 2px solid var(--md-outline);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
-        .data-type h4 {
-            color: #2e7d32;
-            margin-bottom: 5px;
+        .option-card:hover {
+            border-color: var(--md-primary);
+            box-shadow: var(--md-elevation-2);
         }
         
-        .email-button {
-            background: #f44336;
-            color: white;
-            padding: 15px 30px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            transition: background-color 0.3s;
-            margin: 20px 0;
+        .option-card.recommended::before {
+            content: 'RECOMMENDED';
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+            padding: 4px 16px;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
         
-        .email-button:hover {
-            background: #d32f2f;
-            text-decoration: none;
-            color: white;
+        .option-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .option-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--md-on-primary);
+        }
+        
+        .app-option .option-icon {
+            background: var(--md-primary);
+        }
+        
+        .email-option .option-icon {
+            background: var(--md-secondary);
+        }
+        
+        .option-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--md-on-surface);
+        }
+        
+        .option-description {
+            color: rgba(33, 33, 33, 0.7);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+        
+        .option-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+        
+        .option-features li {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: rgba(33, 33, 33, 0.8);
+        }
+        
+        .option-features .material-icons {
+            font-size: 20px;
+            color: var(--md-success);
+        }
+        
+        .contact-section {
+            text-align: center;
+            padding: 48px 24px;
+            background: var(--md-surface);
+            border-radius: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .contact-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: var(--md-on-primary);
+            font-size: 32px;
+        }
+        
+        .contact-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--md-on-surface);
+        }
+        
+        .contact-description {
+            color: rgba(33, 33, 33, 0.7);
+            margin-bottom: 24px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .contact-info {
-            background: #f8f9fa;
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--md-primary);
+            margin-bottom: 24px;
+        }
+        
+        .back-section {
+            text-align: center;
+            padding: 32px 0;
+        }
+        
+        .divider {
+            height: 1px;
+            background: var(--md-outline);
+            margin: 32px 0;
+        }
+        
+        .footer-note {
+            text-align: center;
+            padding: 24px;
+            color: rgba(33, 33, 33, 0.6);
+            font-size: 14px;
+            background: var(--md-surface);
             border-radius: 8px;
-            text-align: center;
-            margin-top: 30px;
+            margin-top: 32px;
         }
         
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        @media (max-width: 600px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header h1 {
+        @media (max-width: 768px) {
+            .page-title {
                 font-size: 2rem;
             }
             
-            .card {
-                padding: 20px;
+            .page-title .material-icons {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 0 16px;
+            }
+            
+            .toolbar {
+                padding: 16px;
+            }
+            
+            .warning-section,
+            .option-card,
+            .contact-section {
+                padding: 20px 16px;
+            }
+            
+            .option-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Novel Era</h1>
-            <p>Account Deletion Request</p>
-        </div>
-        
-        <div class="card">
-            <h2>🗑️ Delete Your Account and Data</h2>
-            <p>You have the right to delete your Novel Era account and all associated personal data. This page provides clear instructions on how to request account deletion as required by Google Play Store policies.</p>
-            
-            <div class="steps">
-                <h3>Steps to Request Account Deletion:</h3>
-                <div class="step"><strong>1.</strong> Click the "Send Deletion Request" button below</div>
-                <div class="step"><strong>2.</strong> Your email client will open with a pre-filled message</div>
-                <div class="step"><strong>3.</strong> Add your account details (email or user ID associated with your Novel Era account)</div>
-                <div class="step"><strong>4.</strong> Send the email to our support team</div>
-                <div class="step"><strong>5.</strong> We will process your request within 30 days and send you a confirmation</div>
-            </div>
-            
-            <a href="mailto:your-support-email@gmail.com?subject=Account%20Deletion%20Request%20-%20Novel%20Era&body=Dear%20Novel%20Era%20Support%20Team%2C%0A%0AI%20am%20requesting%20the%20deletion%20of%20my%20Novel%20Era%20account%20and%20all%20associated%20personal%20data.%0A%0AAccount%20Details%3A%0A-%20Email%20address%3A%20%5BPlease%20provide%20your%20email%5D%0A-%20User%20ID%20(if%20known)%3A%20%5BPlease%20provide%20if%20available%5D%0A-%20Date%20of%20request%3A%20%5BToday%27s%20date%5D%0A%0AI%20understand%20that%3A%0A-%20This%20action%20is%20irreversible%0A-%20All%20my%20personal%20data%20will%20be%20permanently%20deleted%0A-%20My%20reading%20progress%2C%20favorites%2C%20and%20preferences%20will%20be%20lost%0A-%20The%20deletion%20will%20be%20completed%20within%2030%20days%0A%0AThank%20you%20for%20processing%20this%20request.%0A%0ABest%20regards" class="email-button">
-                📧 Send Deletion Request
-            </a>
-        </div>
-        
-        <div class="card">
-            <h2>📋 What Data Will Be Deleted</h2>
-            <div class="data-types">
-                <div class="data-type">
-                    <h4>Account Information</h4>
-                    <p>Username, email address, authentication credentials, and profile data</p>
-                </div>
-                <div class="data-type">
-                    <h4>Reading Data</h4>
-                    <p>Book favorites, reading progress, bookmarks, and reading preferences</p>
-                </div>
-                <div class="data-type">
-                    <h4>Usage Analytics</h4>
-                    <p>App usage patterns, feature usage statistics, and behavioral data</p>
-                </div>
-                <div class="data-type">
-                    <h4>Device Information</h4>
-                    <p>Device identifiers and app installation data</p>
-                </div>
+    <header class="app-bar">
+        <div class="container">
+            <div class="toolbar">
+                <a href="/" class="logo">
+                    <span class="material-icons">menu_book</span>
+                    Novel Era
+                </a>
+                <a href="/" class="material-button text">
+                    <span class="material-icons">home</span>
+                    Home
+                </a>
             </div>
         </div>
-        
-        <div class="card">
-            <div class="warning">
-                <h3>⚠️ Important Information</h3>
-                <p><strong>Data Retention Policy:</strong></p>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    <li>All personal data is permanently deleted within <strong>30 days</strong> of your request</li>
-                    <li>Backup data may be retained for up to <strong>90 days</strong> for security and recovery purposes</li>
-                    <li>After the retention period, no data is kept in any form</li>
-                    <li>This action is <strong>irreversible</strong> - you cannot recover your account or data after deletion</li>
-                </ul>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="material-icons">delete_forever</span>
+                    Delete Account
+                </h1>
+                <p class="page-subtitle">
+                    We respect your right to data privacy. Choose how you'd like to delete your Novel Era account and remove all associated data.
+                </p>
+            </div>
+
+            <div class="warning-section">
+                <div class="warning-title">
+                    <span class="material-icons">warning</span>
+                    Important Notice
+                </div>
+                <div class="warning-content">
+                    <p><strong>Account deletion is permanent and cannot be undone.</strong> This action will:</p>
+                    <ul style="margin-top: 12px; margin-left: 20px;">
+                        <li>Delete your account permanently</li>
+                        <li>Remove all reading progress and bookmarks</li>
+                        <li>Delete downloaded content and preferences</li>
+                        <li>Remove all cloud backups and sync data</li>
+                        <li>Cancel any active features or settings</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="deletion-options">
+                <div class="option-card app-option recommended material-card">
+                    <div class="option-header">
+                        <div class="option-icon">
+                            <span class="material-icons">smartphone</span>
+                        </div>
+                        <div class="option-title">Delete via Mobile App</div>
+                    </div>
+                    <div class="option-description">
+                        Delete your account instantly from within the Novel Era mobile app. This is the fastest and most secure method.
+                    </div>
+                    <ul class="option-features">
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Instant deletion (no waiting period)
+                        </li>
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Secure authentication required
+                        </li>
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Immediate data removal from all servers
+                        </li>
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Real-time confirmation
+                        </li>
+                    </ul>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <a href="https://play.google.com/store/apps/details?id=com.jica98.novelera" target="_blank" class="material-button primary">
+                            <span class="material-icons">get_app</span>
+                            Download App
+                        </a>
+                        <a href="/privacy" class="material-button outlined">
+                            <span class="material-icons">privacy_tip</span>
+                            App Privacy
+                        </a>
+                    </div>
+                </div>
+
+                <div class="option-card email-option material-card">
+                    <div class="option-header">
+                        <div class="option-icon">
+                            <span class="material-icons">email</span>
+                        </div>
+                        <div class="option-title">Delete via Email Request</div>
+                    </div>
+                    <div class="option-description">
+                        If you can't access the mobile app, send us an email request for account deletion. We'll process your request manually.
+                    </div>
+                    <ul class="option-features">
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Manual verification for security
+                        </li>
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Email confirmation required
+                        </li>
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Complete data removal guaranteed
+                        </li>
+                        <li>
+                            <span class="material-icons">check_circle</span>
+                            Processing within 24-48 hours
+                        </li>
+                    </ul>
+                    <a href="mailto:hindevstudios@gmail.com?subject=Delete%20Novel%20Era%20Account&body=I%20request%20deletion%20of%20my%20Novel%20Era%20account%20and%20all%20associated%20data.%0A%0AAccount%20details%3A%0AEmail%3A%20%5BYour%20registered%20email%5D%0AUsername%3A%20%5BYour%20username%20if%20applicable%5D%0A%0AI%20understand%20this%20action%20is%20permanent%20and%20cannot%20be%20undone." class="material-button error">
+                        <span class="material-icons">send</span>
+                        Send Deletion Request
+                    </a>
+                </div>
+            </div>
+
+            <div class="contact-section material-card">
+                <div class="contact-icon">
+                    <span class="material-icons">support_agent</span>
+                </div>
+                <h2 class="contact-title">Need Help?</h2>
+                <p class="contact-description">
+                    If you have questions about account deletion or need assistance with the process, our support team is here to help.
+                </p>
+                <div class="contact-info">
+                    <span class="material-icons">email</span>
+                    hindevstudios@gmail.com
+                </div>
+                <a href="mailto:hindevstudios@gmail.com?subject=Account%20Deletion%20Help&body=I%20need%20help%20with%20deleting%20my%20Novel%20Era%20account." class="material-button outlined">
+                    <span class="material-icons">help</span>
+                    Contact Support
+                </a>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="back-section">
+                <a href="/" class="material-button outlined">
+                    <span class="material-icons">arrow_back</span>
+                    Back to Home
+                </a>
+            </div>
+
+            <div class="footer-note">
+                <p><strong>Data Safety Compliance:</strong> This deletion process complies with GDPR, CCPA, and Google Play Store data safety requirements. All data is permanently deleted from our servers within 48 hours of confirmation.</p>
             </div>
         </div>
-        
-        <div class="card">
-            <h2>📞 Contact Information</h2>
-            <div class="contact-info">
-                <p><strong>For questions about data deletion or privacy:</strong></p>
-                <p>📧 Email: <a href="mailto:your-support-email@gmail.com">your-support-email@gmail.com</a></p>
-                <p>🌐 Privacy Policy: <a href="https://novel-era.web.app/privacy-policy" target="_blank">novel-era.web.app/privacy-policy</a></p>
-                <p><strong>Response Time:</strong> We typically respond within 24-48 hours</p>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>Novel Era • Version 1.0.3+10 • © 2024</p>
-            <p>This page complies with Google Play Store data disclosure requirements</p>
-            <p>Last updated: October 17, 2025</p>
-        </div>
-    </div>
+    </main>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add ripple effect to buttodocument.addEventListener('DOMContentLoadedns
+        document.querySelectorAll('.material-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    transform: scale(0);
+                    animation: ripple 600ms linear;
+                    background-color: rgba(255, 255, 255, 0.6);
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                    pointer-events: none;
+                `;
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>

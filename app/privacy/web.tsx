@@ -18,9 +18,9 @@ Account Details:
 
 Thank you.`;
       
-      window.open(`mailto:your-support-email@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+      window.open(`mailto:hindevstudios@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
     } else {
-      Linking.openURL(`mailto:your-support-email@gmail.com?subject=Account Deletion Request&body=Please delete my account and all associated data.`);
+      Linking.openURL(`mailto:hindevstudios@gmail.com?subject=Account Deletion Request&body=Please delete my account and all associated data.`);
     }
   };
 
@@ -213,7 +213,7 @@ Thank you.`;
               For questions about data practices or privacy concerns:
             </Text>
             <Text variant="bodyMedium" style={styles.emailText}>
-              📧 your-support-email@gmail.com
+              📧 hindevstudios@gmail.com
             </Text>
           </Card.Content>
         </Card>

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Novel Era</title>
+    <meta name="description" content="Novel Era Privacy Policy - Learn about our data collection, usage, and protection practices. Your privacy is our priority.">
+    <meta name="keywords" content="privacy policy, data protection, Novel Era, reading app">
+    
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Roboto Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --md-primary: #1976D2;
+            --md-primary-dark: #1565C0;
+            --md-primary-light: #42A5F5;
+            --md-secondary: #FF9800;
+            --md-success: #4CAF50;
+            --md-info: #2196F3;
+            --md-warning: #FF9800;
+            --md-surface: #FFFFFF;
+            --md-background: #FAFAFA;
+            --md-on-primary: #FFFFFF;
+            --md-on-surface: #212121;
+            --md-on-background: #212121;
+            --md-outline: #E0E0E0;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --md-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --md-elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--md-on-background);
+            background-color: var(--md-background);
+            min-height: 100vh;
+        }
+        
+        .material-card {
+            background: var(--md-surface);
+            border-radius: 12px;
+            box-shadow: var(--md-elevation-2);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .material-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 24px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 8px;
+            min-width: 64px;
+            box-shadow: var(--md-elevation-1);
+        }
+        
+        .material-button:hover {
+            box-shadow: var(--md-elevation-2);
+        }
+        
+        .material-button.primary {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+        }
+        
+        .material-button.primary:hover {
+            background: var(--md-primary-dark);
+        }
+        
+        .material-button.outlined {
+            background: transparent;
+            color: var(--md-primary);
+            border: 1px solid var(--md-primary);
+            box-shadow: none;
+        }
+        
+        .material-button.outlined:hover {
+            background: rgba(25, 118, 210, 0.04);
+        }
+        
+        .material-button.text {
+            background: transparent;
+            color: var(--md-primary);
+            box-shadow: none;
+            padding: 8px 16px;
+        }
+        
+        .material-button.text:hover {
+            background: rgba(25, 118, 210, 0.04);
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        
+        .app-bar {
+            background: var(--md-surface);
+            box-shadow: var(--md-elevation-1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            min-height: 64px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-primary);
+            text-decoration: none;
+        }
+        
+        .main-content {
+            padding: 32px 0;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding: 48px 24px;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-dark) 100%);
+            color: var(--md-on-primary);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="60" cy="30" r="1" fill="rgba(255,255,255,0.2)"/><circle cx="30" cy="70" r="1" fill="rgba(255,255,255,0.2)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 400;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+        }
+        
+        .page-title .material-icons {
+            font-size: 2.5rem;
+        }
+        
+        .page-subtitle {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .last-updated {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            opacity: 0.8;
+            position: relative;
+        }
+        
+        .toc-section {
+            margin-bottom: 32px;
+        }
+        
+        .toc-card {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .toc-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--md-on-surface);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .toc-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 12px;
+        }
+        
+        .toc-list li {
+            padding: 8px 0;
+        }
+        
+        .toc-list a {
+            color: var(--md-primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .toc-list a:hover {
+            background: rgba(25, 118, 210, 0.08);
+            transform: translateX(4px);
+        }
+        
+        .content-section {
+            margin-bottom: 32px;
+        }
+        
+        .section-card {
+            padding: 32px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--md-outline);
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--md-on-primary);
+            font-size: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--md-on-surface);
+        }
+        
+        .section-content {
+            color: rgba(33, 33, 33, 0.8);
+            line-height: 1.7;
+        }
+        
+        .section-content h4 {
+            color: var(--md-on-surface);
+            font-weight: 500;
+            margin: 20px 0 12px 0;
+            font-size: 1.125rem;
+        }
+        
+        .section-content p {
+            margin-bottom: 16px;
+        }
+        
+        .section-content ul, 
+        .section-content ol {
+            margin: 16px 0;
+            padding-left: 24px;
+        }
+        
+        .section-content li {
+            margin-bottom: 8px;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-left: 4px solid var(--md-primary);
+            padding: 20px;
+            margin: 24px 0;
+            border-radius: 8px;
+        }
+        
+        .highlight-box.info {
+            background: linear-gradient(135deg, #E1F5FE 0%, #B3E5FC 100%);
+            border-left-color: var(--md-info);
+        }
+        
+        .highlight-box.success {
+            background: linear-gradient(135deg, #E8F5E8 0%, #C8E6C9 100%);
+            border-left-color: var(--md-success);
+        }
+        
+        .highlight-box.warning {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-left-color: var(--md-warning);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            background: var(--md-surface);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--md-elevation-1);
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--md-outline);
+        }
+        
+        .data-table th {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background: rgba(25, 118, 210, 0.02);
+        }
+        
+        .contact-section {
+            text-align: center;
+            padding: 48px 24px;
+            background: var(--md-surface);
+            border-radius: 16px;
+            margin: 32px 0;
+        }
+        
+        .contact-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: var(--md-on-primary);
+            font-size: 32px;
+        }
+        
+        .contact-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--md-on-surface);
+        }
+        
+        .contact-description {
+            color: rgba(33, 33, 33, 0.7);
+            margin-bottom: 24px;
+        }
+        
+        .contact-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 500;
+            color: var(--md-primary);
+            margin-bottom: 24px;
+        }
+        
+        .back-section {
+            text-align: center;
+            padding: 32px 0;
+        }
+        
+        .divider {
+            height: 1px;
+            background: var(--md-outline);
+            margin: 32px 0;
+        }
+        
+        .footer-note {
+            text-align: center;
+            padding: 24px;
+            color: rgba(33, 33, 33, 0.6);
+            font-size: 14px;
+            background: var(--md-surface);
+            border-radius: 8px;
+            margin-top: 32px;
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .page-title .material-icons {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 0 16px;
+            }
+            
+            .toolbar {
+                padding: 16px;
+            }
+            
+            .page-header,
+            .section-card,
+            .toc-card,
+            .contact-section {
+                padding: 24px 16px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            
+            .toc-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .data-table {
+                font-size: 14px;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-bar">
+        <div class="container">
+            <div class="toolbar">
+                <a href="/" class="logo">
+                    <span class="material-icons">menu_book</span>
+                    Novel Era
+                </a>
+                <a href="/" class="material-button text">
+                    <span class="material-icons">home</span>
+                    Home
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="material-icons">privacy_tip</span>
+                    Privacy Policy
+                </h1>
+                <p class="page-subtitle">
+                    We are committed to protecting your privacy and being transparent about our data practices. This policy explains how Novel Era collects, uses, and protects your information.
+                </p>
+                <div class="last-updated">
+                    <span class="material-icons">schedule</span>
+                    Last updated: December 2024
+                </div>
+            </div>
+
+            <div class="toc-section">
+                <div class="toc-card material-card">
+                    <div class="toc-title">
+                        <span class="material-icons">list</span>
+                        Table of Contents
+                    </div>
+                    <ul class="toc-list">
+                        <li><a href="#information-collection"><span class="material-icons">info</span>Information We Collect</a></li>
+                        <li><a href="#data-usage"><span class="material-icons">analytics</span>How We Use Data</a></li>
+                        <li><a href="#data-sharing"><span class="material-icons">share</span>Data Sharing</a></li>
+                        <li><a href="#data-security"><span class="material-icons">security</span>Data Security</a></li>
+                        <li><a href="#user-rights"><span class="material-icons">account_circle</span>Your Rights</a></li>
+                        <li><a href="#contact"><span class="material-icons">contact_support</span>Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="content-section">
+                <div id="information-collection" class="section-card material-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <span class="material-icons">info</span>
+                        </div>
+                        <div class="section-title">Information We Collect</div>
+                    </div>
+                    <div class="section-content">
+                        <p>Novel Era collects minimal data necessary to provide our reading services. We are transparent about what we collect and why.</p>
+                        
+                        <div class="highlight-box info">
+                            <h4>Data Collection Summary</h4>
+                            <p><strong>We collect data to:</strong> Provide reading services, sync progress across devices, and improve app functionality. <strong>We do not:</strong> Sell personal data, track reading content, or share data with third parties for advertising.</p>
+                        </div>
+
+                        <h4>Account Information</h4>
+                        <ul>
+                            <li><strong>Email Address:</strong> For account creation and authentication</li>
+                            <li><strong>Username:</strong> For personalization (optional)</li>
+                            <li><strong>Authentication Data:</strong> Encrypted login credentials</li>
+                        </ul>
+
+                        <h4>Reading Data</h4>
+                        <ul>
+                            <li><strong>Reading Progress:</strong> Bookmarks, chapter progress, reading position</li>
+                            <li><strong>Library Data:</strong> Saved novels, favorites, reading lists</li>
+                            <li><strong>Preferences:</strong> Theme settings, font preferences, TTS settings</li>
+                            <li><strong>Download Data:</strong> Offline content for reading</li>
+                        </ul>
+
+                        <h4>Technical Information</h4>
+                        <ul>
+                            <li><strong>Device Information:</strong> Device model, OS version for compatibility</li>
+                            <li><strong>App Analytics:</strong> Crash reports, performance metrics (anonymized)</li>
+                            <li><strong>Usage Statistics:</strong> Feature usage for app improvement (anonymized)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="data-usage" class="section-card material-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <span class="material-icons">analytics</span>
+                        </div>
+                        <div class="section-title">How We Use Your Data</div>
+                    </div>
+                    <div class="section-content">
+                        <p>We use your data solely to provide and improve our reading services. Here's exactly how:</p>
+
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data Type</th>
+                                    <th>Purpose</th>
+                                    <th>Storage Location</th>
+                                    <th>Retention</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Account Data</td>
+                                    <td>Authentication & Account Management</td>
+                                    <td>Firebase Authentication</td>
+                                    <td>Until Account Deletion</td>
+                                </tr>
+                                <tr>
+                                    <td>Reading Progress</td>
+                                    <td>Sync Across Devices</td>
+                                    <td>Firebase Realtime Database</td>
+                                    <td>Until Account Deletion</td>
+                                </tr>
+                                <tr>
+                                    <td>App Preferences</td>
+                                    <td>Personalized Experience</td>
+                                    <td>Local Device & Cloud Backup</td>
+                                    <td>Until Account Deletion</td>
+                                </tr>
+                                <tr>
+                                    <td>Analytics Data</td>
+                                    <td>App Improvement</td>
+                                    <td>Anonymous Aggregation</td>
+                                    <td>90 Days Maximum</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <div class="highlight-box success">
+                            <h4>Our Commitment</h4>
+                            <p>✓ We never sell your personal data<br>
+                            ✓ We don't track what you read for advertising<br>
+                            ✓ We don't share data with third parties<br>
+                            ✓ We use minimal data collection practices</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="data-sharing" class="section-card material-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <span class="material-icons">share</span>
+                        </div>
+                        <div class="section-title">Data Sharing & Third Parties</div>
+                    </div>
+                    <div class="section-content">
+                        <p>Novel Era does not sell, rent, or share your personal data with third parties for advertising or marketing purposes.</p>
+
+                        <h4>Service Providers We Use</h4>
+                        <ul>
+                            <li><strong>Google Firebase:</strong> Authentication, database, and hosting services</li>
+                            <li><strong>Google Play Services:</strong> App distribution and crash reporting</li>
+                        </ul>
+
+                        <h4>When We Might Share Data</h4>
+                        <ul>
+                            <li><strong>Legal Requirements:</strong> If required by law or court order</li>
+                            <li><strong>Safety Concerns:</strong> To protect users or prevent illegal activities</li>
+                            <li><strong>Business Transfer:</strong> In case of company merger or acquisition (with user notification)</li>
+                        </ul>
+
+                        <div class="highlight-box warning">
+                            <h4>Third-Party Content Sources</h4>
+                            <p>Novel Era aggregates content from various online sources. When you access content, you may be subject to those sources' privacy policies. We recommend reviewing their policies if privacy is a concern.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="data-security" class="section-card material-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <span class="material-icons">security</span>
+                        </div>
+                        <div class="section-title">Data Security & Protection</div>
+                    </div>
+                    <div class="section-content">
+                        <p>We implement industry-standard security measures to protect your data:</p>
+
+                        <h4>Security Measures</h4>
+                        <ul>
+                            <li><strong>Encryption:</strong> All data transmitted is encrypted using HTTPS/SSL</li>
+                            <li><strong>Secure Storage:</strong> Data stored on Google Firebase with enterprise-grade security</li>
+                            <li><strong>Authentication:</strong> Secure login with password hashing and optional 2FA</li>
+                            <li><strong>Regular Updates:</strong> Security patches and updates applied regularly</li>
+                            <li><strong>Limited Access:</strong> Only authorized personnel have access to systems</li>
+                        </ul>
+
+                        <div class="highlight-box">
+                            <h4>Your Security Responsibilities</h4>
+                            <p>• Use a strong, unique password for your account<br>
+                            • Keep your app updated to the latest version<br>
+                            • Log out from shared devices<br>
+                            • Report any suspicious activity immediately</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="user-rights" class="section-card material-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <span class="material-icons">account_circle</span>
+                        </div>
+                        <div class="section-title">Your Privacy Rights</div>
+                    </div>
+                    <div class="section-content">
+                        <p>You have complete control over your data. Here are your rights and how to exercise them:</p>
+
+                        <h4>Data Rights (GDPR, CCPA Compliant)</h4>
+                        <ul>
+                            <li><strong>Access:</strong> Request a copy of all data we have about you</li>
+                            <li><strong>Correction:</strong> Update or correct any inaccurate data</li>
+                            <li><strong>Deletion:</strong> Request complete removal of your account and data</li>
+                            <li><strong>Portability:</strong> Download your data in a standard format</li>
+                            <li><strong>Restriction:</strong> Limit how we process your data</li>
+                            <li><strong>Objection:</strong> Object to certain types of data processing</li>
+                        </ul>
+
+                        <h4>How to Exercise Your Rights</h4>
+                        <p><strong>Via Mobile App:</strong></p>
+                        <ul>
+                            <li>Go to Settings → Privacy → Data Management</li>
+                            <li>Choose "Delete Account" for instant removal</li>
+                            <li>Export your data before deletion if needed</li>
+                        </ul>
+
+                        <p><strong>Via Email:</strong></p>
+                        <ul>
+                            <li>Contact: <a href="mailto:hindevstudios@gmail.com" style="color: var(--md-primary);">hindevstudios@gmail.com</a></li>
+                            <li>Include: Your email address and specific request</li>
+                            <li>Response time: Within 72 hours for deletion, 30 days for other requests</li>
+                        </ul>
+
+                        <div class="highlight-box success">
+                            <h4>Instant Account Deletion</h4>
+                            <p>Novel Era offers instant account deletion directly from the mobile app. No waiting periods, no email verification needed. Your data is permanently removed immediately upon confirmation.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="contact" class="section-card material-card">
+                    <div class="section-header">
+                        <div class="section-icon">
+                            <span class="material-icons">contact_support</span>
+                        </div>
+                        <div class="section-title">Contact & Updates</div>
+                    </div>
+                    <div class="section-content">
+                        <h4>Privacy Officer Contact</h4>
+                        <ul>
+                            <li><strong>Email:</strong> <a href="mailto:hindevstudios@gmail.com" style="color: var(--md-primary);">hindevstudios@gmail.com</a></li>
+                            <li><strong>Subject:</strong> "Privacy Policy Inquiry" for faster response</li>
+                            <li><strong>Response Time:</strong> Within 48 hours for privacy-related inquiries</li>
+                        </ul>
+
+                        <h4>Policy Updates</h4>
+                        <p>We may update this privacy policy to reflect changes in our practices or legal requirements. We will:</p>
+                        <ul>
+                            <li>Notify users via in-app notification for major changes</li>
+                            <li>Update the "Last Modified" date at the top of this policy</li>
+                            <li>Provide 30 days notice for material changes</li>
+                            <li>Allow you to review changes before they take effect</li>
+                        </ul>
+
+                        <h4>Governing Law</h4>
+                        <p>This privacy policy is governed by applicable data protection laws including GDPR (EU), CCPA (California), and other regional privacy regulations.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-section material-card">
+                <div class="contact-icon">
+                    <span class="material-icons">support_agent</span>
+                </div>
+                <h2 class="contact-title">Questions About Privacy?</h2>
+                <p class="contact-description">
+                    Our privacy team is here to help with any questions about this policy or your data rights.
+                </p>
+                <div class="contact-info">
+                    <span class="material-icons">email</span>
+                    hindevstudios@gmail.com
+                </div>
+                <a href="mailto:hindevstudios@gmail.com?subject=Privacy%20Policy%20Question&body=I%20have%20a%20question%20about%20the%20Novel%20Era%20privacy%20policy." class="material-button primary">
+                    <span class="material-icons">send</span>
+                    Contact Privacy Team
+                </a>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="back-section">
+                <a href="/" class="material-button outlined">
+                    <span class="material-icons">arrow_back</span>
+                    Back to Home
+                </a>
+            </div>
+
+            <div class="footer-note">
+                <p><strong>Compliance:</strong> This privacy policy complies with GDPR, CCPA, Google Play Store data safety requirements, and other applicable privacy regulations. Document version 2.0 - December 2024.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Highlight current section in table of contents
+        const sections = document.querySelectorAll('.section-card[id]');
+        const tocLinks = document.querySelectorAll('.toc-list a');
+
+        function updateActiveSection() {
+            const scrollPosition = window.scrollY + 100;
+            
+            sections.forEach((section, index) => {
+                const sectionTop = section.offsetTop;
+                const sectionBottom = sectionTop + section.offsetHeight;
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                    tocLinks.forEach(link => link.style.fontWeight = '500');
+                    const correspondingLink = document.querySelector(`a[href="#${section.id}"]`);
+                    if (correspondingLink) {
+                        correspondingLink.style.fontWeight = '700';
+                        correspondingLink.style.color = 'var(--md-primary-dark)';
+                    }
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveSection);
+        updateActiveSection(); // Initial call
+
+        // Add ripple effect to buttons
+        document.querySelectorAll('.material-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    transform: scale(0);
+                    animation: ripple 600ms linear;
+                    background-color: rgba(255, 255, 255, 0.6);
+                    width: ${size}px;
+                    height: ${size}px;
+                    top: ${y}px;
+                    left: ${x}px;
+                    pointer-events: none;
+                `;
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

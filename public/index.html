@@ -1,89 +1,662 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
-
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.4.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.4.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.4.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
-
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Novel Era - Your Reading Companion</title>
+    <meta name="description" content="Novel Era - The ultimate reading app for discovering, tracking, and enjoying your favorite novels. Download now for Android.">
+    <meta name="keywords" content="novel, reading app, books, android app, novel era, reading tracker">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Novel Era - Your Reading Companion">
+    <meta property="og:description" content="The ultimate reading app for discovering, tracking, and enjoying your favorite novels.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://novel-era.web.app/">
+    <meta property="og:site_name" content="Novel Era">
+    
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Novel Era - Your Reading Companion">
+    <meta name="twitter:description" content="The ultimate reading app for discovering, tracking, and enjoying your favorite novels.">
+    
+    <!-- Material Design Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Roboto Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --md-primary: #1976D2;
+            --md-primary-dark: #1565C0;
+            --md-primary-light: #42A5F5;
+            --md-secondary: #FF9800;
+            --md-secondary-dark: #F57C00;
+            --md-surface: #FFFFFF;
+            --md-background: #FAFAFA;
+            --md-error: #F44336;
+            --md-on-primary: #FFFFFF;
+            --md-on-surface: #212121;
+            --md-on-background: #212121;
+            --md-outline: #E0E0E0;
+            --md-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --md-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --md-elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            --md-elevation-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: var(--md-on-background);
+            background-color: var(--md-background);
+            min-height: 100vh;
+        }
+        
+        .material-card {
+            background: var(--md-surface);
+            border-radius: 12px;
+            box-shadow: var(--md-elevation-2);
+            transition: box-shadow 0.3s ease;
+        }
+        
+        .material-card:hover {
+            box-shadow: var(--md-elevation-3);
+        }
+        
+        .material-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 24px;
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: 8px;
+            min-width: 64px;
+            box-shadow: var(--md-elevation-1);
+        }
+        
+        .material-button:hover {
+            box-shadow: var(--md-elevation-2);
+        }
+        
+        .material-button.primary {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+        }
+        
+        .material-button.primary:hover {
+            background: var(--md-primary-dark);
+        }
+        
+        .material-button.secondary {
+            background: var(--md-secondary);
+            color: var(--md-on-primary);
+        }
+        
+        .material-button.secondary:hover {
+            background: var(--md-secondary-dark);
+        }
+        
+        .material-button.outlined {
+            background: transparent;
+            color: var(--md-primary);
+            border: 1px solid var(--md-primary);
+            box-shadow: none;
+        }
+        
+        .material-button.outlined:hover {
+            background: rgba(25, 118, 210, 0.04);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+        
+        .app-bar {
+            background: var(--md-surface);
+            box-shadow: var(--md-elevation-1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            min-height: 64px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--md-primary);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 24px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: var(--md-on-surface);
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(25, 118, 210, 0.08);
+            color: var(--md-primary);
+        }
+        
+        .hero {
+            padding: 120px 0 80px;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-dark) 100%);
+            color: var(--md-on-primary);
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 300;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+        }
+        
+        .hero .subtitle {
+            font-size: 1.25rem;
+            font-weight: 400;
+            margin-bottom: 32px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-section {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 32px;
+        }
+        
+        .download-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 32px;
+            background: var(--md-surface);
+            color: var(--md-primary);
+            border-radius: 28px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: var(--md-elevation-2);
+            transition: all 0.3s ease;
+        }
+        
+        .download-button:hover {
+            box-shadow: var(--md-elevation-3);
+            transform: translateY(-2px);
+        }
+        
+        .features-section {
+            padding: 80px 0;
+            background: var(--md-surface);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 400;
+            margin-bottom: 16px;
+            color: var(--md-on-surface);
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.125rem;
+            color: rgba(33, 33, 33, 0.6);
+            margin-bottom: 48px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        
+        .feature-card {
+            padding: 32px 24px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-primary-light) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: var(--md-on-primary);
+            font-size: 28px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--md-on-surface);
+        }
+        
+        .feature-card p {
+            color: rgba(33, 33, 33, 0.7);
+            line-height: 1.6;
+        }
+        
+        .privacy-section {
+            padding: 80px 0;
+            background: var(--md-background);
+        }
+        
+        .privacy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 48px;
+        }
+        
+        .privacy-card {
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .privacy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--md-primary);
+        }
+        
+        .privacy-card .material-icons {
+            font-size: 48px;
+            color: var(--md-primary);
+            margin-bottom: 16px;
+        }
+        
+        .privacy-card h3 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: var(--md-on-surface);
+        }
+        
+        .privacy-card p {
+            color: rgba(33, 33, 33, 0.7);
+            margin-bottom: 16px;
+        }
+        
+        .privacy-card a {
+            color: var(--md-primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .privacy-card a:hover {
+            text-decoration: underline;
+        }
+        
+        .footer {
+            background: var(--md-on-surface);
+            color: var(--md-surface);
+            padding: 48px 0 24px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+        
+        .footer-section h3 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: var(--md-surface);
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+        
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--md-surface);
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            padding-top: 24px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--md-secondary);
+            color: var(--md-on-primary);
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--md-elevation-3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .fab:hover {
+            box-shadow: var(--md-elevation-4);
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .toolbar {
+                padding: 16px;
+            }
+            
+            .cta-section {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .download-button {
+                width: 280px;
+                justify-content: center;
+            }
+            
+            .features-grid,
+            .privacy-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 0 16px;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
-    </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
+</head>
+<body>
+    <header class="app-bar">
+        <div class="container">
+            <div class="toolbar">
+                <a href="#" class="logo">
+                    <span class="material-icons">menu_book</span>
+                    Novel Era
+                </a>
+                <nav>
+                    <ul class="nav-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#privacy">Privacy</a></li>
+                        <li><a href="/privacy-policy">Privacy Policy</a></li>
+                        <li><a href="/delete-account">Delete Account</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1>Novel Era</h1>
+                <p class="subtitle">Your ultimate reading companion. Discover, track, and enjoy your favorite novels with powerful features and a beautiful Material Design interface.</p>
+                <div class="cta-section">
+                    <a href="https://play.google.com/store/apps/details?id=com.jica98.novelera" class="download-button" target="_blank">
+                        <span class="material-icons">get_app</span>
+                        Download for Android
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">Everything you need for the perfect reading experience, designed with Material Design principles</p>
+                <div class="features-grid">
+                    <div class="feature-card material-card">
+                        <div class="feature-icon">
+                            <span class="material-icons">book</span>
+                        </div>
+                        <h3>Reading Tracker</h3>
+                        <p>Keep track of your reading progress across multiple novels with detailed statistics and smart bookmarks.</p>
+                    </div>
+                    <div class="feature-card material-card">
+                        <div class="feature-icon">
+                            <span class="material-icons">search</span>
+                        </div>
+                        <h3>Smart Search</h3>
+                        <p>Find novels from multiple sources with our intelligent search system and personalized recommendations.</p>
+                    </div>
+                    <div class="feature-card material-card">
+                        <div class="feature-icon">
+                            <span class="material-icons">cloud_download</span>
+                        </div>
+                        <h3>Offline Reading</h3>
+                        <p>Download chapters for offline reading and never worry about internet connectivity again.</p>
+                    </div>
+                    <div class="feature-card material-card">
+                        <div class="feature-icon">
+                            <span class="material-icons">volume_up</span>
+                        </div>
+                        <h3>Text-to-Speech</h3>
+                        <p>Listen to your novels with built-in TTS functionality and customizable voice settings.</p>
+                    </div>
+                    <div class="feature-card material-card">
+                        <div class="feature-icon">
+                            <span class="material-icons">dark_mode</span>
+                        </div>
+                        <h3>Reading Modes</h3>
+                        <p>Customize your reading experience with dark mode, font settings, and reading preferences.</p>
+                    </div>
+                    <div class="feature-card material-card">
+                        <div class="feature-icon">
+                            <span class="material-icons">cloud_sync</span>
+                        </div>
+                        <h3>Cloud Sync</h3>
+                        <p>Sync your reading progress across devices with secure cloud backup and restore.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="privacy" class="privacy-section">
+            <div class="container">
+                <h2 class="section-title">Privacy & Data Safety</h2>
+                <p class="section-subtitle">Your privacy is our priority. We are transparent about our data practices and comply with all privacy regulations.</p>
+                <div class="privacy-grid">
+                    <div class="privacy-card material-card">
+                        <span class="material-icons">security</span>
+                        <h3>Encrypted Data</h3>
+                        <p>All user data is encrypted in transit and stored securely on our servers.</p>
+                    </div>
+                    <div class="privacy-card material-card">
+                        <span class="material-icons">delete_forever</span>
+                        <h3>Account Deletion</h3>
+                        <p>Request instant account deletion and complete data removal at any time.</p>
+                        <a href="/delete-account">
+                            Delete Account 
+                            <span class="material-icons" style="font-size: 16px;">arrow_forward</span>
+                        </a>
+                    </div>
+                    <div class="privacy-card material-card">
+                        <span class="material-icons">description</span>
+                        <h3>Transparent Policies</h3>
+                        <p>Clear privacy policies explaining exactly what data we collect and how we use it.</p>
+                        <a href="/privacy-policy">
+                            View Policy 
+                            <span class="material-icons" style="font-size: 16px;">arrow_forward</span>
+                        </a>
+                    </div>
+                    <div class="privacy-card material-card">
+                        <span class="material-icons">flash_on</span>
+                        <h3>Instant Deletion</h3>
+                        <p>No waiting periods - your data is deleted immediately when requested.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Novel Era</h3>
+                    <p style="color: rgba(255, 255, 255, 0.7); margin-top: 8px;">Your ultimate reading companion with Material Design.</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://play.google.com/store/apps/details?id=com.jica98.novelera" target="_blank">Download App</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="/privacy-policy">Privacy Policy</a></li>
+                        <li><a href="/delete-account">Delete Account</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul class="footer-links">
+                        <li><a href="mailto:hindevstudios@gmail.com">Contact Support</a></li>
+                        <li><a href="/privacy">Privacy Component</a></li>
+                        <li><a href="https://github.com/JICA98" target="_blank">GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Novel Era. All rights reserved. | Version 1.0.3+10</p>
+                <p style="margin-top: 8px;">This page complies with Google Play Store data disclosure requirements</p>
+            </div>
+        </div>
+    </footer>
+
+    <button class="fab" onclick="window.open('https://play.google.com/store/apps/details?id=com.jica98.novelera', '_blank')" title="Download Novel Era">
+        <span class="material-icons">get_app</span>
+    </button>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
 
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
+        // App bar elevation on scroll
+        window.addEventListener('scroll', () => {
+            const appBar = document.querySelector('.app-bar');
+            if (window.scrollY > 0) {
+                appBar.style.boxShadow = 'var(--md-elevation-2)';
+            } else {
+                appBar.style.boxShadow = 'var(--md-elevation-1)';
+            }
+        });
+
+        // FAB hide/show on scroll
+        let lastScrollTop = 0;
+        window.addEventListener('scroll', () => {
+            const fab = document.querySelector('.fab');
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > lastScrollTop && scrollTop > 200) {
+                fab.style.transform = 'scale(0)';
+            } else {
+                fab.style.transform = 'scale(1)';
+            }
+            lastScrollTop = scrollTop;
+        });
+    </script>
     </script>
   </body>
 </html>

@@ -102,7 +102,7 @@
     "supported": true,
     "method": "Email request",
     "url": "https://novel-era.web.app/delete-account.html",
-    "email": "your-support-email@gmail.com",
+    "email": "hindevstudios@gmail.com",
     "processingTime": "30 days",
     "dataRetention": {
       "personalData": "30 days",
@@ -144,9 +144,9 @@
     "optOutProcessing": true
   },
   "contactInformation": {
-    "supportEmail": "your-support-email@gmail.com",
+    "supportEmail": "hindevstudios@gmail.com",
     "privacyPolicyUrl": "https://novel-era.web.app/privacy-policy",
-    "dataProtectionOfficer": "your-support-email@gmail.com"
+    "dataProtectionOfficer": "hindevstudios@gmail.com"
   },
   "compliance": {
     "gdpr": true,
