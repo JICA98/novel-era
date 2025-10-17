@@ -9,6 +9,7 @@ import {
     AuthState,
     AuthUser,
     authStateStore,
+    deleteAccountCompletely,
     signInWithEmail,
     signInWithGoogle,
     signOutUser,
@@ -20,7 +21,8 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
-    const [expanded, setExpanded] = useState(true);
+    const [authLoading, setAuthLoading] = useState(true)
+    const [expanded, setExpanded] = useState(false);
     const { colors } = useTheme();
     const handlePress = () => setExpanded(!expanded);
     const authUser: AuthUser = authStateStore((state: any) => state.content);
@@ -29,6 +31,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     const [showBackup, setBackup] = useState(false);
     const [showRestore, setRestore] = useState(false);
     const [showSignOut, setSignOut] = useState(false);
+    const [showDeleteAccount, setShowDeleteAccount] = useState(false);
     const allTrackers = chapterTrackerStore((state: any) => state.content);
     const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
@@ -92,6 +95,13 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
             cancelled = true;
         };
     }, [showRestore, authUser.authId]);
+
+    useEffect(() => {
+        // Handle initial auth loading state
+        if (authUser.state === AuthState.SIGNED_OUT || authUser.state === AuthState.SIGNED_IN) {
+            setAuthLoading(false);
+        }
+    }, [authUser.state]);
 
     function prevalidation(): boolean {
         if (!email || !password) {
@@ -209,14 +219,28 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         editable={false}
                     />
                     <View style={styles.mt20}></View>
-                    <Button
-                        mode="contained"
-                        onPress={() => {
-                            setSignOut(true);
-                        }}
-                    >
-                        Sign out
-                    </Button>
+                    <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                        <Button
+                            mode="contained"
+                            style={{ flex: 1 }}
+                            onPress={() => {
+                                setSignOut(true);
+                            }}
+                        >
+                            Sign out
+                        </Button>
+                        <Button
+                            mode="contained"
+                            buttonColor="#d32f2f"
+                            textColor="#ffffff"
+                            style={{ flex: 1 }}
+                            onPress={() => {
+                                setShowDeleteAccount(true);
+                            }}
+                        >
+                            Delete Account
+                        </Button>
+                    </View>
                     <View style={styles.mt20}></View>
                     <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <Button
@@ -326,6 +350,22 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     }}
                 />
             )}
+            {showDeleteAccount && (
+                <PaperDialog
+                    title={'Delete Account'}
+                    description='This will permanently delete your account and all associated data. This action cannot be undone. Are you sure you want to continue?'
+                    setVisible={setShowDeleteAccount}
+                    done={async () => {
+                        try {
+                            await deleteAccountCompletely();
+                            setSnackbarText('Account deleted successfully');
+                        } catch (error: unknown) {
+                            const message = error instanceof Error ? error.message : 'Unable to delete account';
+                            setSnackbarText(message);
+                        }
+                    }}
+                />
+            )}
 
 
             <List.Accordion
@@ -336,8 +376,14 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                 titleStyle={{ color: colors.primary }}
             >
 
-                {authUser.state === AuthState.SIGNED_OUT && signInSignUpPage()}
-                {authUser.state === AuthState.SIGNED_IN && accountInfoPage()}
+                {authLoading && (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator animating size="large" />
+                        <Text style={styles.loadingText}>Loading account...</Text>
+                    </View>
+                )}
+                {!authLoading && authUser.state === AuthState.SIGNED_OUT && signInSignUpPage()}
+                {!authLoading && authUser.state === AuthState.SIGNED_IN && accountInfoPage()}
 
 
             </List.Accordion>
@@ -546,5 +592,15 @@ const styles = StyleSheet.create({
     },
     mt20: {
         marginTop: 20,
+    },
+    loadingContainer: {
+        padding: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    loadingText: {
+        marginTop: 12,
+        textAlign: 'center',
+        opacity: 0.7,
     },
 })
