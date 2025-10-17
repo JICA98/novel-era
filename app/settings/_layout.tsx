@@ -86,11 +86,9 @@ const styles = StyleSheet.create({
 
 function SearchPreferencesSection({ repos, setSnackbarText }: { repos: Repo[]; setSnackbarText: (text: string) => void; }) {
     const userPref = userPrefStore((state: any) => state.userPref);
-    const setDefaultUniversalSearch = userPrefStore((state: any) => state.setDefaultUniversalSearch);
     const setPreferredRepository = userPrefStore((state: any) => state.setPreferredRepository);
     const [expanded, setExpanded] = useState(false);
     const preferredRepoId = userPref?.preferredRepositoryId;
-    const defaultUniversalSearch = userPref?.defaultUniversalSearch ?? false;
 
     const repoItems = useMemo(() => {
         return repos.map((repo) => ({ id: repo.id, name: repo.name }));
@@ -100,6 +98,10 @@ function SearchPreferencesSection({ repos, setSnackbarText }: { repos: Repo[]; s
         return null;
     }
 
+    const selectedRepoName = preferredRepoId 
+        ? repoItems.find((item) => item.id === preferredRepoId)?.name 
+        : 'First available';
+
     return (
         <List.Accordion
             title="Search Preferences"
@@ -108,52 +110,40 @@ function SearchPreferencesSection({ repos, setSnackbarText }: { repos: Repo[]; s
             left={(props) => <List.Icon {...props} icon="magnify" />}
         >
             <List.Item
-                title="Enable universal search by default"
-                description="Use all sources when opening search"
-                right={() => (
-                    <Switch
-                        value={defaultUniversalSearch}
-                        onValueChange={(value) => {
-                            setDefaultUniversalSearch(value);
-                            setSnackbarText('Universal search preference updated');
-                        }}
-                    />
-                )}
+                title="Default search source"
+                description={`Currently: ${selectedRepoName}`}
+                left={(props) => <List.Icon {...props} icon="book-search" />}
             />
-            <List.Item
-                title="Preferred source"
-                description={preferredRepoId ? repoItems.find((item) => item.id === preferredRepoId)?.name : 'First available'}
-                right={() => (
-                    <Text variant="labelMedium" style={{ alignSelf: 'center' }}>
-                        {preferredRepoId ? 'Selected' : 'Auto'}
-                    </Text>
-                )}
-            />
+            <Text variant="bodyMedium" style={{ paddingHorizontal: 16, paddingBottom: 8, opacity: 0.7 }}>
+                Choose which source to use by default when opening the search page. You can always switch between sources using the chips at the top of the search page.
+            </Text>
             <RadioButton.Group
                 value={preferredRepoId ?? ''}
                 onValueChange={(value) => {
                     const repoId = value || undefined;
                     setPreferredRepository(repoId);
-                    setSnackbarText('Preferred source updated');
+                    setSnackbarText(`Default search source ${repoId ? 'set to ' + repoItems.find(r => r.id === repoId)?.name : 'cleared'}`);
                 }}
             >
                 <List.Item
-                    title="No preference"
+                    title="Auto-select"
                     description="Use the first available source"
-                    left={(props) => <List.Icon {...props} icon="circle-outline" />}
+                    left={(props) => <List.Icon {...props} icon="auto-fix" />}
                     right={() => <RadioButton value="" />}
                     onPress={() => {
                         setPreferredRepository(undefined);
-                        setSnackbarText('Preferred source cleared');
+                        setSnackbarText('Default search source cleared');
                     }}
                 />
                 {repoItems.map((repo) => (
                     <List.Item
                         key={repo.id}
                         title={repo.name}
+                        description={preferredRepoId === repo.id ? "Currently selected" : "Select as default"}
+                        left={(props) => <List.Icon {...props} icon="book" />}
                         onPress={() => {
                             setPreferredRepository(repo.id);
-                            setSnackbarText('Preferred source updated');
+                            setSnackbarText(`Default search source set to ${repo.name}`);
                         }}
                         right={() => <RadioButton value={repo.id} />}
                     />

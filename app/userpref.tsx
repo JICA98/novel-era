@@ -42,7 +42,6 @@ export interface UserPreferences {
     editorPreferences: EditorPreferences;
     ttsConfig: TTSConfig;
     preferredRepositoryId?: string;
-    defaultUniversalSearch?: boolean;
 }
 
 export const userPrefStore = create((set, get: any) => ({
@@ -60,15 +59,6 @@ export const userPrefStore = create((set, get: any) => ({
         set({ userPref: updated });
         setUserPreference(updated).then(() => { });
     },
-    setDefaultUniversalSearch: (enabled: boolean) => {
-        const current: UserPreferences | null = get().userPref;
-        if (!current) {
-            return;
-        }
-        const updated = { ...current, defaultUniversalSearch: enabled };
-        set({ userPref: updated });
-        setUserPreference(updated).then(() => { });
-    },
     setTTSConfig: (ttsConfig: TTSConfig) => {
         const userPref: UserPreferences = get().userPref;
         userPref.ttsConfig = ttsConfig;
@@ -83,7 +73,6 @@ export async function getUserPreference(): Promise<UserPreferences> {
         editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
         preferredRepositoryId: userPref?.preferredRepositoryId,
-        defaultUniversalSearch: userPref?.defaultUniversalSearch ?? false,
     };
 }
 
