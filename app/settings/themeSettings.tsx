@@ -9,7 +9,7 @@ export const ThemeSelectionAccordion = ({ userPref, setUserPref, setSnackbarText
     setSnackbarText: (text: string) => void
 }) => {
     const { colors } = useTheme();
-    const [expanded, setExpanded] = useState(true);
+    const [expanded, setExpanded] = useState(false);
     const [theme, setTheme] = useState(userPref.theme);
     const handlePress = () => setExpanded(!expanded);
 

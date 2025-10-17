@@ -18,7 +18,7 @@
 - ❌ My app does not allow users to create an account
 
 ### 4. Delete account URL
-**Use this URL:** `https://novel-era.com/delete-account.html`
+**Use this URL:** `https://novel-era.web.app/delete-account.html`
 
 *Note: You'll need to host the `public/delete-account.html` file on your domain*
 
@@ -71,11 +71,12 @@ For each data type, select these purposes:
 
 ## Next Steps
 
-1. Host the `delete-account.html` file on your domain
-2. Update the URLs in the components to match your actual domain
-3. Fill out the Google Play Console Data Safety form using the information above
-4. Test the privacy screens in your app
-5. Submit your app update
+1. ✅ **URLs Updated** - All URLs now use your website: `novel-era.web.app`
+2. **Deploy Delete Account Page** - Follow `FIREBASE_DEPLOYMENT_GUIDE.md` to host the HTML file
+3. **Update Support Email** - Replace `your-support-email@gmail.com` with your actual support email
+4. **Fill out Google Play Console** - Use the data safety information provided
+5. **Test Privacy Screens** - Navigate to Settings > Privacy & Data Policy in your app
+6. **Submit App Update** - You're now compliant with data safety requirements
 
 ## Contact Information
-Make sure to replace `support@novel-era.com` with your actual support email address in all files.
+All URLs have been updated to use your website: `novel-era.web.app`

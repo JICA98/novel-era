@@ -101,8 +101,8 @@
   "accountDeletion": {
     "supported": true,
     "method": "Email request",
-    "url": "https://novel-era.com/delete-account.html",
-    "email": "support@novel-era.com",
+    "url": "https://novel-era.web.app/delete-account.html",
+    "email": "your-support-email@gmail.com",
     "processingTime": "30 days",
     "dataRetention": {
       "personalData": "30 days",
@@ -144,9 +144,9 @@
     "optOutProcessing": true
   },
   "contactInformation": {
-    "supportEmail": "support@novel-era.com",
-    "privacyPolicyUrl": "https://novel-era.com/privacy-policy",
-    "dataProtectionOfficer": "support@novel-era.com"
+    "supportEmail": "your-support-email@gmail.com",
+    "privacyPolicyUrl": "https://novel-era.web.app/privacy-policy",
+    "dataProtectionOfficer": "your-support-email@gmail.com"
   },
   "compliance": {
     "gdpr": true,

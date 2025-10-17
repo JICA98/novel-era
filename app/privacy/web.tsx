@@ -18,17 +18,17 @@ Account Details:
 
 Thank you.`;
       
-      window.open(`mailto:support@novel-era.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+      window.open(`mailto:your-support-email@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
     } else {
-      Linking.openURL(`mailto:support@novel-era.com?subject=Account Deletion Request&body=Please delete my account and all associated data.`);
+      Linking.openURL(`mailto:your-support-email@gmail.com?subject=Account Deletion Request&body=Please delete my account and all associated data.`);
     }
   };
 
   const openPrivacyPolicy = () => {
     if (Platform.OS === 'web') {
-      window.open('https://novel-era.com/privacy-policy', '_blank');
+      window.open('https://novel-era.web.app/privacy-policy', '_blank');
     } else {
-      Linking.openURL('https://novel-era.com/privacy-policy');
+      Linking.openURL('https://novel-era.web.app/privacy-policy');
     }
   };
 
@@ -213,7 +213,7 @@ Thank you.`;
               For questions about data practices or privacy concerns:
             </Text>
             <Text variant="bodyMedium" style={styles.emailText}>
-              📧 support@novel-era.com
+              📧 your-support-email@gmail.com
             </Text>
           </Card.Content>
         </Card>

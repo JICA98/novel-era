@@ -67,7 +67,7 @@ export default function PrivacyPolicyScreen() {
   };
 
   const openPrivacyPolicy = () => {
-    Linking.openURL('https://novel-era.com/privacy-policy');
+    Linking.openURL('https://novel-era.web.app/privacy-policy');
   };
 
   return (
@@ -238,7 +238,7 @@ export default function PrivacyPolicyScreen() {
         <Card.Content>
           <Text variant="bodySmall" style={styles.footerText}>
             Novel Era • Version 1.0.3 • © 2024{'\n'}
-            For support or privacy concerns: support@novel-era.com
+            For support or privacy concerns: your-support-email@gmail.com
           </Text>
         </Card.Content>
       </Card>
