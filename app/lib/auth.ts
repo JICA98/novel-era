@@ -6,6 +6,7 @@ import {
   GoogleAuthProvider,
   User,
   createUserWithEmailAndPassword,
+  deleteUser,
   onAuthStateChanged,
   sendEmailVerification,
   signInWithCredential,
@@ -240,6 +241,51 @@ function resolveGoogleNativeError(error: unknown): string | undefined {
   }
 
   return undefined;
+}
+
+export async function deleteCurrentUser(): Promise<void> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("No user is currently signed in");
+    }
+
+    // Delete the user from Firebase Auth
+    await deleteUser(user);
+    
+  } catch (error) {
+    throw new Error(extractFirebaseMessage(error, "Unable to delete account."));
+  }
+}
+
+export async function deleteAccountCompletely(): Promise<void> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("No user is currently signed in");
+    }
+
+    const authId = user.uid;
+
+    // Import the deleteUserData function dynamically to avoid circular imports
+    const { deleteUserData } = await import('./firebaseBackup');
+    
+    // Delete user data from Firebase Realtime Database
+    await deleteUserData(authId);
+
+    // Delete the user from Firebase Auth (this will also sign them out)
+    await deleteUser(user);
+
+    // Clear local storage - import storage functions
+    const { clearAllData } = await import('../storage');
+    await clearAllData();
+
+    console.log('Account deletion completed successfully');
+    
+  } catch (error) {
+    console.error('Error during account deletion:', error);
+    throw new Error(extractFirebaseMessage(error, "Unable to delete account completely. Please try again or contact support."));
+  }
 }
 
 // Default export to satisfy Expo Router

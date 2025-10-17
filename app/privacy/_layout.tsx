@@ -7,7 +7,7 @@ export default function PrivacyLayout() {
         name="index"
         options={{
           title: 'Privacy & Data Policy',
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

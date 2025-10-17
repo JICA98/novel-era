@@ -47,6 +47,16 @@ export const getAllKeys = async () => {
     }
 }
 
+export const clearAllData = async () => {
+    try {
+        await AsyncStorage.clear();
+        console.log('All local data cleared');
+    } catch (e) {
+        console.error('Error clearing all data:', e);
+        throw e;
+    }
+}
+
 export async function cacheValue(key: string, value: any) {
     await storeData(key, value);
 }

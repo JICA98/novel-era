@@ -1,6 +1,6 @@
 import { Alert } from 'react-native';
 import * as Device from 'expo-device';
-import { getDatabase, onValue, ref, get, set } from 'firebase/database';
+import { getDatabase, onValue, ref, get, set, remove } from 'firebase/database';
 import { createStore } from "../../lib/downloads/utils";
 import { UserPreferences } from '../userpref';
 import {
@@ -657,6 +657,21 @@ export async function fetchBackupPreview(
   } catch (error) {
     console.error('Error fetching backup preview:', error);
     return { error };
+  }
+}
+
+export async function deleteUserData(authId: string): Promise<void> {
+  try {
+    const database = getDatabase(app);
+    const userDataRef = ref(database, `users/${authId}`);
+    
+    // Delete all user data from Firebase Realtime Database
+    await remove(userDataRef);
+    
+    console.log('User data deleted from Firebase Realtime Database');
+  } catch (error) {
+    console.error('Error deleting user data from Firebase:', error);
+    throw new Error('Failed to delete user data from cloud storage');
   }
 }
 

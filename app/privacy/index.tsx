@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Linking, Alert } from 'react-native';
-import { Text, Card, Button, Divider, List } from 'react-native-paper';
+import { Text, Card, Button, Divider, List, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authStateStore } from '../lib/auth';
@@ -8,26 +8,58 @@ import { authStateStore } from '../lib/auth';
 export default function PrivacyPolicyScreen() {
   const router = useRouter();
   const authState = authStateStore((state: any) => state.authState);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
+    if (!authState?.user) {
+      Alert.alert(
+        'Not Signed In',
+        'You need to be signed in to delete your account.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     Alert.alert(
       'Delete Account',
-      'To delete your account and associated data, please send an email to support@novel-era.com with your account details. We will process your request within 30 days.',
+      'Are you sure you want to permanently delete your account? This action cannot be undone and will:\n\n• Delete all your data from our servers\n• Remove your reading progress and favorites\n• Delete your account permanently\n• Clear all local app data',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Send Email',
-          onPress: () => {
-            const subject = 'Account Deletion Request - Novel Era';
-            const body = `Please delete my account and all associated data.
-            
-Account Details:
-- User ID: ${authState?.user?.uid || 'Not logged in'}
-- Email: ${authState?.user?.email || 'Not provided'}
-
-I understand that this action is irreversible and all my data will be permanently deleted.`;
-            
-            Linking.openURL(`mailto:support@novel-era.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              // Import the deletion function
+              const { deleteAccountCompletely } = await import('../lib/auth');
+              
+              // Perform the deletion
+              await deleteAccountCompletely();
+              
+              Alert.alert(
+                'Account Deleted',
+                'Your account and all associated data have been permanently deleted.',
+                [
+                  {
+                    text: 'OK',
+                    onPress: () => {
+                      // Navigate back to main screen
+                      router.replace('/');
+                    }
+                  }
+                ]
+              );
+            } catch (error) {
+              console.error('Account deletion error:', error);
+              Alert.alert(
+                'Deletion Failed',
+                error instanceof Error ? error.message : 'An error occurred while deleting your account. Please try again or contact support.',
+                [{ text: 'OK' }]
+              );
+            } finally {
+              setIsDeleting(false);
+            }
           }
         }
       ]
@@ -39,13 +71,26 @@ I understand that this action is irreversible and all my data will be permanentl
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.headerCard}>
-        <Card.Content>
-          <Text variant="headlineMedium" style={styles.title}>
-            Novel Era - Data Privacy & Account Management
-          </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <IconButton
+          icon="arrow-left"
+          size={24}
+          onPress={() => router.back()}
+          style={styles.backButton}
+        />
+        <Text variant="headlineSmall" style={styles.headerTitle}>
+          Privacy & Data Policy
+        </Text>
+      </View>
+      
+      <ScrollView style={styles.scrollContainer}>
+        <Card style={styles.headerCard}>
+          <Card.Content>
+            <Text variant="headlineMedium" style={styles.title}>
+              Novel Era - Data Privacy & Account Management
+            </Text>
+            <Text variant="bodyMedium" style={styles.subtitle}>
             Your privacy and data security are our top priorities
           </Text>
         </Card.Content>
@@ -121,11 +166,11 @@ I understand that this action is irreversible and all my data will be permanentl
         />
         <Card.Content>
           <Text variant="bodyMedium" style={styles.text}>
-            You have the right to delete your account and all associated data at any time.
+            You can delete your account and all associated data instantly using the button below. This action is irreversible.
           </Text>
           
           <Text variant="titleSmall" style={styles.sectionTitle}>
-            What gets deleted:
+            What gets deleted immediately:
           </Text>
           <List.Item
             title="Account Information"
@@ -133,19 +178,24 @@ I understand that this action is irreversible and all my data will be permanentl
             left={() => <List.Icon icon="account-remove" />}
           />
           <List.Item
+            title="Cloud Data"
+            description="All data stored on our servers"
+            left={() => <List.Icon icon="cloud-off" />}
+          />
+          <List.Item
+            title="Local Data"
+            description="All app data stored on your device"
+            left={() => <List.Icon icon="phone-remove" />}
+          />
+          <List.Item
             title="Reading Data"
             description="Favorites, reading progress, and preferences"
             left={() => <List.Icon icon="book-remove" />}
           />
-          <List.Item
-            title="Usage Analytics"
-            description="All associated usage data and analytics"
-            left={() => <List.Icon icon="analytics" />}
-          />
           
           <Text variant="bodySmall" style={styles.retentionText}>
-            <Text style={styles.bold}>Data Retention:</Text> All data is permanently deleted within 30 days of your request. 
-            Some backup data may be retained for up to 90 days for security purposes before permanent deletion.
+            <Text style={styles.bold}>Instant Deletion:</Text> Your account and all associated data will be permanently deleted immediately. 
+            This action cannot be undone. You will be signed out and returned to the main screen.
           </Text>
           
           <Button
@@ -153,9 +203,13 @@ I understand that this action is irreversible and all my data will be permanentl
             onPress={handleDeleteAccount}
             style={styles.deleteButton}
             buttonColor="#F44336"
-            icon="email"
+            icon={isDeleting ? undefined : "delete"}
+            disabled={isDeleting}
           >
-            Request Account Deletion
+            {isDeleting ? (
+              <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
+            ) : null}
+            {isDeleting ? "Deleting Account..." : "Delete Account Permanently"}
           </Button>
         </Card.Content>
       </Card>
@@ -188,7 +242,8 @@ I understand that this action is irreversible and all my data will be permanentl
           </Text>
         </Card.Content>
       </Card>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -196,6 +251,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  backButton: {
+    margin: 0,
+  },
+  headerTitle: {
+    marginLeft: 8,
+    fontWeight: 'bold',
+  },
+  scrollContainer: {
+    flex: 1,
   },
   headerCard: {
     margin: 16,
