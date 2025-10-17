@@ -1,0 +1,157 @@
+{
+  "appName": "Novel Era",
+  "version": "1.0.3+10",
+  "lastUpdated": "2024-10-17",
+  "dataCollectionDisclosure": {
+    "collectsData": true,
+    "encryptedInTransit": true,
+    "dataTypes": [
+      {
+        "category": "Personal info",
+        "types": [
+          {
+            "type": "Email address",
+            "collected": true,
+            "shared": false,
+            "optional": false,
+            "purpose": ["Account management", "Authentication"],
+            "retention": "Until account deletion requested"
+          },
+          {
+            "type": "User ID",
+            "collected": true,
+            "shared": false,
+            "optional": false,
+            "purpose": ["Account management", "Authentication"],
+            "retention": "Until account deletion requested"
+          }
+        ]
+      },
+      {
+        "category": "App activity",
+        "types": [
+          {
+            "type": "App interactions",
+            "collected": true,
+            "shared": false,
+            "optional": true,
+            "purpose": ["Analytics", "App functionality"],
+            "retention": "2 years or until account deletion"
+          },
+          {
+            "type": "In-app search history",
+            "collected": true,
+            "shared": false,
+            "optional": true,
+            "purpose": ["App functionality", "Personalization"],
+            "retention": "Until account deletion requested"
+          }
+        ]
+      },
+      {
+        "category": "App info and performance",
+        "types": [
+          {
+            "type": "Crash logs",
+            "collected": true,
+            "shared": false,
+            "optional": true,
+            "purpose": ["Analytics", "App functionality"],
+            "retention": "90 days"
+          },
+          {
+            "type": "Other app performance data",
+            "collected": true,
+            "shared": false,
+            "optional": true,
+            "purpose": ["Analytics", "App functionality"],
+            "retention": "1 year"
+          }
+        ]
+      }
+    ]
+  },
+  "accountCreationMethods": [
+    {
+      "type": "Username and password",
+      "supported": true
+    },
+    {
+      "type": "Username and other authentication",
+      "supported": true
+    },
+    {
+      "type": "Username, password and other authentication",
+      "supported": true
+    },
+    {
+      "type": "OAuth",
+      "supported": true,
+      "providers": ["Google"]
+    },
+    {
+      "type": "Other",
+      "supported": false
+    },
+    {
+      "type": "No account creation",
+      "supported": false
+    }
+  ],
+  "accountDeletion": {
+    "supported": true,
+    "method": "Email request",
+    "url": "https://novel-era.com/delete-account.html",
+    "email": "support@novel-era.com",
+    "processingTime": "30 days",
+    "dataRetention": {
+      "personalData": "30 days",
+      "backupData": "90 days",
+      "analyticsData": "90 days"
+    },
+    "deletionIncludes": [
+      "Account information (username, email, authentication data)",
+      "Reading preferences and favorites",
+      "Reading progress and bookmarks",
+      "Usage analytics and behavioral data",
+      "Device identifiers and installation data"
+    ]
+  },
+  "securityMeasures": {
+    "encryptionInTransit": true,
+    "encryptionAtRest": true,
+    "accessControls": true,
+    "dataMinimization": true,
+    "regularSecurityAudits": true
+  },
+  "thirdPartySharing": {
+    "sharesData": false,
+    "advertisingPartners": [],
+    "analyticsPartners": [],
+    "serviceProviders": [
+      {
+        "name": "Firebase",
+        "purpose": "Authentication and data storage",
+        "dataTypes": ["Account information", "Reading preferences"]
+      }
+    ]
+  },
+  "userRights": {
+    "accessData": true,
+    "correctData": true,
+    "deleteData": true,
+    "portData": false,
+    "optOutProcessing": true
+  },
+  "contactInformation": {
+    "supportEmail": "support@novel-era.com",
+    "privacyPolicyUrl": "https://novel-era.com/privacy-policy",
+    "dataProtectionOfficer": "support@novel-era.com"
+  },
+  "compliance": {
+    "gdpr": true,
+    "ccpa": true,
+    "coppa": false,
+    "googlePlayDataSafety": true
+  }
+}

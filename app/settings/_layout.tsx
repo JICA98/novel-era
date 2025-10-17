@@ -6,12 +6,15 @@ import Auth from "./accountSettings";
 import { List, RadioButton, Snackbar, Switch, Text } from "react-native-paper";
 import UseRepositoryLayout from "../_repos";
 import { Repo } from "@/types";
+import { useRouter } from "expo-router";
 
 
 export default function Settings() {
     const userPref = userPrefStore((state: any) => state.userPref);
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
     const [snackbarText, setSnackbarText] = useState('');
+    const router = useRouter();
+    
     useEffect(() => {
         async function fetchUserPreferences() {
             const preferences = await getUserPreference();
@@ -25,6 +28,13 @@ export default function Settings() {
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <List.Section>
                     <Auth setSnackbarText={setSnackbarText} />
+                    <List.Item
+                        title="Privacy & Data Policy"
+                        description="View data collection practices and manage your account"
+                        left={(props) => <List.Icon {...props} icon="shield-account" />}
+                        right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                        onPress={() => router.push('/privacy/' as any)}
+                    />
                     {userPref && (
                         <>
                             <ThemeSelectionAccordion
