@@ -58,10 +58,29 @@ export interface ReadingModePreferences {
     autoHideDelay: number; // seconds
 }
 
+export interface TextDisplaySettings {
+    fontSize: number; // 12-32
+    lineSpacing: number; // 1.0-2.5
+    paragraphSpacing: number; // 0-20 pixels
+    textAlignment: 'left' | 'center' | 'justify';
+    marginHorizontal: number; // 8-40 pixels
+    marginVertical: number; // 8-40 pixels
+}
+
+export interface ReadingBehaviorSettings {
+    keepScreenOn: boolean;
+    tapToScroll: boolean;
+    tapScrollDistance: number; // percentage of screen height
+    volumeKeysForNavigation: boolean;
+    confirmBeforeClosing: boolean;
+}
+
 export interface ReadingExperiencePreferences {
     autoScroll: AutoScrollSettings;
     pageTurnAnimation: PageTurnAnimation;
     readingMode: ReadingModePreferences;
+    textDisplay: TextDisplaySettings;
+    readingBehavior: ReadingBehaviorSettings;
 }
 
 export const defaultAutoScrollSettings: AutoScrollSettings = {
@@ -85,10 +104,29 @@ export const defaultReadingModePreferences: ReadingModePreferences = {
     autoHideDelay: 3,
 };
 
+export const defaultTextDisplaySettings: TextDisplaySettings = {
+    fontSize: 16,
+    lineSpacing: 1.4,
+    paragraphSpacing: 8,
+    textAlignment: 'left',
+    marginHorizontal: 16,
+    marginVertical: 16,
+};
+
+export const defaultReadingBehaviorSettings: ReadingBehaviorSettings = {
+    keepScreenOn: true,
+    tapToScroll: true,
+    tapScrollDistance: 80, // 80% of screen height
+    volumeKeysForNavigation: false,
+    confirmBeforeClosing: false,
+};
+
 export const defaultReadingExperiencePreferences: ReadingExperiencePreferences = {
     autoScroll: defaultAutoScrollSettings,
     pageTurnAnimation: defaultPageTurnAnimation,
     readingMode: defaultReadingModePreferences,
+    textDisplay: defaultTextDisplaySettings,
+    readingBehavior: defaultReadingBehaviorSettings,
 };
 
 export interface UserPreferences {
@@ -132,11 +170,22 @@ export const userPrefStore = create((set, get: any) => ({
 
 export async function getUserPreference(): Promise<UserPreferences> {
     const userPref = await getData<UserPreferences>('userPreference');
+    const readingExperience = userPref?.readingExperience ?? defaultReadingExperiencePreferences;
+    
+    // Ensure backward compatibility with existing preferences
+    const completeReadingExperience: ReadingExperiencePreferences = {
+        autoScroll: readingExperience.autoScroll ?? defaultAutoScrollSettings,
+        pageTurnAnimation: readingExperience.pageTurnAnimation ?? defaultPageTurnAnimation,
+        readingMode: readingExperience.readingMode ?? defaultReadingModePreferences,
+        textDisplay: readingExperience.textDisplay ?? defaultTextDisplaySettings,
+        readingBehavior: readingExperience.readingBehavior ?? defaultReadingBehaviorSettings,
+    };
+    
     return {
         theme: userPref?.theme ?? ThemeOptions.System,
         editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
-        readingExperience: userPref?.readingExperience ?? defaultReadingExperiencePreferences,
+        readingExperience: completeReadingExperience,
         preferredRepositoryId: userPref?.preferredRepositoryId,
     };
 }

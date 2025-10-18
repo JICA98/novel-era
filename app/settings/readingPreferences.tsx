@@ -15,6 +15,8 @@ import {
     AutoScrollSettings,
     PageTurnAnimation,
     ReadingModePreferences,
+    TextDisplaySettings,
+    ReadingBehaviorSettings,
     UserPreferences
 } from '../userpref';
 
@@ -30,38 +32,86 @@ export default function ReadingPreferences({ setSnackbarText }: ReadingPreferenc
     const [autoScrollExpanded, setAutoScrollExpanded] = useState(false);
     const [animationExpanded, setAnimationExpanded] = useState(false);
     const [readingModeExpanded, setReadingModeExpanded] = useState(false);
+    const [textDisplayExpanded, setTextDisplayExpanded] = useState(false);
+    const [behaviorExpanded, setBehaviorExpanded] = useState(false);
 
     if (!userPref) {
         return null;
     }
 
-    const readingExperience = userPref.readingExperience;
+    // Ensure all properties exist for backward compatibility
+    const readingExperience = {
+        ...userPref.readingExperience,
+        textDisplay: userPref.readingExperience.textDisplay || {
+            fontSize: 16,
+            lineSpacing: 1.4,
+            paragraphSpacing: 8,
+            textAlignment: 'left' as const,
+            marginHorizontal: 16,
+            marginVertical: 16,
+        },
+        readingBehavior: userPref.readingExperience.readingBehavior || {
+            keepScreenOn: true,
+            tapToScroll: true,
+            tapScrollDistance: 80,
+            volumeKeysForNavigation: false,
+            confirmBeforeClosing: false,
+        }
+    };
 
-    const updateAutoScroll = (updates: Partial<AutoScrollSettings>) => {
+    const updateAutoScroll = (updates: Partial<AutoScrollSettings>, showSnackbar: boolean = true) => {
         const newReadingExperience: ReadingExperiencePreferences = {
             ...readingExperience,
             autoScroll: { ...readingExperience.autoScroll, ...updates }
         };
         setReadingExperience(newReadingExperience);
-        setSnackbarText('Auto-scroll settings updated');
+        if (showSnackbar) {
+            setSnackbarText('Auto-scroll settings updated');
+        }
     };
 
-    const updatePageTurnAnimation = (updates: Partial<PageTurnAnimation>) => {
+    const updatePageTurnAnimation = (updates: Partial<PageTurnAnimation>, showSnackbar: boolean = true) => {
         const newReadingExperience: ReadingExperiencePreferences = {
             ...readingExperience,
             pageTurnAnimation: { ...readingExperience.pageTurnAnimation, ...updates }
         };
         setReadingExperience(newReadingExperience);
-        setSnackbarText('Page turn animation settings updated');
+        if (showSnackbar) {
+            setSnackbarText('Page turn animation settings updated');
+        }
     };
 
-    const updateReadingMode = (updates: Partial<ReadingModePreferences>) => {
+    const updateReadingMode = (updates: Partial<ReadingModePreferences>, showSnackbar: boolean = true) => {
         const newReadingExperience: ReadingExperiencePreferences = {
             ...readingExperience,
             readingMode: { ...readingExperience.readingMode, ...updates }
         };
         setReadingExperience(newReadingExperience);
-        setSnackbarText('Reading mode settings updated');
+        if (showSnackbar) {
+            setSnackbarText('Reading mode settings updated');
+        }
+    };
+
+    const updateTextDisplay = (updates: Partial<TextDisplaySettings>, showSnackbar: boolean = true) => {
+        const newReadingExperience: ReadingExperiencePreferences = {
+            ...readingExperience,
+            textDisplay: { ...readingExperience.textDisplay, ...updates }
+        };
+        setReadingExperience(newReadingExperience);
+        if (showSnackbar) {
+            setSnackbarText('Text display settings updated');
+        }
+    };
+
+    const updateReadingBehavior = (updates: Partial<ReadingBehaviorSettings>, showSnackbar: boolean = true) => {
+        const newReadingExperience: ReadingExperiencePreferences = {
+            ...readingExperience,
+            readingBehavior: { ...readingExperience.readingBehavior, ...updates }
+        };
+        setReadingExperience(newReadingExperience);
+        if (showSnackbar) {
+            setSnackbarText('Reading behavior settings updated');
+        }
     };
 
     return (
@@ -87,7 +137,7 @@ export default function ReadingPreferences({ setSnackbarText }: ReadingPreferenc
                 />
                 
                 {readingExperience.autoScroll.enabled && (
-                    <>
+                    <View>
                         <View style={styles.sliderContainer}>
                             <Text variant="bodyMedium" style={styles.sliderLabel}>
                                 Auto-scroll Speed: {readingExperience.autoScroll.speed} pixels/sec
@@ -126,7 +176,7 @@ export default function ReadingPreferences({ setSnackbarText }: ReadingPreferenc
                                 />
                             )}
                         />
-                    </>
+                    </View>
                 )}
             </List.Accordion>
 
@@ -155,7 +205,7 @@ export default function ReadingPreferences({ setSnackbarText }: ReadingPreferenc
                 />
 
                 {readingExperience.pageTurnAnimation.enabled && (
-                    <>
+                    <View>
                         <Text variant="bodyMedium" style={styles.sectionTitle}>
                             Animation Type
                         </Text>
@@ -209,7 +259,7 @@ export default function ReadingPreferences({ setSnackbarText }: ReadingPreferenc
                                 maximumTrackTintColor={theme.colors.outline}
                             />
                         </View>
-                    </>
+                    </View>
                 )}
             </List.Accordion>
 
@@ -297,6 +347,204 @@ export default function ReadingPreferences({ setSnackbarText }: ReadingPreferenc
                         Higher values make gestures more sensitive
                     </Text>
                 </View>
+            </List.Accordion>
+
+            <Divider />
+
+            {/* Text Display Settings */}
+            <List.Accordion
+                title="Text Display"
+                description="Font size, spacing, and layout preferences"
+                expanded={textDisplayExpanded}
+                onPress={() => setTextDisplayExpanded(!textDisplayExpanded)}
+                left={(props) => <List.Icon {...props} icon="format-text" />}
+            >
+                <View style={styles.sliderContainer}>
+                    <Text variant="bodyMedium" style={styles.sliderLabel}>
+                        Font Size: {readingExperience.textDisplay.fontSize}px
+                    </Text>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={12}
+                        maximumValue={32}
+                        value={readingExperience.textDisplay.fontSize}
+                        onValueChange={(fontSize) => updateTextDisplay({ fontSize: Math.round(fontSize) })}
+                        minimumTrackTintColor={theme.colors.primary}
+                        maximumTrackTintColor={theme.colors.outline}
+                    />
+                </View>
+
+                <View style={styles.sliderContainer}>
+                    <Text variant="bodyMedium" style={styles.sliderLabel}>
+                        Line Spacing: {readingExperience.textDisplay.lineSpacing.toFixed(1)}
+                    </Text>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={1.0}
+                        maximumValue={2.5}
+                        step={0.1}
+                        value={readingExperience.textDisplay.lineSpacing}
+                        onValueChange={(lineSpacing) => updateTextDisplay({ lineSpacing: Math.round(lineSpacing * 10) / 10 })}
+                        minimumTrackTintColor={theme.colors.primary}
+                        maximumTrackTintColor={theme.colors.outline}
+                    />
+                </View>
+
+                <View style={styles.sliderContainer}>
+                    <Text variant="bodyMedium" style={styles.sliderLabel}>
+                        Paragraph Spacing: {readingExperience.textDisplay.paragraphSpacing}px
+                    </Text>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={0}
+                        maximumValue={20}
+                        value={readingExperience.textDisplay.paragraphSpacing}
+                        onValueChange={(paragraphSpacing) => updateTextDisplay({ paragraphSpacing: Math.round(paragraphSpacing) })}
+                        minimumTrackTintColor={theme.colors.primary}
+                        maximumTrackTintColor={theme.colors.outline}
+                    />
+                </View>
+
+                <Text variant="bodyMedium" style={styles.sectionTitle}>
+                    Text Alignment
+                </Text>
+                <RadioButton.Group
+                    value={readingExperience.textDisplay.textAlignment}
+                    onValueChange={(alignment) => 
+                        updateTextDisplay({ textAlignment: alignment as 'left' | 'center' | 'justify' })
+                    }
+                >
+                    <List.Item
+                        title="Left"
+                        description="Align text to the left"
+                        left={(props) => <List.Icon {...props} icon="format-align-left" />}
+                        right={() => <RadioButton value="left" />}
+                        onPress={() => updateTextDisplay({ textAlignment: 'left' })}
+                    />
+                    <List.Item
+                        title="Center"
+                        description="Center align text"
+                        left={(props) => <List.Icon {...props} icon="format-align-center" />}
+                        right={() => <RadioButton value="center" />}
+                        onPress={() => updateTextDisplay({ textAlignment: 'center' })}
+                    />
+                    <List.Item
+                        title="Justify"
+                        description="Justify text for even edges"
+                        left={(props) => <List.Icon {...props} icon="format-align-justify" />}
+                        right={() => <RadioButton value="justify" />}
+                        onPress={() => updateTextDisplay({ textAlignment: 'justify' })}
+                    />
+                </RadioButton.Group>
+
+                <View style={styles.sliderContainer}>
+                    <Text variant="bodyMedium" style={styles.sliderLabel}>
+                        Horizontal Margins: {readingExperience.textDisplay.marginHorizontal}px
+                    </Text>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={8}
+                        maximumValue={40}
+                        value={readingExperience.textDisplay.marginHorizontal}
+                        onValueChange={(marginHorizontal) => updateTextDisplay({ marginHorizontal: Math.round(marginHorizontal) })}
+                        minimumTrackTintColor={theme.colors.primary}
+                        maximumTrackTintColor={theme.colors.outline}
+                    />
+                </View>
+
+                <View style={styles.sliderContainer}>
+                    <Text variant="bodyMedium" style={styles.sliderLabel}>
+                        Vertical Margins: {readingExperience.textDisplay.marginVertical}px
+                    </Text>
+                    <Slider
+                        style={styles.slider}
+                        minimumValue={8}
+                        maximumValue={40}
+                        value={readingExperience.textDisplay.marginVertical}
+                        onValueChange={(marginVertical) => updateTextDisplay({ marginVertical: Math.round(marginVertical) })}
+                        minimumTrackTintColor={theme.colors.primary}
+                        maximumTrackTintColor={theme.colors.outline}
+                    />
+                </View>
+            </List.Accordion>
+
+            <Divider />
+
+            {/* Reading Behavior Settings */}
+            <List.Accordion
+                title="Reading Behavior"
+                description="Screen and interaction preferences"
+                expanded={behaviorExpanded}
+                onPress={() => setBehaviorExpanded(!behaviorExpanded)}
+                left={(props) => <List.Icon {...props} icon="gesture-tap" />}
+            >
+                <List.Item
+                    title="Keep screen on"
+                    description="Prevent screen from turning off while reading"
+                    left={(props) => <List.Icon {...props} icon="lightbulb-on" />}
+                    right={() => (
+                        <Switch
+                            value={readingExperience.readingBehavior.keepScreenOn}
+                            onValueChange={(keepScreenOn) => updateReadingBehavior({ keepScreenOn })}
+                        />
+                    )}
+                />
+
+                <List.Item
+                    title="Tap to scroll"
+                    description="Tap screen edges to scroll"
+                    left={(props) => <List.Icon {...props} icon="gesture-tap" />}
+                    right={() => (
+                        <Switch
+                            value={readingExperience.readingBehavior.tapToScroll}
+                            onValueChange={(tapToScroll) => updateReadingBehavior({ tapToScroll })}
+                        />
+                    )}
+                />
+
+                {readingExperience.readingBehavior.tapToScroll && (
+                    <View style={styles.sliderContainer}>
+                        <Text variant="bodyMedium" style={styles.sliderLabel}>
+                            Tap Scroll Distance: {readingExperience.readingBehavior.tapScrollDistance}%
+                        </Text>
+                        <Slider
+                            style={styles.slider}
+                            minimumValue={20}
+                            maximumValue={100}
+                            value={readingExperience.readingBehavior.tapScrollDistance}
+                            onValueChange={(tapScrollDistance) => updateReadingBehavior({ tapScrollDistance: Math.round(tapScrollDistance) })}
+                            minimumTrackTintColor={theme.colors.primary}
+                            maximumTrackTintColor={theme.colors.outline}
+                        />
+                        <Text variant="bodySmall" style={styles.helperText}>
+                            Percentage of screen height to scroll per tap
+                        </Text>
+                    </View>
+                )}
+
+                <List.Item
+                    title="Volume keys navigation"
+                    description="Use volume keys to navigate pages"
+                    left={(props) => <List.Icon {...props} icon="volume-high" />}
+                    right={() => (
+                        <Switch
+                            value={readingExperience.readingBehavior.volumeKeysForNavigation}
+                            onValueChange={(volumeKeysForNavigation) => updateReadingBehavior({ volumeKeysForNavigation })}
+                        />
+                    )}
+                />
+
+                <List.Item
+                    title="Confirm before closing"
+                    description="Ask for confirmation before closing reader"
+                    left={(props) => <List.Icon {...props} icon="alert-circle" />}
+                    right={() => (
+                        <Switch
+                            value={readingExperience.readingBehavior.confirmBeforeClosing}
+                            onValueChange={(confirmBeforeClosing) => updateReadingBehavior({ confirmBeforeClosing })}
+                        />
+                    )}
+                />
             </List.Accordion>
         </View>
     );
