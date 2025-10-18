@@ -89,10 +89,13 @@ export function inverseFavoriteTracker({ novelTracker, repo, content, allNovelTr
 }) {
     const key = novelKey(repo.id, content.bookId);
     const updatedTracker: NovelTracker = { ...novelTracker, favorite: !novelTracker.favorite, updated: Date.now() };
+    console.log('Toggling favorite for:', content.title, 'to:', updatedTracker.favorite);
     setNovelTracker(updatedTracker);
     allNovelTrackerStore.set(key, createNovelTrackerStore(updatedTracker));
     setAllNovelTracker(allNovelTrackerStore);
-    saveNovelTracker(updatedTracker).then(() => { });
+    saveNovelTracker(updatedTracker).then(() => {
+        console.log('Saved novel tracker to storage for:', content.title);
+    });
 }
 
 export function createChapter(repo: Repo, novel: Content, chapterId: string): ChapterTracker {
