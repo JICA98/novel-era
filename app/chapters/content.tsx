@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, } from 'react';
-import { View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList, ViewToken } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList, ViewToken, Animated } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { IconButton } from 'react-native-paper';
 import { RenderChapterProps, navigateToNextChapter } from './common';
@@ -13,6 +13,14 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const [pages, setPages] = useState<any[]>([]);
     const listRef = useRef<FlatList>(null);
     const [listLoaded, setListLoaded] = useState(false);
+    const autoScrollTimerRef = useRef<number | null>(null);
+    const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+    const [autoScrollPaused, setAutoScrollPaused] = useState(false);
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    const fadeAnimation = useRef(new Animated.Value(1)).current;
+    const slideAnimation = useRef(new Animated.Value(0)).current;
+    const flipAnimation = useRef(new Animated.Value(0)).current;
+    const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const useTracker = getOrCreateTrackerStore({
         chapterId: props.id,
         repo: props.repo,
@@ -26,8 +34,9 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const setTracker = useTracker((state: any) => state.setContent) as (_: ChapterTracker) => void;
     const [viewableItems, setViewableItems] = useState<ViewToken<Sentence>[]>([]);
     const windowHeight = useWindowDimensions().height;
-    const ttsConfig = (userPrefStore((state: any) => state.userPref) as UserPreferences).ttsConfig;
-    const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
+    const ttsConfig = userPref?.ttsConfig;
+    const editorPref = userPref?.editorPreferences;
+    const readingExperience = userPref?.readingExperience;
 
     const splitContentIntoPages = (content: string) => {
         const words = content.split(' ');
@@ -40,9 +49,186 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         return result;
     };
 
+    // Page turn animation functions
+    const animatePageTurn = useCallback((direction: 'next' | 'prev') => {
+        if (!readingExperience?.pageTurnAnimation.enabled) {
+            return;
+        }
+
+        const animationType = readingExperience.pageTurnAnimation.type;
+        const animationSpeed = readingExperience.pageTurnAnimation.speed;
+
+        switch (animationType) {
+            case 'fade':
+                Animated.sequence([
+                    Animated.timing(fadeAnimation, {
+                        toValue: 0,
+                        duration: animationSpeed / 2,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(fadeAnimation, {
+                        toValue: 1,
+                        duration: animationSpeed / 2,
+                        useNativeDriver: true,
+                    }),
+                ]).start();
+                break;
+
+            case 'slide':
+                const slideValue = direction === 'next' ? -windowHeight : windowHeight;
+                Animated.sequence([
+                    Animated.timing(slideAnimation, {
+                        toValue: slideValue,
+                        duration: animationSpeed / 2,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(slideAnimation, {
+                        toValue: 0,
+                        duration: animationSpeed / 2,
+                        useNativeDriver: true,
+                    }),
+                ]).start();
+                break;
+
+            case 'flip':
+                Animated.sequence([
+                    Animated.timing(flipAnimation, {
+                        toValue: 1,
+                        duration: animationSpeed / 2,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(flipAnimation, {
+                        toValue: 0,
+                        duration: animationSpeed / 2,
+                        useNativeDriver: true,
+                    }),
+                ]).start();
+                break;
+
+            case 'none':
+            default:
+                // No animation
+                break;
+        }
+    }, [readingExperience?.pageTurnAnimation, fadeAnimation, slideAnimation, flipAnimation, windowHeight]);
+
+    const getPageAnimationStyle = useCallback(() => {
+        if (!readingExperience?.pageTurnAnimation.enabled) {
+            return {};
+        }
+
+        const animationType = readingExperience.pageTurnAnimation.type;
+
+        switch (animationType) {
+            case 'fade':
+                return {
+                    opacity: fadeAnimation,
+                };
+
+            case 'slide':
+                return {
+                    transform: [{ translateY: slideAnimation }],
+                };
+
+            case 'flip':
+                return {
+                    transform: [{
+                        rotateY: flipAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0deg', '180deg'],
+                        }),
+                    }],
+                };
+
+            case 'none':
+            default:
+                return {};
+        }
+    }, [readingExperience?.pageTurnAnimation, fadeAnimation, slideAnimation, flipAnimation]);
+
+    // Auto-scroll functionality
+    const startAutoScroll = useCallback(() => {
+        if (!readingExperience?.autoScroll.enabled || !listRef.current) {
+            return;
+        }
+
+        const speed = readingExperience.autoScroll.speed;
+        const scrollInterval = 50; // Update every 50ms for smooth scrolling
+        const scrollStep = (speed * scrollInterval) / 1000; // Calculate step size
+
+        setIsAutoScrolling(true);
+        setAutoScrollPaused(false);
+
+        autoScrollTimerRef.current = setInterval(() => {
+            listRef.current?.scrollToOffset({
+                offset: Math.max(0, getCurrentScrollOffset() + scrollStep),
+                animated: true
+            });
+        }, scrollInterval);
+    }, [readingExperience?.autoScroll.enabled, readingExperience?.autoScroll.speed]);
+
+    const stopAutoScroll = useCallback(() => {
+        if (autoScrollTimerRef.current) {
+            clearInterval(autoScrollTimerRef.current);
+            autoScrollTimerRef.current = null;
+        }
+        setIsAutoScrolling(false);
+        setAutoScrollPaused(false);
+    }, []);
+
+    const pauseAutoScroll = useCallback(() => {
+        if (autoScrollTimerRef.current) {
+            clearInterval(autoScrollTimerRef.current);
+            autoScrollTimerRef.current = null;
+        }
+        setAutoScrollPaused(true);
+    }, []);
+
+    const resumeAutoScroll = useCallback(() => {
+        if (autoScrollPaused && readingExperience?.autoScroll.enabled) {
+            startAutoScroll();
+        }
+    }, [autoScrollPaused, readingExperience?.autoScroll.enabled, startAutoScroll]);
+
+    const getCurrentScrollOffset = useCallback(() => {
+        // This is a simplified way to get scroll offset
+        // In a real implementation, you might need to track this more accurately
+        return 0;
+    }, []);
+
+    // Handle TTS state changes for auto-scroll
+    useEffect(() => {
+        if (!readingExperience?.autoScroll.enabled) {
+            return;
+        }
+
+        const isTTSActive = isSpeechOrPause(tts.state);
+        
+        if (isTTSActive && readingExperience.autoScroll.pauseOnTTS) {
+            if (isAutoScrolling) {
+                pauseAutoScroll();
+            }
+        } else if (!isTTSActive && readingExperience.autoScroll.resumeAfterTTS && autoScrollPaused) {
+            resumeAutoScroll();
+        }
+    }, [tts.state, readingExperience?.autoScroll, isAutoScrolling, autoScrollPaused, pauseAutoScroll, resumeAutoScroll]);
+
+    // Start auto-scroll when enabled
+    useEffect(() => {
+        if (readingExperience?.autoScroll.enabled && listLoaded && !isAutoScrolling && !isSpeechOrPause(tts.state)) {
+            startAutoScroll();
+        } else if (!readingExperience?.autoScroll.enabled && isAutoScrolling) {
+            stopAutoScroll();
+        }
+
+        return () => {
+            stopAutoScroll();
+        };
+    }, [readingExperience?.autoScroll.enabled, listLoaded, startAutoScroll, stopAutoScroll, isAutoScrolling, tts.state]);
+
     useEffect(() => {
         let data = props.data;
-        if (editorPref.hasChapterNumber) {
+        if (editorPref?.hasChapterNumber) {
             data = `<p>Chapter — ${props.id}</p>${data}`;
         }
         const { html, sentences } = htmlToIdSentences(data);
@@ -50,13 +236,13 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         setPages(pageContent);
         let tts: TTS = {
             state: props.speachState, sentences, ttsQueue: toQueue(sentences),
-            index: 0, ttsConfig
+            index: 0, ttsConfig: ttsConfig || { rate: 1, voice: 'system', pitch: 1, volume: 0.8 }
         };
         setTTStore(tts);
         if (tts.state === 'speak') {
             setTTS({ tts, setTTS: setTTStore });
         }
-    }, [props.data, editorPref.hasChapterNumber]);
+    }, [props.data, editorPref?.hasChapterNumber, ttsConfig]);
 
     const updateViewableItems = ({ viewableItems }:
         { viewableItems: ViewToken<Sentence>[] }): void => {
@@ -154,10 +340,30 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         </View>
     )}</>);
     return (
-        <PagerView style={{ flex: 1 }} initialPage={0}>
+        <PagerView 
+            style={{ flex: 1 }} 
+            initialPage={0}
+            // Enable overdrag for better gesture sensitivity
+            overdrag={true}
+            onPageSelected={(e) => {
+                const newIndex = e.nativeEvent.position;
+                if (newIndex !== currentPageIndex) {
+                    const direction = newIndex > currentPageIndex ? 'next' : 'prev';
+                    animatePageTurn(direction);
+                    setCurrentPageIndex(newIndex);
+                }
+            }}
+        >
             {pages.map((_, index) => {
+                const animatedStyle = getPageAnimationStyle();
                 return (
-                    <View key={index} style={{ flex: 1, marginHorizontal: 10 }}>
+                    <Animated.View 
+                        key={index} 
+                        style={[
+                            { flex: 1, marginHorizontal: 10 },
+                            animatedStyle
+                        ]}
+                    >
                         <FlatList
                             ref={listRef}
                             onScroll={onScroll}
@@ -187,7 +393,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                                     setListLoaded(true);
                                 }
                             }} />
-                    </View>
+                    </Animated.View>
                 );
             })}
         </PagerView>

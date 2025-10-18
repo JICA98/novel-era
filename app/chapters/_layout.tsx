@@ -1,6 +1,6 @@
 import { FetchData } from "@/types";
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
 import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
 import { allDownloadsStore, useDownloadStore } from "../../lib/downloads/utils";
@@ -31,12 +31,83 @@ const ChapterLayout: React.FC = () => {
     const tts: TTS = ttsStore((state: any) => state.tts);
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
-    const [focusedMode, setFocusedMode] = useState(props.focusedMode);
+    const [focusedMode, setFocusedMode] = useState(
+        props.focusedMode || userPref?.readingExperience?.readingMode?.immersiveByDefault || false
+    );
     const colors = useTheme().colors;
+    const controlsOpacity = useRef(new Animated.Value(1)).current;
+    const [controlsVisible, setControlsVisible] = useState(true);
+    const hideControlsTimer = useRef<number | null>(null);
 
     useEffect(() => {
         fetchChapterData();
-    }, []);
+        
+        // Set initial immersive mode based on preferences
+        if (userPref?.readingExperience?.readingMode?.immersiveByDefault && !props.focusedMode) {
+            setFocusedMode(true);
+        }
+    }, [userPref?.readingExperience?.readingMode?.immersiveByDefault]);
+
+    // Auto-hide controls functionality
+    const startHideControlsTimer = () => {
+        if (!userPref?.readingExperience?.readingMode?.autoHideControls || !focusedMode) {
+            return;
+        }
+
+        const delay = (userPref.readingExperience.readingMode.autoHideDelay || 3) * 1000;
+        
+        if (hideControlsTimer.current) {
+            clearTimeout(hideControlsTimer.current);
+        }
+
+        hideControlsTimer.current = setTimeout(() => {
+            hideControls();
+        }, delay);
+    };
+
+    const hideControls = () => {
+        Animated.timing(controlsOpacity, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+        }).start(() => {
+            setControlsVisible(false);
+        });
+    };
+
+    const showControls = () => {
+        setControlsVisible(true);
+        Animated.timing(controlsOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+        }).start();
+        startHideControlsTimer();
+    };
+
+    const resetControlsTimer = () => {
+        if (controlsVisible) {
+            startHideControlsTimer();
+        }
+    };
+
+    // Start auto-hide timer when entering focused mode
+    useEffect(() => {
+        if (focusedMode && userPref?.readingExperience?.readingMode?.autoHideControls) {
+            startHideControlsTimer();
+        } else {
+            if (hideControlsTimer.current) {
+                clearTimeout(hideControlsTimer.current);
+            }
+            showControls();
+        }
+
+        return () => {
+            if (hideControlsTimer.current) {
+                clearTimeout(hideControlsTimer.current);
+            }
+        };
+    }, [focusedMode, userPref?.readingExperience?.readingMode?.autoHideControls]);
 
     function fetchChapterData(cached = true) {
         if (cached && contentData.data) { return; }
@@ -98,32 +169,75 @@ const ChapterLayout: React.FC = () => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Status bar handling based on reading preferences */}
+            {focusedMode && userPref?.readingExperience?.readingMode?.hideStatusBar ? (
+                <StatusBar hidden />
+            ) : (
+                <StatusBar barStyle="default" />
+            )}
+            
+            {/* App bar - hidden in focused mode or when controls are auto-hidden */}
             {!focusedMode && (
                 <AppBar title={`Chapter ${props.id}`} actions={hasDataLoaded ? chapterActions : []}></AppBar>
             )}
-            {focusedMode && (<StatusBar hidden />)}
-            {child}
-            {hasDataLoaded && (<TouchableOpacity
-                style={styles.invisibleButton}
-                onPress={() => setFocusedMode(!focusedMode)}
-            />)}
-            {!focusedMode && (renderBottomBar())}
-            {
-                focusedMode && (isSpeechOrPause(tts.state)) &&
-                <>
-                    <FAB
-                        style={{
+            
+            {/* Main content with gesture handling for enhanced sensitivity */}
+            <TouchableOpacity
+                style={{ flex: 1 }}
+                activeOpacity={1}
+                onPress={() => {
+                    if (focusedMode) {
+                        if (!controlsVisible) {
+                            showControls();
+                        } else {
+                            resetControlsTimer();
+                        }
+                    }
+                }}
+            >
+                {child}
+            </TouchableOpacity>
+            
+            {/* Invisible button for focus mode toggle */}
+            {hasDataLoaded && (
+                <TouchableOpacity
+                    style={styles.invisibleButton}
+                    onPress={() => {
+                        setFocusedMode(!focusedMode);
+                        if (!focusedMode) {
+                            showControls();
+                        }
+                    }}
+                />
+            )}
+            
+            {/* Bottom bar with controls - hidden in focused mode or when auto-hidden */}
+            {!focusedMode && renderBottomBar()}
+            
+            {/* Floating TTS controls in focused mode */}
+            {focusedMode && isSpeechOrPause(tts.state) && controlsVisible && (
+                <Animated.View
+                    style={[
+                        {
                             position: 'absolute',
                             margin: 16,
                             right: 0,
                             bottom: 0,
-                        }}
+                        },
+                        { opacity: controlsOpacity }
+                    ]}
+                >
+                    <FAB
                         size="small"
                         icon={tts.state === 'pause' ? 'play' : 'pause'}
-                        onPress={() => updateTTS(tts.state === 'speak' ? 'pause' : 'speak')} />
-                </>
-            }
-        </SafeAreaView >
+                        onPress={() => {
+                            updateTTS(tts.state === 'speak' ? 'pause' : 'speak');
+                            resetControlsTimer();
+                        }}
+                    />
+                </Animated.View>
+            )}
+        </SafeAreaView>
     );
 
     function renderBottomBar(): React.ReactNode {

@@ -7,6 +7,7 @@ import { List, RadioButton, Snackbar, Switch, Text } from "react-native-paper";
 import UseRepositoryLayout from "../_repos";
 import { Repo } from "@/types";
 import { useRouter } from "expo-router";
+import ReadingPreferences from "./readingPreferences";
 
 
 export default function Settings() {
@@ -42,6 +43,7 @@ export default function Settings() {
                                 setUserPref={setUserPref}
                                 setSnackbarText={setSnackbarText}
                             />
+                            <ReadingPreferences setSnackbarText={setSnackbarText} />
                             <UseRepositoryLayout
                                 props={{
                                     renderRepositories: (repos) => (

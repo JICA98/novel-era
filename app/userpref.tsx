@@ -37,10 +37,65 @@ export const defaultEditorPreferences: EditorPreferences = {
     hasChapterNumber: false,
 };
 
+export interface AutoScrollSettings {
+    enabled: boolean;
+    speed: number; // pixels per second
+    pauseOnTTS: boolean;
+    resumeAfterTTS: boolean;
+}
+
+export interface PageTurnAnimation {
+    type: 'slide' | 'fade' | 'flip' | 'none';
+    speed: number; // animation duration in milliseconds
+    enabled: boolean;
+}
+
+export interface ReadingModePreferences {
+    immersiveByDefault: boolean;
+    hideStatusBar: boolean;
+    navigationGestureSensitivity: number; // 1-10 scale
+    autoHideControls: boolean;
+    autoHideDelay: number; // seconds
+}
+
+export interface ReadingExperiencePreferences {
+    autoScroll: AutoScrollSettings;
+    pageTurnAnimation: PageTurnAnimation;
+    readingMode: ReadingModePreferences;
+}
+
+export const defaultAutoScrollSettings: AutoScrollSettings = {
+    enabled: false,
+    speed: 50, // pixels per second
+    pauseOnTTS: true,
+    resumeAfterTTS: true,
+};
+
+export const defaultPageTurnAnimation: PageTurnAnimation = {
+    type: 'slide',
+    speed: 300,
+    enabled: true,
+};
+
+export const defaultReadingModePreferences: ReadingModePreferences = {
+    immersiveByDefault: false,
+    hideStatusBar: true,
+    navigationGestureSensitivity: 5,
+    autoHideControls: true,
+    autoHideDelay: 3,
+};
+
+export const defaultReadingExperiencePreferences: ReadingExperiencePreferences = {
+    autoScroll: defaultAutoScrollSettings,
+    pageTurnAnimation: defaultPageTurnAnimation,
+    readingMode: defaultReadingModePreferences,
+};
+
 export interface UserPreferences {
     theme: ThemeOptions;
     editorPreferences: EditorPreferences;
     ttsConfig: TTSConfig;
+    readingExperience: ReadingExperiencePreferences;
     preferredRepositoryId?: string;
 }
 
@@ -64,6 +119,15 @@ export const userPrefStore = create((set, get: any) => ({
         userPref.ttsConfig = ttsConfig;
         get().setUserPref(userPref);
     },
+    setReadingExperience: (readingExperience: ReadingExperiencePreferences) => {
+        const current: UserPreferences | null = get().userPref;
+        if (!current) {
+            return;
+        }
+        const updated = { ...current, readingExperience };
+        set({ userPref: updated });
+        setUserPreference(updated).then(() => { });
+    },
 }));
 
 export async function getUserPreference(): Promise<UserPreferences> {
@@ -72,6 +136,7 @@ export async function getUserPreference(): Promise<UserPreferences> {
         theme: userPref?.theme ?? ThemeOptions.System,
         editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
+        readingExperience: userPref?.readingExperience ?? defaultReadingExperiencePreferences,
         preferredRepositoryId: userPref?.preferredRepositoryId,
     };
 }
