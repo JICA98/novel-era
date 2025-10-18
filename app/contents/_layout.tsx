@@ -1,7 +1,7 @@
 import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Animated, SafeAreaView, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl } from "react-native";
 import { ActivityIndicator, Snackbar, useTheme, MD3Theme, FAB } from "react-native-paper";
 import IDOMParser from "advanced-html-parser";
@@ -65,12 +65,16 @@ export default function ContentLayout() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
     const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
-    const novelTrackerStore = getOrCreateNovelTrackerStore({
-        repo,
-        content: _content,
-        allTrackers: allNovelTrackerStore,
-        setAllTrackers: setAllNovelTracker,
-    });
+    
+    const novelTrackerStore = useMemo(() => {
+        return getOrCreateNovelTrackerStore({
+            repo,
+            content: _content,
+            allTrackers: allNovelTrackerStore,
+            setAllTrackers: setAllNovelTracker,
+        });
+    }, [repo, _content, allNovelTrackerStore, setAllNovelTracker]);
+    
     const novelTracker = novelTrackerStore((state: any) => state.content) as NovelTracker;
     const setNovelTracker = novelTrackerStore((state: any) => state.setContent);
 

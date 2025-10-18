@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getFavoriteTrackersAsync, NovelTracker, noveFavoriteStore } from '../../lib/favorites/tracker';
@@ -8,39 +8,11 @@ import { emptyFavoritePlaceholder } from '../placeholders';
 const FavoriteScreen = () => {
     const [favoriteTrackers, setFavoriteTrackers] = useState<NovelTracker[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    
+    // Get the store content directly - this will automatically trigger re-renders when the store updates
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
-    const [, forceUpdate] = useState({});
 
-    useEffect(() => {
-        fetchFavoriteTrackers();
-    }, []);
-
-    // Also update when the store changes
-    useEffect(() => {
-        if (allNovelTrackerStore) {
-            const trackers = extractTrackersFromStore(allNovelTrackerStore);
-            console.log('Store favorite trackers:', trackers.length, 'items');
-            setFavoriteTrackers(trackers);
-        }
-    }, [allNovelTrackerStore]);
-
-    // Subscribe to store changes
-    useEffect(() => {
-        const unsubscribe = noveFavoriteStore.subscribe(() => {
-            console.log('Novel favorite store updated');
-            forceUpdate({});
-        });
-        return unsubscribe;
-    }, []);
-
-    // Refresh when screen comes into focus
-    useFocusEffect(
-        React.useCallback(() => {
-            fetchFavoriteTrackers();
-        }, [])
-    );
-
-    const fetchFavoriteTrackers = async () => {
+    const fetchFavoriteTrackers = useCallback(async () => {
         setRefreshing(true);
         try {
             const trackers = await getFavoriteTrackersAsync();
@@ -53,11 +25,43 @@ const FavoriteScreen = () => {
         } finally {
             setRefreshing(false);
         }
-    };
+    }, []);
 
-    const renderItem = ({ item }: { item: NovelTracker }) => (
-        <BookItem item={item.novel} repo={item.repo} />
+    // Update from store when it changes
+    const updateFromStore = useCallback(() => {
+        if (allNovelTrackerStore && allNovelTrackerStore.size > 0) {
+            const trackers = extractTrackersFromStore(allNovelTrackerStore);
+            console.log('Store favorite trackers:', trackers.length, 'items');
+            setFavoriteTrackers(prevTrackers => {
+                // Only update if there's a real change to prevent unnecessary re-renders
+                if (JSON.stringify(prevTrackers) !== JSON.stringify(trackers)) {
+                    return trackers;
+                }
+                return prevTrackers;
+            });
+        }
+    }, [allNovelTrackerStore]);
+
+    // Initial load
+    useEffect(() => {
+        fetchFavoriteTrackers();
+    }, [fetchFavoriteTrackers]);
+
+    // Update when the store changes
+    useEffect(() => {
+        updateFromStore();
+    }, [updateFromStore]);
+
+    // Refresh when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            fetchFavoriteTrackers();
+        }, [fetchFavoriteTrackers])
     );
+
+    const renderItem = useCallback(({ item }: { item: NovelTracker }) => (
+        <BookItem item={item.novel} repo={item.repo} />
+    ), []);
 
     return (
         <View style={styles.container}>
@@ -91,7 +95,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export default FavoriteScreen;
+export default React.memo(FavoriteScreen);
 
 function extractTrackers(t: Record<string, NovelTracker>): NovelTracker[] {
     const trackers = Object.values(t);
