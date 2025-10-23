@@ -17,11 +17,17 @@
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "android": {
+        "gradleCommand": ":app:bundlePlayRelease"
+      }
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "android": {
+        "gradleCommand": ":app:bundlePlayRelease"
+      }
     }
   },
   "submit": {
