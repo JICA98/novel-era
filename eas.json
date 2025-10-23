@@ -19,16 +19,16 @@
       "distribution": "internal",
       "channel": "preview",
       "android": {
-        "gradleCommand": ":app:bundlePlayRelease",
-        "artifactPath": "android/app/build/outputs/bundle/playRelease/app-play-release.aab"
+        "gradleCommand": ":app:bundleRelease --stacktrace --warning-mode all",
+        "applicationArchivePath": "android/app/build/outputs/bundle/release/app-release.aab"
       }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
       "android": {
-        "gradleCommand": ":app:bundlePlayRelease",
-        "artifactPath": "android/app/build/outputs/bundle/playRelease/app-play-release.aab"
+        "gradleCommand": ":app:bundleRelease",
+        "applicationArchivePath": "android/app/build/outputs/bundle/release/app-release.aab"
       }
     }
   },

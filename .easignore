@@ -1,0 +1,24 @@
+# Reduce upload size for EAS builds
+# Dependencies will be installed on the builder
+node_modules/
+
+# Android build outputs and caches
+android/app/build/
+android/build/
+.gradle/
+*.iml
+.idea/
+
+# iOS build outputs
+ios/build/
+
+# Local keystores (EAS credentials manager handles signing)
+android/app/debug.keystore
+
+# Generic build artifacts
+build/
+app/build/
+
+# Assets/outputs not needed for building
+IconKitchen-Output/
+screenshots/
