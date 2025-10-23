@@ -19,14 +19,16 @@
       "distribution": "internal",
       "channel": "preview",
       "android": {
-        "gradleCommand": ":app:bundlePlayRelease"
+        "gradleCommand": ":app:bundlePlayRelease",
+        "artifactPath": "android/app/build/outputs/bundle/playRelease/app-play-release.aab"
       }
     },
     "production": {
       "autoIncrement": true,
       "channel": "production",
       "android": {
-        "gradleCommand": ":app:bundlePlayRelease"
+        "gradleCommand": ":app:bundlePlayRelease",
+        "artifactPath": "android/app/build/outputs/bundle/playRelease/app-play-release.aab"
       }
     }
   },
