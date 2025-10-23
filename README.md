@@ -48,3 +48,23 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Cloud Backup purchase (Android)
+
+This app gates Cloud Backup/Restore behind a one-time Google Play purchase on Android.
+
+- Product ID: `cloud_backup_lifetime` (configure this in the Play Console under In‑app products > Managed products)
+- Module: `react-native-iap@^14`
+
+To test purchases:
+
+1. Set up a Google Play Console app with a closed/internal testing track.
+2. Create the managed product `cloud_backup_lifetime` and set it to Active.
+3. Add your test account as a license tester and install the internal app build (AAB) via Play.
+4. In the app, go to Settings → Account → Backup/Restore; on Android you’ll see a paywall dialog if not purchased.
+5. Use “Confirm” to buy; “Restore Purchase” is available if you previously purchased.
+
+Notes:
+
+- Purchases are stored as an entitlement in preferences (`entitlements.cloudBackup`).
+- iOS is currently not implemented; the flow is Android‑only.
