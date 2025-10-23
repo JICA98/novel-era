@@ -29,7 +29,8 @@ export async function initBilling(): Promise<void> {
 
 export async function fetchProducts(productIds: string[] = [CLOUD_BACKUP_PRODUCT_ID]) {
   const IAP = await loadIap();
-  const products = await IAP.getProducts({ skus: productIds });
+  // react-native-iap v13 expects an array of SKUs on Android
+  const products = await IAP.getProducts(productIds as any);
   return products;
 }
 
@@ -93,7 +94,8 @@ export async function purchaseCloudBackup(): Promise<PurchaseResult> {
       purchaseError.remove();
     });
 
-    await IAP.requestPurchase({ sku: CLOUD_BACKUP_PRODUCT_ID });
+  // react-native-iap v13 Android API accepts a single SKU string
+  await IAP.requestPurchase(CLOUD_BACKUP_PRODUCT_ID as any);
     return { success: true };
   } catch (e: any) {
     return { success: false, message: e?.message ?? 'Purchase failed' };
