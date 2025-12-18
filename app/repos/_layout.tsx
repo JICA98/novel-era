@@ -49,7 +49,7 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; sea
                     }
                     console.log({ title, bookImage, bookLink, bookId, rating });
                     return { title, bookImage, bookLink, bookId, rating };
-                });
+                }).filter((item) => item.title && item.bookId);
             }
         }) ?? [];
     } catch (error) {

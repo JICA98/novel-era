@@ -8,7 +8,8 @@ import { StyleSheet } from 'react-native';
 import { errorPlaceholder } from "./placeholders";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
+const localRepos = require('../config/repository.json');
+// const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
 
 interface FetchData<T> {
     data?: T;
@@ -23,6 +24,11 @@ const useRepositoryStore = create(persist(
         repositories: { isLoading: true } as FetchData<ReposData>,
         fetchData: () => {
             set({ repositories: { isLoading: true } });
+            // Simulate async fetch for consistency, or just set data
+            setTimeout(() => {
+                set({ repositories: { data: localRepos as ReposData, isLoading: false } });
+            }, 500);
+            /*
             fetch(repoLink)
                 .then(response => response.json())
                 .then(data => {
@@ -31,6 +37,7 @@ const useRepositoryStore = create(persist(
                 .catch(error => {
                     set({ repositories: { error, isLoading: false } });
                 });
+            */
         }
     }),
     {

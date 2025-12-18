@@ -88,7 +88,12 @@ export async function httpGet<T>(
     }
     try {
         console.log('API ->', input);
-        const response = await fetch(input, init);
+        const validInit = init || {};
+        validInit.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            ...validInit.headers,
+        };
+        const response = await fetch(input, validInit);
         if (!onResponse) {
             if (options.text) {
                 return await response.text() as T;

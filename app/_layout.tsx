@@ -62,16 +62,23 @@ export default function RootLayout() {
   }, []);
   console.log(userPref);
   return (
-    userPref && (<PaperProvider theme={getTheme({ colorScheme, theme, themeOptions: userPref.theme })}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="repos" options={{ headerShown: false }} />
-        <Stack.Screen name="contents" options={{ headerShown: false }} />
-        <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="browser" options={{ headerShown: false }} />
-        <Stack.Screen name="privacy" options={{ headerShown: false }} />
-      </Stack>
-    </PaperProvider>)
+    userPref && (
+      (() => {
+        const paperTheme = getTheme({ colorScheme, theme, themeOptions: userPref.theme });
+        return (
+          <PaperProvider theme={paperTheme}>
+            <Stack screenOptions={{ contentStyle: { backgroundColor: paperTheme.colors.background } }}>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="repos" options={{ headerShown: false }} />
+              <Stack.Screen name="contents" options={{ headerShown: false }} />
+              <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="browser" options={{ headerShown: false }} />
+              <Stack.Screen name="privacy" options={{ headerShown: false }} />
+            </Stack>
+          </PaperProvider>
+        );
+      })()
+    )
   );
 }
 

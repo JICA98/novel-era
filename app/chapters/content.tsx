@@ -8,6 +8,7 @@ import * as Speech from 'expo-speech';
 import { htmlToIdSentences, indexOfSentence, isSpeechOrPause, Sentence, setTTS, toQueue, TTS, ttsStore } from './tts';
 import { UserPreferences, userPrefStore } from '../userpref';
 import SentenceRenderer from './html';
+import { useNavigation } from 'expo-router';
 
 export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderChapterProps) => {
     const [pages, setPages] = useState<any[]>([]);
@@ -28,6 +29,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     const windowHeight = useWindowDimensions().height;
     const ttsConfig = (userPrefStore((state: any) => state.userPref) as UserPreferences).ttsConfig;
     const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
+    const navigation = useNavigation();
 
     const splitContentIntoPages = (content: string) => {
         const words = content.split(' ');
@@ -97,7 +99,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                     if (isCompleted) {
                         updateChapterProgress(1);
                         clearInterval(intervalId);
-                        navigateToNextChapter(props, 1, 'speak');
+                        navigateToNextChapter(props, 1, 'speak', navigation);
                     }
                 }, 1000);
             }
@@ -137,7 +139,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                     icon={'arrow-up'}
                     mode='contained-tonal'
                     size={40}
-                    onPress={() => navigateToNextChapter(props, -1)} />
+                    onPress={() => navigateToNextChapter(props, -1, 'unknown', navigation)} />
             </View>
         )}
     </View>);
@@ -149,7 +151,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
                 size={40}
                 onPress={() => {
                     updateChapterProgress(1);
-                    return navigateToNextChapter(props, 1);
+                    return navigateToNextChapter(props, 1, 'unknown', navigation);
                 }} />
         </View>
     )}</>);

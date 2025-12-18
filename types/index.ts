@@ -40,6 +40,7 @@ export interface HomeSelector extends Selector {
     latestChapterSelector: Selector;
     summarySelector: Selector;
     authorSelector: Selector;
+    bookImage: Selector;
 }
 
 export interface SnackBarData {

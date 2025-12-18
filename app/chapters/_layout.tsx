@@ -1,5 +1,5 @@
 import { FetchData } from "@/types";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
 import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
@@ -67,7 +67,8 @@ const ChapterLayout: React.FC = () => {
             speachState={props.speachState}
         />;
     }
-    const chapterActions: MenuItem[] = buildChapterActionMenu(setFocusedMode, userPref, props, setUserPref);
+    const navigation = useNavigation();
+    const chapterActions: MenuItem[] = buildChapterActionMenu(setFocusedMode, userPref, props, setUserPref, navigation);
     function updateFontSize(add: number) {
         const editorPref = userPref.editorPreferences;
         const newFontSize = editorPref.fontSize + add;
@@ -214,7 +215,8 @@ export default ChapterLayout;
 
 function buildChapterActionMenu(
     setFocusedMode: React.Dispatch<React.SetStateAction<boolean>>,
-    userPref: UserPreferences, props: RenderChapterProps, setUserPref: any
+    userPref: UserPreferences, props: RenderChapterProps, setUserPref: any,
+    navigation: any
 ) {
     const chapterActions: MenuItem[] = [
         {
@@ -240,12 +242,12 @@ function buildChapterActionMenu(
     if (props.enableNextPrev) {
         if (parseInt(props.id) > 1) {
             chapterActions.push({
-                leadingIcon: 'arrow-left', title: 'Previous Chapter', onPress: () => navigateToNextChapter(props, -1)
+                leadingIcon: 'arrow-left', title: 'Previous Chapter', onPress: () => navigateToNextChapter(props, -1, 'unknown', navigation)
             });
         }
         if (parseInt(props.id) < (props.content.latestChapter ?? 0)) {
             chapterActions.push({
-                leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () => navigateToNextChapter(props)
+                leadingIcon: 'arrow-right', title: 'Next Chapter', onPress: () => navigateToNextChapter(props, 1, 'unknown', navigation)
             });
         }
     }

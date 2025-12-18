@@ -25,14 +25,15 @@ async function fetchContentChapters(repo: Repo, content: Content, cached: boolea
         const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
         return await httpGet<Content>(url, {
             cached,
-            onCache: (data) => !!data.latestChapter,
+            onCache: (data) => !!data.latestChapter && !!data.bookImage,
             onResponse: async (response) => {
                 const html = await response.text();
                 const dom = IDOMParser.parse(html).documentElement;
                 const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
                 const summary = processData(dom, repo.homeSelector.summarySelector);
                 const author = processData(dom, repo.homeSelector.authorSelector);
-                return { ...content, latestChapter, summary, author };
+                const bookImage = processData(dom, repo.homeSelector.bookImage);
+                return { ...content, latestChapter, summary, author, bookImage: bookImage || content.bookImage };
             }
         });
     } catch (error) {
@@ -65,7 +66,7 @@ export default function ContentLayout() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
     const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
-    
+
     const novelTrackerStore = useMemo(() => {
         return getOrCreateNovelTrackerStore({
             repo,
@@ -74,7 +75,7 @@ export default function ContentLayout() {
             setAllTrackers: setAllNovelTracker,
         });
     }, [repo, _content, allNovelTrackerStore, setAllNovelTracker]);
-    
+
     const novelTracker = novelTrackerStore((state: any) => state.content) as NovelTracker;
     const setNovelTracker = novelTrackerStore((state: any) => state.setContent);
 

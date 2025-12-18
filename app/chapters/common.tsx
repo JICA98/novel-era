@@ -53,7 +53,7 @@ export function textContent(html: string) {
     return dom.textContent;
 }
 
-export function navigateToNextChapter(props: RenderChapterProps, add = 1, speachState: SpeechAction = 'unknown') {
+export function navigateToNextChapter(props: RenderChapterProps, add = 1, speachState: SpeechAction = 'unknown', navigation?: any) {
     props = {
         ...props,
         id: (parseInt(props.id) + add).toString(),
@@ -61,6 +61,11 @@ export function navigateToNextChapter(props: RenderChapterProps, add = 1, speach
         fromPrevious: add === -1,
         speachState: speachState,
     };
+    if (navigation) {
+        navigation.setOptions({
+            animationTypeForReplace: add === 1 ? 'push' : 'pop',
+        });
+    }
     router.replace({
         pathname: '/chapters',
         params: {

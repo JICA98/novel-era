@@ -12,10 +12,9 @@
             },
             "repoIcon": "https://novelfire.net/logo.svg?v=2",
             "repoSearch": {
-                "type": "http",
+                "type": "text",
                 "method": "GET",
-                "path": "/ajax/searchLive?inputContent=[text]",
-                "jsonPath": "$.html",
+                "path": "/search?keyword=[text]",
                 "selector": ".novel-list .novel-item",
                 "page": "search",
                 "bookId": {
@@ -31,7 +30,7 @@
                 },
                 "bookLink": {
                     "type": "text",
-                    "selector": "a",    
+                    "selector": "a",
                     "attribute": "href"
                 },
                 "bookImage": {
@@ -105,6 +104,118 @@
                     "type": "attribute",
                     "selector": "a",
                     "attribute": "title"
+                }
+            }
+        },
+        {
+            "name": "Novel Bin",
+            "idName": "novel-bin",
+            "id": "2",
+            "repoUrl": "https://novelbin.me",
+            "repoType": "novel",
+            "repoChapterType": {
+                "type": "iterative",
+                "path": "/novel-book/[bookId]/chapters"
+            },
+            "repoIcon": "https://novelbin.me/img/logo.png",
+            "repoSearch": {
+                "type": "text",
+                "method": "GET",
+                "path": "/search?keyword=[text]",
+                "selector": ".list-novel .row",
+                "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "h3.novel-title a",
+                    "attribute": "href",
+                    "regex": "novel-book/(.*)"
+                },
+                "rating": {
+                    "type": "attribute",
+                    "selector": ".novel-stats .info-rating",
+                    "attribute": "data-rating"
+                },
+                "bookLink": {
+                    "type": "text",
+                    "selector": "h3.novel-title a",
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".cover",
+                    "attribute": "src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": "h3.novel-title a"
+                }
+            },
+            "homeSelector": {
+                "type": "text",
+                "path": "/novel-book/[bookId]",
+                "page": "home",
+                "latestChapterSelector": {
+                    "type": "text",
+                    "selector": ".l-chapter .chapter-title",
+                    "regex": "Chapter\\s*(\\d+)"
+                },
+                "authorSelector": {
+                    "type": "text",
+                    "selector": "ul.info-meta li:nth-child(1)",
+                    "regex": "Author:\\s*(.*)"
+                },
+                "summarySelector": {
+                    "type": "text",
+                    "selector": ".desc-text"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".books img",
+                    "attribute": "data-src"
+                }
+            },
+            "chapterSelector": {
+                "path": "/novel-book/[bookId]/chapter-[chapterId]",
+                "page": "chapter",
+                "content": {
+                    "type": "html",
+                    "selector": "#chr-content",
+                    "filters": [
+                        {
+                            "type": "css",
+                            "selector": ".box-notification"
+                        },
+                        {
+                            "type": "css",
+                            "selector": "h4"
+                        }
+                    ]
+                }
+            },
+            "listSelector": {
+                "type": "text",
+                "path": "/sort/novelbin-popular",
+                "selector": ".list-novel .row",
+                "page": "search",
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "h3.novel-title a",
+                    "attribute": "href",
+                    "regex": "novel-book/(.*)"
+                },
+                "bookLink": {
+                    "type": "text",
+                    "selector": "h3.novel-title a",
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".cover",
+                    "attribute": "data-src"
+                },
+                "title": {
+                    "type": "text",
+                    "selector": "h3.novel-title a"
                 }
             }
         }
