@@ -94,13 +94,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
-        // When consuming libraries with the 'store' flavor dimension (e.g., react-native-iap),
-        // prefer the 'play' flavor automatically without defining flavors in this app module.
-        missingDimensionStrategy 'store', 'play'
+        versionCode 1
+        versionName "1.0.0"
     }
-    // Note: Do not define app-level flavors for 'store'. We rely on
-    // missingDimensionStrategy to select the correct flavor from libraries (e.g., react-native-iap)
-    // without propagating the 'store' dimension to all dependencies.
     signingConfigs {
         debug {
             storeFile file('debug.keystore')

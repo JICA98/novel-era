@@ -37,27 +37,13 @@ export const defaultEditorPreferences: EditorPreferences = {
     hasChapterNumber: false,
 };
 
-// Entitlement to unlock paid features like cloud backup
-export interface Entitlements {
-    cloudBackup: boolean;
-    purchase?: {
-        productId?: string;
-        purchaseToken?: string;
-        platform?: 'android' | 'ios' | 'web';
-        acknowledged?: boolean;
-        purchaseTime?: number;
-    };
-}
 
-export const defaultEntitlements: Entitlements = {
-    cloudBackup: false,
-};
 
 export interface UserPreferences {
     theme: ThemeOptions;
     editorPreferences: EditorPreferences;
     ttsConfig: TTSConfig;
-    entitlements?: Entitlements;
+
     preferredRepositoryId?: string;
 }
 
@@ -67,16 +53,7 @@ export const userPrefStore = create((set, get: any) => ({
         set({ userPref });
         setUserPreference(userPref).then(() => { });
     },
-    setEntitlements: (entitlements: Partial<Entitlements>) => {
-        const current: UserPreferences | null = get().userPref;
-        if (!current) return;
-        const updated: UserPreferences = {
-            ...current,
-            entitlements: { ...(current.entitlements ?? defaultEntitlements), ...entitlements },
-        };
-        set({ userPref: updated });
-        setUserPreference(updated).then(() => { });
-    },
+
     setPreferredRepository: (repoId?: string) => {
         const current: UserPreferences | null = get().userPref;
         if (!current) {
@@ -99,10 +76,7 @@ export async function getUserPreference(): Promise<UserPreferences> {
         theme: userPref?.theme ?? ThemeOptions.System,
         editorPreferences: userPref?.editorPreferences ?? defaultEditorPreferences,
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
-        entitlements: {
-            ...defaultEntitlements,
-            ...(userPref?.entitlements ?? {}),
-        },
+
         preferredRepositoryId: userPref?.preferredRepositoryId,
     };
 }

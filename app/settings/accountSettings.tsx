@@ -5,7 +5,7 @@ import { ActivityIndicator, Button, Divider, List, Text, TextInput, Title, useTh
 import { ChapterTracker, NovelTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../../lib/favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import { Platform } from 'react-native'
-import { CLOUD_BACKUP_PRODUCT_ID, initBilling, purchaseCloudBackup, restorePurchases } from '../../lib/payments/googleBilling'
+
 import PaperDialog from '../components/dialog'
 import {
     AuthState,
@@ -32,8 +32,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
     const [showBackup, setBackup] = useState(false);
     const [showRestore, setRestore] = useState(false);
-    const [showPaywall, setShowPaywall] = useState(false);
-    const [purchaseLoading, setPurchaseLoading] = useState(false);
+
     const [showSignOut, setSignOut] = useState(false);
     const [showDeleteAccount, setShowDeleteAccount] = useState(false);
     const allTrackers = chapterTrackerStore((state: any) => state.content);
@@ -250,11 +249,6 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         <Button
                             mode="contained-tonal"
                             onPress={async () => {
-                                // Gate behind one-time purchase on Android
-                                if (Platform.OS === 'android' && !(userPref?.entitlements?.cloudBackup)) {
-                                    setShowPaywall(true);
-                                    return;
-                                }
                                 setBackup(true);
                             }}
                         >
@@ -263,10 +257,6 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         <Button
                             mode="contained-tonal"
                             onPress={async () => {
-                                if (Platform.OS === 'android' && !(userPref?.entitlements?.cloudBackup)) {
-                                    setShowPaywall(true);
-                                    return;
-                                }
                                 setRestore(true);
                             }}
                         >
@@ -281,70 +271,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     return (
         <>
             {/* Paywall dialog for cloud backup on Android */}
-            {showPaywall && (
-                <PaperDialog
-                    title={'Unlock Cloud Backup'}
-                    description={'One-time purchase to enable Cloud Backup & Restore on Android.'}
-                    details={
-                        <List.Section>
-                            <List.Item
-                                title="What you get"
-                                description="Cloud backup & restore for preferences, progress and favorites. One-time purchase."
-                                left={(props) => <List.Icon {...props} icon="cloud-upload" />}
-                            />
-                            <Divider />
-                            <List.Item
-                                title="Product"
-                                description={CLOUD_BACKUP_PRODUCT_ID}
-                                left={(props) => <List.Icon {...props} icon="cart" />}
-                            />
-                            {Platform.OS === 'android' && (
-                                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
-                                    <Button
-                                        mode="text"
-                                        loading={purchaseLoading}
-                                        onPress={async () => {
-                                            try {
-                                                setPurchaseLoading(true);
-                                                const result = await restorePurchases();
-                                                if (result.success) {
-                                                    setSnackbarText('Purchase restored');
-                                                    setShowPaywall(false);
-                                                } else if (result.message) {
-                                                    setSnackbarText(result.message);
-                                                }
-                                            } finally {
-                                                setPurchaseLoading(false);
-                                            }
-                                        }}
-                                    >
-                                        Restore Purchase
-                                    </Button>
-                                </View>
-                            )}
-                        </List.Section>
-                    }
-                    setVisible={setShowPaywall}
-                    done={async () => {
-                        if (purchaseLoading) return;
-                        try {
-                            setPurchaseLoading(true);
-                            if (Platform.OS === 'android') {
-                                await initBilling();
-                                const result = await purchaseCloudBackup();
-                                if (result.success) {
-                                    setSnackbarText('Cloud Backup unlocked');
-                                    setShowPaywall(false);
-                                } else if (result.message) {
-                                    setSnackbarText(result.message);
-                                }
-                            }
-                        } finally {
-                            setPurchaseLoading(false);
-                        }
-                    }}
-                />
-            )}
+
             {showSignOut && <PaperDialog title={'Sign out'}
                 description='This will sign you out of your account, continue?' setVisible={setSignOut}
                 done={async () => {
