@@ -44,7 +44,19 @@ async function verifyRepoSearch(repoName, query) {
 
             if (title) {
                 validCount++;
-                if (index === 0) console.log('First Item Title:', title);
+                if (index === 0) {
+                    console.log('First Item Title:', title);
+
+                    // Debug Image extraction
+                    const imgSelector = repo.repoSearch.bookImage.selector;
+                    const imgAttr = repo.repoSearch.bookImage.attribute;
+                    const imgEl = item.querySelector(imgSelector);
+                    const imgSrc = imgEl ? imgEl.getAttribute(imgAttr) : 'NOT FOUND';
+                    console.log('First Item Image:', imgSrc);
+                    if (imgEl) {
+                        console.log('Image Element Attributes:', JSON.stringify(imgEl.attributes));
+                    }
+                }
             } else {
                 invalidCount++;
                 console.log(`Item ${index} invalid/empty title. HTML snippet:`, item.toString().substring(0, 100));

@@ -40,8 +40,14 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; sea
 
                 return Array.from(list).map((item) => {
                     const title = processData(item, selector.title);
-                    const bookImage = processData(item, selector.bookImage);
-                    const bookLink = processData(item, selector.bookLink);
+                    let bookImage = processData(item, selector.bookImage);
+                    if (bookImage && bookImage.startsWith('/')) {
+                        bookImage = repo.repoUrl + bookImage;
+                    }
+                    let bookLink = processData(item, selector.bookLink);
+                    if (bookLink && bookLink.startsWith('/')) {
+                        bookLink = repo.repoUrl + bookLink;
+                    }
                     const bookId = processData(item, selector.bookId);
                     let rating = undefined;
                     if ('rating' in selector) {
