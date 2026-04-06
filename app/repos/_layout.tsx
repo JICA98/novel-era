@@ -2,7 +2,7 @@ import { ActivityIndicator, Appbar, useTheme } from "react-native-paper";
 import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Content, FetchData, processData, Repo, SelectorType } from "@/types";
+import { Content, FetchData, normalizeUrl, processData, Repo, SelectorType } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import IDOMParser from "advanced-html-parser";
@@ -40,13 +40,17 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; sea
 
                 return Array.from(list).map((item) => {
                     const title = processData(item, selector.title);
-                    const bookImage = processData(item, selector.bookImage);
+                    let bookImage = processData(item, selector.bookImage);
+                    if (!bookImage && selector.bookImage.attribute !== 'src') {
+                        bookImage = processData(item, { ...selector.bookImage, attribute: 'src' });
+                    }
                     const bookLink = processData(item, selector.bookLink);
                     const bookId = processData(item, selector.bookId);
                     let rating = undefined;
                     if ('rating' in selector) {
                         rating = processData(item, selector.rating);
                     }
+                    bookImage = normalizeUrl(bookImage, repo.repoUrl);
                     console.log({ title, bookImage, bookLink, bookId, rating });
                     return { title, bookImage, bookLink, bookId, rating };
                 });

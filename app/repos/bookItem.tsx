@@ -1,47 +1,42 @@
-import { Content, Repo } from "@/types";
+import { Content, Repo, normalizeUrl } from "@/types";
 import { router } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View, Image, Dimensions } from "react-native";
 import { useMemo } from "react";
-import { Card, Icon, Text, useTheme } from "react-native-paper";
+import { AtelierText } from "@/components/AtelierText";
+import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "react-native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface BookItemProps {
     repo: Repo;
     item: Content;
+    status?: 'Reading' | 'Completed' | 'Dropped' | 'Plan to Read';
+    progress?: number; // 0 to 1
     onLinkPress?: (link: string, item: Content) => void;
 }
 
-export default function BookItem({ repo, item, onLinkPress }: BookItemProps) {
-    const theme = useTheme();
-    const size = 44.0;
-    const ratingLabel = item.rating ? `${item.rating} ★` : undefined;
-    const coverUri = item.bookImage?.length ? item.bookImage : `https://picsum.photos/seed/${item.bookId}/200/300`;
-    const subtitle = item.bookLink?.length ? item.bookLink : undefined;
+const { width } = Dimensions.get('window');
+const COLUMN_WIDTH = (width - 48) / 2; // 2 columns with padding
 
-    const resolvedLink = useMemo(() => (subtitle ? resolveLink(repo.repoUrl, subtitle) : undefined), [repo.repoUrl, subtitle]);
-    const linkLabel = useMemo(() => (resolvedLink ? formatLinkLabel(resolvedLink) : undefined), [resolvedLink]);
+export default function BookItem({ repo, item, status = 'Reading', progress = 0.65, onLinkPress }: BookItemProps) {
+    const systemColorScheme = useColorScheme();
+    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
+    const themeColors = Colors[colorScheme];
+    
+    const coverUri = normalizeUrl(item.bookImage, repo.repoUrl) || `https://picsum.photos/seed/${item.bookId}/200/300`;
+    const ratingLabel = item.rating ? item.rating : undefined;
 
-    const handleLinkPress = () => {
-        if (!resolvedLink) {
-            return;
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Completed': return '#15803d'; // Green-700
+            case 'Dropped': return themeColors.onSurfaceVariant;
+            default: return themeColors.primary;
         }
-
-        if (onLinkPress) {
-            onLinkPress(resolvedLink, item);
-            return;
-        }
-
-        router.push({
-            pathname: "/browser",
-            params: {
-                url: resolvedLink,
-                title: item.title,
-            },
-        } as never);
     };
 
     return (
-        <Card
-            style={styles.card}
+        <Pressable
+            style={styles.container}
             onPress={() => {
                 router.push({
                     pathname: '/contents',
@@ -49,113 +44,113 @@ export default function BookItem({ repo, item, onLinkPress }: BookItemProps) {
                 } as never);
             }}
         >
-            <View style={styles.row}>
-                <Card.Cover source={{ uri: coverUri }} style={[styles.cover, { width: size * 2, height: size * 3 }]} />
-                <View style={styles.info}>
-                    <Text variant="titleMedium" numberOfLines={2} style={styles.title}>
-                        {item.title}
-                    </Text>
-                    {linkLabel && (
-                        <Pressable onPress={handleLinkPress} style={styles.linkWrapper} accessibilityRole="link">
-                            <View style={styles.linkContent}>
-                                <Icon source="open-in-new" size={16} color={theme.colors.primary} />
-                                <Text
-                                    variant="bodyMedium"
-                                    numberOfLines={1}
-                                    style={[styles.link, { color: theme.colors.primary }]}
-                                >
-                                    {linkLabel}
-                                </Text>
-                            </View>
-                        </Pressable>
-                    )}
-                    {ratingLabel && (
-                        <Text variant="labelLarge" style={styles.rating}>
-                            {ratingLabel}
-                        </Text>
-                    )}
+            <View style={styles.coverWrapper}>
+                <Image 
+                    source={{ uri: coverUri }} 
+                    style={styles.cover} 
+                    resizeMode="cover"
+                />
+                <View style={[styles.badge, { backgroundColor: getStatusColor(status) }]}>
+                    <AtelierText variant="caption" bold color="#fff" style={styles.badgeText}>
+                        {status.toUpperCase()}
+                    </AtelierText>
                 </View>
             </View>
-        </Card>
+            
+            <View style={styles.info}>
+                <AtelierText variant="body" bold numberOfLines={1} style={styles.title}>
+                    {item.title}
+                </AtelierText>
+                <AtelierText variant="caption" color={themeColors.onSurfaceVariant} style={styles.subtitle}>
+                    {repo.name}
+                </AtelierText>
+                
+                {status === 'Reading' && (
+                    <View style={styles.progressContainer}>
+                        <View style={[styles.progressBarBase, { backgroundColor: themeColors.surfaceContainerHighest }]}>
+                            <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: themeColors.primaryContainer }]} />
+                        </View>
+                    </View>
+                )}
+                
+                {status === 'Completed' && ratingLabel && (
+                    <View style={styles.ratingRow}>
+                        <MaterialCommunityIcons name="star" size={14} color={themeColors.primary} />
+                        <AtelierText variant="caption" bold style={styles.ratingText}>
+                            {ratingLabel} Rating
+                        </AtelierText>
+                    </View>
+                )}
+            </View>
+        </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
-    card: {
-        flex: 1,
-        marginVertical: 4,
-        elevation: 1,
+    container: {
+        width: COLUMN_WIDTH,
+        marginBottom: 24,
     },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingRight: 12,
+    coverWrapper: {
+        width: '100%',
+        aspectRatio: 3 / 4,
+        borderRadius: 16,
+        overflow: 'hidden',
+        backgroundColor: '#e0e0e0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 6,
     },
     cover: {
-        marginRight: 12,
-        borderRadius: 6,
+        width: '100%',
+        height: '100%',
+    },
+    badge: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        opacity: 0.9,
+    },
+    badgeText: {
+        letterSpacing: 1.5,
+        fontSize: 10,
     },
     info: {
-        flex: 1,
+        marginTop: 12,
     },
     title: {
-        marginRight: 12,
+        fontSize: 16,
+        lineHeight: 20,
     },
-    linkWrapper: {
-        alignSelf: 'flex-start',
+    subtitle: {
         marginTop: 4,
+        fontSize: 13,
     },
-    link: {
-        textDecorationLine: 'none',
-        marginLeft: 6,
+    progressContainer: {
+        marginTop: 12,
     },
-    linkContent: {
+    progressBarBase: {
+        height: 4,
+        width: '100%',
+        borderRadius: 2,
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: '100%',
+        borderRadius: 2,
+    },
+    ratingRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: 8,
     },
-    rating: {
-        marginHorizontal: 16,
-        marginBottom: 12,
+    ratingText: {
+        marginLeft: 4,
+        fontSize: 11,
     },
 });
-
-function resolveLink(repoUrl: string, link?: string): string | undefined {
-    if (!link) {
-        return undefined;
-    }
-
-    if (/^https?:\/\//i.test(link)) {
-        return link;
-    }
-
-    if (link.startsWith("//")) {
-        return `https:${link}`;
-    }
-
-    if (!repoUrl) {
-        return undefined;
-    }
-
-    const normalizedBase = repoUrl.endsWith("/") ? repoUrl.slice(0, -1) : repoUrl;
-    const normalizedLink = link.startsWith("/") ? link : `/${link}`;
-    return `${normalizedBase}${normalizedLink}`;
-}
-
-function formatLinkLabel(link: string): string {
-    try {
-        const url = new URL(link);
-        const path = url.pathname.replace(/\/+$/, "");
-        const displayPath = path.length > 1 ? path : "";
-        const simplified = [url.hostname, displayPath].filter(Boolean).join("");
-        return truncateLink(simplified || url.hostname || link);
-    } catch (error) {
-        return truncateLink(link.replace(/^https?:\/\//i, ""));
-    }
-}
-
-function truncateLink(label: string, maxLength = 36): string {
-    if (label.length <= maxLength) {
-        return label;
-    }
-    return `${label.slice(0, maxLength - 3)}...`;
-}
