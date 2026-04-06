@@ -233,7 +233,7 @@ export async function getNovelReadingStatus(
     };
 }
 
-async function getChaptersForNovel(repoId: string, novelId: string): Promise<ChapterTracker[]> {
+export async function getChaptersForNovel(repoId: string, novelId: string): Promise<ChapterTracker[]> {
     const prefix = `trackerv1-${repoId}-${novelId}-`;
     const allData = await getDataByKeyPrefix<ChapterTracker>(prefix);
     return Object.values(allData);

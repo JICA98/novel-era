@@ -17,7 +17,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { userPrefStore } from './userpref';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getNovelReadingStatus, getAllTrackersAsync, NovelReadingStatus } from './favorites/tracker';
+import { getChaptersForNovel, NovelReadingStatus } from './favorites/tracker';
 
 const { width } = Dimensions.get('window');
 const RECENT_SEARCHES_KEY = 'explore-recent-searches';
@@ -520,20 +520,50 @@ function SearchResultsView({
             const data = await fetchContentList({ repo, searchQuery, cached });
             setContent({ data, isLoading: false });
 
-            // Enrich with reading status
-            const chapterTrackers = await getAllTrackersAsync();
+            // Enrich with reading status - query chapter trackers directly
             const enriched = await Promise.all(
                 data.map(async (item) => {
-                    const novelTracker = {
-                        repo,
-                        novel: item,
-                        added: Date.now(),
-                        updated: Date.now(),
-                        favorite: false,
-                    };
+                    // Get chapter trackers for this novel
+                    const chapterTrackers = await getChaptersForNovel(repo.id, item.bookId);
+                    
+                    let readingStatus: NovelReadingStatus | undefined;
+                    
+                    if (chapterTrackers.length > 0) {
+                        // Calculate reading status from trackers
+                        const hasReading = chapterTrackers.some(c => c.status === 'reading');
+                        const allRead = chapterTrackers.every(c => c.status === 'read');
+                        const completedChapters = chapterTrackers.filter(c => c.chapterProgress >= 1 || c.status === 'read').length;
+                        const readingChapter = chapterTrackers.find(c => c.chapterProgress > 0 && c.chapterProgress < 1);
+                        const partialProgress = readingChapter ? readingChapter.chapterProgress : 0;
+                        
+                        const totalChapters = item.latestChapter || chapterTrackers.length;
+                        const overallProgress = totalChapters > 0 ? (completedChapters + partialProgress) / totalChapters : 0;
+                        
+                        const lastReadChapter = chapterTrackers.reduce((latest, current) =>
+                            current.lastRead > latest.lastRead ? current : latest
+                        , chapterTrackers[0]);
+                        
+                        let status: NovelReadingStatus['status'];
+                        if (completedChapters >= totalChapters) {
+                            status = 'Completed';
+                        } else if (hasReading || completedChapters > 0) {
+                            status = 'Reading';
+                        } else {
+                            status = 'Plan to Read';
+                        }
+                        
+                        readingStatus = {
+                            status,
+                            progress: overallProgress,
+                            lastChapterRead: lastReadChapter.chapterId,
+                            lastReadTimestamp: lastReadChapter.lastRead,
+                            totalChaptersTracked: chapterTrackers.length,
+                        };
+                    }
+                    
                     return {
                         content: item,
-                        readingStatus: await getNovelReadingStatus(novelTracker, chapterTrackers),
+                        readingStatus,
                     };
                 })
             );
@@ -552,93 +582,10 @@ function SearchResultsView({
         setViewType(type);
     };
 
-    const renderItem = ({ item, index }: { item: EnrichedContent; index: number }) => {
-        const commonProps = {
-            item: item.content,
-            repo,
-            status: item.readingStatus?.status || 'Plan to Read',
-            progress: item.readingStatus?.progress || 0,
-            totalChapters: item.content.latestChapter || item.readingStatus?.totalChaptersTracked || undefined,
-            lastReadTimestamp: item.readingStatus?.lastReadTimestamp,
-        };
-
-        return (
-            <Animated.View
-                layout={LinearTransition.springify()}
-                entering={FadeInDown.delay(index * 50)}
-                exiting={FadeOut}
-                style={viewType === 'grid' ? { width: '50%' } : { width: '100%' }}
-            >
-                {viewType === 'grid' ? (
-                    <BookItem {...commonProps} />
-                ) : (
-                    <BookListItem {...commonProps} />
-                )}
-            </Animated.View>
-        );
-    };
-
-    const ViewToggle = () => (
-        <View style={[styles.viewToggleContainer, { backgroundColor: themeColors.surfaceContainer }]}>
-            <TouchableOpacity
-                style={[
-                    styles.toggleButton,
-                    viewType === 'list' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
-                ]}
-                onPress={() => handleViewToggle('list')}
-            >
-                <MaterialIcons
-                    name="view-list"
-                    size={20}
-                    color={viewType === 'list' ? themeColors.primary : themeColors.onSurfaceVariant}
-                />
-            </TouchableOpacity>
-            <TouchableOpacity
-                style={[
-                    styles.toggleButton,
-                    viewType === 'grid' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
-                ]}
-                onPress={() => handleViewToggle('grid')}
-            >
-                <MaterialIcons
-                    name="grid-view"
-                    size={20}
-                    color={viewType === 'grid' ? themeColors.primary : themeColors.onSurfaceVariant}
-                />
-            </TouchableOpacity>
-        </View>
-    );
-
-    if (content.isLoading) {
-        return (
-            <View style={styles.resultsLoading}>
-                <ActivityIndicator size="large" color={themeColors.primary} />
-                <AtelierText style={{ marginTop: 12 }} color={themeColors.onSurfaceVariant}>Searching archives...</AtelierText>
-            </View>
-        );
-    }
-
-    if (content.error || !content.data) {
-        return errorComponent;
-    }
-
-    if (content.data.length === 0) {
-        return emptyComponent;
-    }
-
-    return (
-        <View style={styles.resultsContainer}>
-            {/* Results Header */}
-            <View style={styles.resultsHeader}>
-                <View style={styles.resultsTitleRow}>
-                    <View style={{ flex: 1 }}>
-                        <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
-                            Results for '{searchQuery}'
-                        </AtelierText>
-                        <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
-                            {content.data.length} volume{content.data.length !== 1 ? 's' : ''} found
-                        </AtelierText>
-                    </View>
+    const renderListElement = ({ item, index }: { item: any; index: number }) => {
+        if (item.type === 'sticky-header') {
+            return (
+                <View style={[styles.stickyHeader, { backgroundColor: themeColors.background }]}>
                     <View style={styles.headerActions}>
                         <TouchableOpacity
                             style={[styles.filterBtn, { backgroundColor: showFilters ? themeColors.secondary : themeColors.primary }]}
@@ -653,43 +600,193 @@ function SearchResultsView({
                                 {showFilters ? "Hide" : "Filter"}
                             </AtelierText>
                         </TouchableOpacity>
-                        <ViewToggle />
+                        <View style={[styles.viewToggleContainer, { backgroundColor: themeColors.surfaceContainer }]}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.toggleButton,
+                                    viewType === 'list' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
+                                ]}
+                                onPress={() => handleViewToggle('list')}
+                            >
+                                <MaterialIcons
+                                    name="view-list"
+                                    size={20}
+                                    color={viewType === 'list' ? themeColors.primary : themeColors.onSurfaceVariant}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.toggleButton,
+                                    viewType === 'grid' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
+                                ]}
+                                onPress={() => handleViewToggle('grid')}
+                            >
+                                <MaterialIcons
+                                    name="grid-view"
+                                    size={20}
+                                    color={viewType === 'grid' ? themeColors.primary : themeColors.onSurfaceVariant}
+                                />
+                            </TouchableOpacity>
+                        </View>
                     </View>
+
+                    {showFilters && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.repoChips}>
+                            {repos.map((r) => {
+                                const isSelected = repo.id === r.id;
+                                return (
+                                    <TouchableOpacity
+                                        key={r.id}
+                                        onPress={() => {
+                                            setSelectedRepository(r.id);
+                                            setPreferredRepository(r.id);
+                                        }}
+                                        style={[styles.repoChip, { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceContainerHigh }]}
+                                    >
+                                        <AtelierText variant="label" bold color={isSelected ? themeColors.onPrimary : themeColors.onSurfaceVariant}>
+                                            {r.name}
+                                        </AtelierText>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    )}
                 </View>
+            );
+        }
 
-                {/* Repository Filter Chips */}
-                {showFilters && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.repoChips}>
-                        {repos.map((r) => {
-                            const isSelected = repo.id === r.id;
-                            return (
-                                <TouchableOpacity
-                                    key={r.id}
-                                    onPress={() => {
-                                        setSelectedRepository(r.id);
-                                        setPreferredRepository(r.id);
-                                    }}
-                                    style={[styles.repoChip, { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceContainerHigh }]}
-                                >
-                                    <AtelierText variant="label" bold color={isSelected ? themeColors.onPrimary : themeColors.onSurfaceVariant}>
-                                        {r.name}
-                                    </AtelierText>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
+        if (item.type === 'row') {
+            return (
+                <View style={styles.gridRow}>
+                    {item.items.map((res: any, i: number) => {
+                        const result = res.data;
+                        const commonProps = {
+                            item: result.content,
+                            repo,
+                            status: result.readingStatus?.status || 'Plan to Read',
+                            progress: result.readingStatus?.progress || 0,
+                            totalChapters: result.content.latestChapter || result.readingStatus?.totalChaptersTracked || undefined,
+                            lastReadTimestamp: result.readingStatus?.lastReadTimestamp,
+                        };
+                        return (
+                            <Animated.View
+                                key={result.content.bookId}
+                                layout={LinearTransition.springify()}
+                                entering={FadeInDown.delay((index - 1) * 50 + i * 50)}
+                                exiting={FadeOut}
+                                style={{ width: '50%' }}
+                            >
+                                <BookItem {...commonProps} />
+                            </Animated.View>
+                        );
+                    })}
+                </View>
+            );
+        }
+
+        const result = item.data;
+        const commonProps = {
+            item: result.content,
+            repo,
+            status: result.readingStatus?.status || 'Plan to Read',
+            progress: result.readingStatus?.progress || 0,
+            totalChapters: result.content.latestChapter || result.readingStatus?.totalChaptersTracked || undefined,
+            lastReadTimestamp: result.readingStatus?.lastReadTimestamp,
+        };
+
+        return (
+            <Animated.View
+                layout={LinearTransition.springify()}
+                entering={FadeInDown.delay((index - 1) * 50)}
+                exiting={FadeOut}
+                style={viewType === 'grid' ? { width: '50%' } : { width: '100%' }}
+            >
+                {viewType === 'grid' ? (
+                    <BookItem {...commonProps} />
+                ) : (
+                    <BookListItem {...commonProps} />
                 )}
-            </View>
+            </Animated.View>
+        );
+    };
 
-            {/* Results Grid/List */}
+    const ListHeaderComp = (
+        <View style={styles.resultsTitleContainer}>
+            <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
+                Results for '{searchQuery}'
+            </AtelierText>
+            <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
+                {content.data?.length || 0} volume{(content.data?.length || 0) !== 1 ? 's' : ''} found
+            </AtelierText>
+        </View>
+    );
+
+    const data = useMemo(() => {
+        if (content.isLoading || content.error || !content.data || content.data.length === 0) {
+            return [];
+        }
+        
+        const results = enrichedResults.map(item => ({ type: 'result', data: item }));
+        
+        if (viewType === 'grid') {
+            const rows: any[] = [];
+            for (let i = 0; i < results.length; i += 2) {
+                rows.push({
+                    type: 'row',
+                    items: results.slice(i, i + 2)
+                });
+            }
+            return [{ type: 'sticky-header' }, ...rows];
+        }
+        
+        return [
+            { type: 'sticky-header' },
+            ...results
+        ];
+    }, [enrichedResults, content.isLoading, content.error, content.data, viewType]);
+
+    if (content.isLoading) {
+        return (
+            <View style={styles.resultsContainer}>
+                <View style={styles.resultsLoading}>
+                    <ActivityIndicator size="large" color={themeColors.primary} />
+                    <AtelierText style={{ marginTop: 12 }} color={themeColors.onSurfaceVariant}>Searching archives...</AtelierText>
+                </View>
+            </View>
+        );
+    }
+
+    if (content.error || !content.data) {
+        return (
+            <View style={styles.resultsContainer}>
+                {errorComponent}
+            </View>
+        );
+    }
+
+    if (content.data.length === 0) {
+        return (
+            <View style={styles.resultsContainer}>
+                {emptyComponent}
+            </View>
+        );
+    }
+
+    return (
+        <View style={styles.resultsContainer}>
             <FlatList
-                data={enrichedResults}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.content.bookId}
-                numColumns={viewType === 'grid' ? 2 : 1}
+                data={data}
+                renderItem={renderListElement}
+    keyExtractor={(item, index) => {
+        if (item.type === 'sticky-header') return 'sticky';
+        if (item.type === 'row') return `row-${index}`;
+        return item.data.content.bookId;
+    }}
+                numColumns={1}
                 key={viewType}
-                columnWrapperStyle={viewType === 'grid' ? styles.columnWrapper : undefined}
+                stickyHeaderIndices={[0]}
                 contentContainerStyle={styles.resultsList}
+                ListHeaderComponent={ListHeaderComp}
                 refreshControl={
                     <RefreshControl
                         refreshing={content.isLoading}
@@ -911,6 +1008,17 @@ const styles = StyleSheet.create({
         paddingTop: 8,
         paddingBottom: 20,
     },
+    resultsTitleContainer: {
+        paddingHorizontal: 24,
+        paddingTop: 16,
+        paddingBottom: 8,
+    },
+    stickyHeader: {
+        paddingHorizontal: 24,
+        paddingTop: 8,
+        paddingBottom: 16,
+        zIndex: 10,
+    },
     resultsTitleRow: {
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -930,6 +1038,10 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    gridRow: {
+        flexDirection: 'row',
+        paddingHorizontal: 16,
     },
     resultsList: {
         paddingHorizontal: 2,
