@@ -13,7 +13,7 @@ import BookItem from "./bookItem";
 import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 
-async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
+export async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
     try {
         const selector = searchQuery ? repo.repoSearch : repo.listSelector;
         if (!selector) {
@@ -69,6 +69,10 @@ interface RepoContentLayoutProps {
     enableSearchToggle?: boolean;
     initialSearchBarVisible?: boolean;
     topAccessory?: ReactNode;
+    initialSearchQuery?: string;
+    emptyComponent?: React.ReactElement;
+    errorComponent?: (props: { onRetry: () => void }) => React.ReactElement;
+    hideSearchBar?: boolean;
 }
 
 export function RepoContentLayout({
@@ -78,6 +82,10 @@ export function RepoContentLayout({
     enableSearchToggle = true,
     initialSearchBarVisible = false,
     topAccessory,
+    initialSearchQuery,
+    emptyComponent,
+    errorComponent,
+    hideSearchBar = false,
 }: RepoContentLayoutProps) {
     const theme = useTheme();
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
@@ -99,8 +107,13 @@ export function RepoContentLayout({
     );
 
     useEffect(() => {
-        fetchContent({ cached: true });
-    }, [fetchContent]);
+        if (initialSearchQuery) {
+            setSearchQuery(initialSearchQuery);
+            fetchContent({ cached: false, searchQuery: initialSearchQuery });
+        } else {
+            fetchContent({ cached: true });
+        }
+    }, [fetchContent, initialSearchQuery]);
 
     const hasDataLoaded = !!content.data && !content.isLoading;
 
@@ -114,6 +127,9 @@ export function RepoContentLayout({
         }
 
         if (content.error) {
+            if (errorComponent) {
+                return errorComponent({ onRetry: () => fetchContent({ cached: false }) });
+            }
             return errorPlaceholder({ onRetry: () => fetchContent({ cached: false }) });
         }
 
@@ -124,7 +140,7 @@ export function RepoContentLayout({
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
-                ListEmptyComponent={emptyPlaceholder('No content found')}
+                ListEmptyComponent={emptyComponent || emptyPlaceholder('No content found')}
                 ListFooterComponent={<View style={{ height: 120 }} />}
                 ListHeaderComponent={<View style={{ height: 20 }} />}
                 refreshControl={
@@ -172,7 +188,7 @@ export function RepoContentLayout({
                 <View style={styles.accessoryContainer}>{topAccessory}</View>
             )}
 
-            {(searchBarVisible || (!enableSearchToggle && !content.isLoading)) && (
+            {!hideSearchBar && (searchBarVisible || (!enableSearchToggle && !content.isLoading)) && (
                 <View style={styles.searchBar}>
                     <Searchbar
                         placeholder="Search"

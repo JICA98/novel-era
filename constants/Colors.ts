@@ -33,6 +33,10 @@ export const Colors = {
     surfaceContainer: '#f0edf0',
     surfaceContainerHigh: '#eae7ea',
     surfaceContainerHighest: '#e5e1e4',
+    error: '#ba1a1a',
+    onError: '#ffffff',
+    errorContainer: '#ffdad6',
+    onErrorContainer: '#410002',
   },
   dark: {
     text: '#f3f0f3',
@@ -60,6 +64,10 @@ export const Colors = {
     surfaceContainer: '#1f1f22',
     surfaceContainerHigh: '#2a2a2d',
     surfaceContainerHighest: '#353438',
+    error: '#ffb4ab',
+    onError: '#690005',
+    errorContainer: '#93000a',
+    onErrorContainer: '#ffdad6',
   },
 };
 

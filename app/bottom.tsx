@@ -13,7 +13,7 @@ import { BlurView } from 'expo-blur';
 
 export const indexes = {
     favorites: 0,
-    search: 1,
+    explore: 1,
     recents: 2,
     settings: 3
 }
@@ -31,8 +31,8 @@ const MyBottom = () => {
     const themeColors = Colors[colorScheme];
 
     const routes = [
-        { key: 'favorites', title: 'Library', icon: 'bookshelf' },
-        { key: 'search', title: 'Search', icon: 'magnify' },
+        { key: 'favorites', title: 'Library', icon: 'library-shelves' },
+        { key: 'explore', title: 'Explore', icon: 'compass' },
         { key: 'recents', title: 'Recents', icon: 'history' },
         { key: 'settings', title: 'Settings', icon: 'cog-outline' },
     ];
