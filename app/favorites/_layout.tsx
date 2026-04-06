@@ -176,23 +176,9 @@ const FavoriteScreen = () => {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-            {/* Custom Header */}
-            <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                    <TouchableOpacity style={styles.profileButton}>
-                        <Image 
-                            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBmnBSHqcB1TIsqZy8emE6gDAjF72nMJKa4A178Go0YRmBP417zzWtnhg3sbp-GkN0pXNn9kTwyQFXHNCgh7aSmRSnMFGUHu2vlyAm9W6IHvv8GYaaNPFHo12MpgCZ9YhXqS_Mq0EVRAHxxrMTlKjdut-NJy3CHFKFWZJJqdYB53C_T1kTQOTQH7vDRQRhnNf8jPc6E40XfKtekTImOwoWR29NhPRTpWOS7O3f2zhnEPPhesnGslts-LiZJRjisfdUUr2aU999o808d' }} 
-                            style={styles.profileImage}
-                        />
-                    </TouchableOpacity>
-                    <AtelierText variant="title" italic bold style={styles.headerTitle}>
-                        The Atelier
-                    </AtelierText>
-                </View>
-                <TouchableOpacity onPress={() => router.push('/search')}>
-                    <MaterialCommunityIcons name="magnify" size={28} color={themeColors.primary} />
-                </TouchableOpacity>
-            </View>
+            {/* Space at the top */}
+            <View style={{ height: 24 }} />
+
 
             <FlatList
                 data={displayedTrackers}
