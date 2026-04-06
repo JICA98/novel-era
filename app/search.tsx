@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, FlatList, Dimensions, Platform, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Image, TextInput, FlatList, Dimensions, Platform, ActivityIndicator, RefreshControl, Modal, Pressable, LayoutAnimation } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { AtelierText } from '@/components/AtelierText';
 import { Colors } from '@/constants/Colors';
@@ -8,14 +8,16 @@ import { BlurView } from 'expo-blur';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import BookItem from './repos/bookItem';
+import { BookListItem } from '@/components/BookListItem';
 import { useSearchStore } from './store/searchStore';
 import { Repo, Content, FetchData } from '@/types';
 import UseRepositoryLayout from './_repos';
-import { RepoContentLayout, fetchContentList } from './repos/_layout';
+import { fetchContentList } from './repos/_layout';
 import { useShallow } from 'zustand/react/shallow';
 import { userPrefStore } from './userpref';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getNovelReadingStatus, getAllTrackersAsync, NovelReadingStatus } from './favorites/tracker';
 
 const { width } = Dimensions.get('window');
 const RECENT_SEARCHES_KEY = 'explore-recent-searches';
@@ -461,60 +463,242 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 {viewState === 'discovery' && discoveryView}
                 {viewState === 'focus' && focusView}
                 {viewState === 'results' && (
-                    <RepoContentLayout
-                        key={selectedRepo.id}
+                    <SearchResultsView
                         repo={selectedRepo}
-                        showHeader={false}
-                        enableSearchToggle={false}
-                        initialSearchBarVisible={false}
-                        initialSearchQuery={searchQuery}
-                        hideSearchBar={true}
+                        searchQuery={searchQuery}
+                        showFilters={showFilters}
+                        setShowFilters={setShowFilters}
+                        repos={repos}
+                        setSelectedRepository={setSelectedRepository}
+                        setPreferredRepository={setPreferredRepository}
                         emptyComponent={React.createElement(feedbackView, { type: 'empty' })}
                         errorComponent={({ onRetry }) => React.createElement(feedbackView, { type: 'error', onRetry })}
-                        topAccessory={(
-                            <View style={styles.resultsHeader}>
-                                <View style={styles.resultsTitleRow}>
-                                    <View style={{ flex: 1 }}>
-                                        <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>Results for '{searchQuery}'</AtelierText>
-                                        <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>Discovery across 10,248 volumes in our collection.</AtelierText>
-                                    </View>
-                                    <TouchableOpacity 
-                                        style={[styles.filterBtn, { backgroundColor: showFilters ? themeColors.secondary : themeColors.primary }]}
-                                        onPress={() => setShowFilters(!showFilters)}
-                                    >
-                                        <MaterialIcons name={showFilters ? "close" : "tune"} size={20} color={showFilters ? themeColors.onSecondary : themeColors.onPrimary} />
-                                        <AtelierText variant="label" bold color={showFilters ? themeColors.onSecondary : themeColors.onPrimary} style={{ marginLeft: 8 }}>
-                                            {showFilters ? "Hide" : "Filter"}
-                                        </AtelierText>
-                                    </TouchableOpacity>
-                                </View>
-                                {showFilters && (
-                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.repoChips}>
-                                        {repos.map((repo) => {
-                                            const isSelected = selectedRepo?.id === repo.id;
-                                            return (
-                                                <TouchableOpacity
-                                                    key={repo.id}
-                                                    onPress={() => {
-                                                        setSelectedRepository(repo.id);
-                                                        setPreferredRepository(repo.id);
-                                                    }}
-                                                    style={[styles.repoChip, { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceContainerHigh }]}
-                                                >
-                                                    <AtelierText variant="label" bold color={isSelected ? themeColors.onPrimary : themeColors.onSurfaceVariant}>
-                                                        {repo.name}
-                                                    </AtelierText>
-                                                </TouchableOpacity>
-                                            );
-                                        })}
-                                    </ScrollView>
-                                )}
-                            </View>
-                        )}
                     />
                 )}
             </View>
         </SafeAreaView>
+    );
+}
+
+interface EnrichedContent {
+    content: Content;
+    readingStatus?: NovelReadingStatus;
+}
+
+interface SearchResultsViewProps {
+    repo: Repo;
+    searchQuery: string;
+    showFilters: boolean;
+    setShowFilters: (show: boolean) => void;
+    repos: Repo[];
+    setSelectedRepository: (id: string) => void;
+    setPreferredRepository: (id: string) => void;
+    emptyComponent: React.ReactElement;
+    errorComponent: React.ReactElement<{ onRetry: () => void }>;
+}
+
+function SearchResultsView({
+    repo,
+    searchQuery,
+    showFilters,
+    setShowFilters,
+    repos,
+    setSelectedRepository,
+    setPreferredRepository,
+    emptyComponent,
+    errorComponent,
+}: SearchResultsViewProps) {
+    const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
+    const [enrichedResults, setEnrichedResults] = useState<EnrichedContent[]>([]);
+    const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
+    const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+    const themeColors = Colors[colorScheme];
+
+    const fetchContent = async ({ cached }: { cached: boolean }) => {
+        setContent({ isLoading: true });
+        try {
+            const data = await fetchContentList({ repo, searchQuery, cached });
+            setContent({ data, isLoading: false });
+
+            // Enrich with reading status
+            const chapterTrackers = await getAllTrackersAsync();
+            const enriched = await Promise.all(
+                data.map(async (item) => {
+                    const novelTracker = {
+                        repo,
+                        novel: item,
+                        added: Date.now(),
+                        updated: Date.now(),
+                        favorite: false,
+                    };
+                    return {
+                        content: item,
+                        readingStatus: await getNovelReadingStatus(novelTracker, chapterTrackers),
+                    };
+                })
+            );
+            setEnrichedResults(enriched);
+        } catch (error) {
+            setContent({ error, isLoading: false });
+        }
+    };
+
+    useEffect(() => {
+        fetchContent({ cached: false });
+    }, [repo, searchQuery]);
+
+    const handleViewToggle = (type: 'grid' | 'list') => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setViewType(type);
+    };
+
+    const renderItem = ({ item, index }: { item: EnrichedContent; index: number }) => {
+        const commonProps = {
+            item: item.content,
+            repo,
+            status: item.readingStatus?.status || 'Plan to Read',
+            progress: item.readingStatus?.progress || 0,
+            totalChapters: item.content.latestChapter || item.readingStatus?.totalChaptersTracked || undefined,
+            lastReadTimestamp: item.readingStatus?.lastReadTimestamp,
+        };
+
+        return (
+            <Animated.View
+                layout={LinearTransition.springify()}
+                entering={FadeInDown.delay(index * 50)}
+                exiting={FadeOut}
+                style={viewType === 'grid' ? { width: '50%' } : { width: '100%' }}
+            >
+                {viewType === 'grid' ? (
+                    <BookItem {...commonProps} />
+                ) : (
+                    <BookListItem {...commonProps} />
+                )}
+            </Animated.View>
+        );
+    };
+
+    const ViewToggle = () => (
+        <View style={[styles.viewToggleContainer, { backgroundColor: themeColors.surfaceContainer }]}>
+            <TouchableOpacity
+                style={[
+                    styles.toggleButton,
+                    viewType === 'list' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
+                ]}
+                onPress={() => handleViewToggle('list')}
+            >
+                <MaterialIcons
+                    name="view-list"
+                    size={20}
+                    color={viewType === 'list' ? themeColors.primary : themeColors.onSurfaceVariant}
+                />
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={[
+                    styles.toggleButton,
+                    viewType === 'grid' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
+                ]}
+                onPress={() => handleViewToggle('grid')}
+            >
+                <MaterialIcons
+                    name="grid-view"
+                    size={20}
+                    color={viewType === 'grid' ? themeColors.primary : themeColors.onSurfaceVariant}
+                />
+            </TouchableOpacity>
+        </View>
+    );
+
+    if (content.isLoading) {
+        return (
+            <View style={styles.resultsLoading}>
+                <ActivityIndicator size="large" color={themeColors.primary} />
+                <AtelierText style={{ marginTop: 12 }} color={themeColors.onSurfaceVariant}>Searching archives...</AtelierText>
+            </View>
+        );
+    }
+
+    if (content.error || !content.data) {
+        return errorComponent;
+    }
+
+    if (content.data.length === 0) {
+        return emptyComponent;
+    }
+
+    return (
+        <View style={styles.resultsContainer}>
+            {/* Results Header */}
+            <View style={styles.resultsHeader}>
+                <View style={styles.resultsTitleRow}>
+                    <View style={{ flex: 1 }}>
+                        <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
+                            Results for '{searchQuery}'
+                        </AtelierText>
+                        <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
+                            {content.data.length} volume{content.data.length !== 1 ? 's' : ''} found
+                        </AtelierText>
+                    </View>
+                    <View style={styles.headerActions}>
+                        <TouchableOpacity
+                            style={[styles.filterBtn, { backgroundColor: showFilters ? themeColors.secondary : themeColors.primary }]}
+                            onPress={() => setShowFilters(!showFilters)}
+                        >
+                            <MaterialIcons
+                                name={showFilters ? "close" : "tune"}
+                                size={20}
+                                color={showFilters ? themeColors.onSecondary : themeColors.onPrimary}
+                            />
+                            <AtelierText variant="label" bold color={showFilters ? themeColors.onSecondary : themeColors.onPrimary} style={{ marginLeft: 8 }}>
+                                {showFilters ? "Hide" : "Filter"}
+                            </AtelierText>
+                        </TouchableOpacity>
+                        <ViewToggle />
+                    </View>
+                </View>
+
+                {/* Repository Filter Chips */}
+                {showFilters && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.repoChips}>
+                        {repos.map((r) => {
+                            const isSelected = repo.id === r.id;
+                            return (
+                                <TouchableOpacity
+                                    key={r.id}
+                                    onPress={() => {
+                                        setSelectedRepository(r.id);
+                                        setPreferredRepository(r.id);
+                                    }}
+                                    style={[styles.repoChip, { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceContainerHigh }]}
+                                >
+                                    <AtelierText variant="label" bold color={isSelected ? themeColors.onPrimary : themeColors.onSurfaceVariant}>
+                                        {r.name}
+                                    </AtelierText>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+                )}
+            </View>
+
+            {/* Results Grid/List */}
+            <FlatList
+                data={enrichedResults}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.content.bookId}
+                numColumns={viewType === 'grid' ? 2 : 1}
+                key={viewType}
+                columnWrapperStyle={viewType === 'grid' ? styles.columnWrapper : undefined}
+                contentContainerStyle={styles.resultsList}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={content.isLoading}
+                        onRefresh={() => fetchContent({ cached: false })}
+                        tintColor={themeColors.primary}
+                    />
+                }
+            />
+        </View>
     );
 }
 
@@ -738,6 +922,45 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderRadius: 24,
+    },
+    resultsContainer: {
+        flex: 1,
+    },
+    resultsLoading: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    resultsList: {
+        paddingHorizontal: 2,
+        paddingBottom: 100,
+    },
+    headerActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    viewToggleContainer: {
+        flexDirection: 'row',
+        padding: 4,
+        borderRadius: 24,
+    },
+    toggleButton: {
+        padding: 8,
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toggleActive: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    columnWrapper: {
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
     },
     repoChips: {
         marginTop: 4,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, Dimensions, ScrollView, Modal, Pressable, LayoutAnimation } from 'react-native';
+import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, Dimensions, ScrollView, Modal, Pressable, LayoutAnimation, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { getFavoriteTrackersAsync, NovelTracker, NovelReadingStatus, getNovelReadingStatus, getAllTrackersAsync, ChapterTracker } from './tracker';
 import { fetchContentChapters } from '../contents/_layout';
 import BookItem from '../repos/bookItem';
@@ -14,6 +14,8 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { normalizeUrl } from '@/types';
+import { RenderChapterProps } from '../chapters/common';
 
 const { width } = Dimensions.get('window');
 
@@ -94,6 +96,17 @@ const FavoriteScreen = () => {
         });
     }, [enrichedTrackers, filterStatus, sortBy]);
 
+    const lastReadNovel = useMemo(() => {
+        if (enrichedTrackers.length === 0) return null;
+        const readingNovels = enrichedTrackers.filter(t => 
+            t.readingStatus.lastReadTimestamp && t.readingStatus.status === 'Reading'
+        );
+        if (readingNovels.length === 0) return null;
+        return readingNovels.sort((a, b) => 
+            (b.readingStatus.lastReadTimestamp || 0) - (a.readingStatus.lastReadTimestamp || 0)
+        )[0];
+    }, [enrichedTrackers]);
+
     const handleFilterChange = (status: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setFilterStatus(status);
@@ -162,6 +175,91 @@ const FavoriteScreen = () => {
         </View>
     );
 
+    const ContinueReadingCard = ({ item }: { item: EnrichedTracker }) => {
+        const scale = useSharedValue(1);
+        
+        const animatedStyle = useAnimatedStyle(() => ({
+            transform: [{ scale: scale.value }]
+        }));
+
+        const handlePressIn = () => {
+            scale.value = withSpring(0.97);
+        };
+
+        const handlePressOut = () => {
+            scale.value = withSpring(1);
+        };
+
+        const handlePress = () => {
+            const chapterProps: RenderChapterProps = {
+                focusedMode: false,
+                id: item.readingStatus.lastChapterRead || '1',
+                content: item.novelTracker.novel,
+                repo: item.novelTracker.repo,
+                enableNextPrev: true,
+                speachState: 'unknown',
+                data: ''
+            };
+            router.push({
+                pathname: '/chapters',
+                params: { props: JSON.stringify(chapterProps) }
+            });
+        };
+
+        const coverUri = normalizeUrl(item.novelTracker.novel.bookImage, item.novelTracker.repo.repoUrl) || 
+            `https://picsum.photos/seed/${item.novelTracker.novel.bookId}/200/300`;
+
+        return (
+            <Animated.View 
+                entering={FadeInDown.delay(200).springify()}
+                style={[styles.continueCardContainer, animatedStyle]}
+            >
+                <Pressable
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    onPress={handlePress}
+                    style={styles.continueCardPressable}
+                >
+                    <ImageBackground
+                        source={{ uri: coverUri }}
+                        style={styles.continueCardBg}
+                        imageStyle={styles.continueCardImage}
+                        blurRadius={10}
+                    >
+                        <LinearGradient
+                            colors={['transparent', 'rgba(0,0,0,0.8)']}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={styles.continueCardContent}>
+                            <View style={styles.continueCardHeader}>
+                                <View style={[styles.continueBadge, { backgroundColor: themeColors.primary }]}>
+                                    <MaterialCommunityIcons name="play" size={12} color={themeColors.onPrimary} />
+                                    <AtelierText variant="caption" bold color={themeColors.onPrimary} style={styles.continueBadgeText}>
+                                        RESUME READING
+                                    </AtelierText>
+                                </View>
+                            </View>
+                            
+                            <View style={styles.continueCardFooter}>
+                                <View style={styles.continueCardInfo}>
+                                    <AtelierText variant="title" bold color="#fff" numberOfLines={1}>
+                                        {item.novelTracker.novel.title}
+                                    </AtelierText>
+                                    <AtelierText variant="body" color="rgba(255,255,255,0.8)" numberOfLines={1}>
+                                        Chapter {item.readingStatus.lastChapterRead}
+                                    </AtelierText>
+                                </View>
+                                <View style={[styles.continuePlayButton, { backgroundColor: themeColors.primary }]}>
+                                    <MaterialCommunityIcons name="chevron-right" size={28} color={themeColors.onPrimary} />
+                                </View>
+                            </View>
+                        </View>
+                    </ImageBackground>
+                </Pressable>
+            </Animated.View>
+        );
+    };
+
     const EmptyState = () => (
         <View style={styles.emptyContainer}>
             <View style={styles.illustrationContainer}>
@@ -228,6 +326,10 @@ const FavoriteScreen = () => {
                             Curating your personal literary collection.
                         </AtelierText>
                         
+                        {lastReadNovel && filterStatus === 'All' && (
+                            <ContinueReadingCard item={lastReadNovel} />
+                        )}
+
                         <View style={styles.headerActions}>
                             <TouchableOpacity 
                                 style={[styles.sortButton, { backgroundColor: themeColors.surfaceContainerLow }]}
@@ -553,6 +655,70 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 24,
         maxWidth: 280,
+        marginBottom: 32,
+    },
+    continueCardContainer: {
+        width: '100%',
+        height: 160,
+        borderRadius: 24,
+        overflow: 'hidden',
+        marginBottom: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
+        elevation: 10,
+    },
+    continueCardPressable: {
+        flex: 1,
+    },
+    continueCardBg: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    continueCardImage: {
+        opacity: 0.7,
+    },
+    continueCardContent: {
+        flex: 1,
+        padding: 20,
+        justifyContent: 'space-between',
+    },
+    continueCardHeader: {
+        flexDirection: 'row',
+    },
+    continueBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
+        gap: 4,
+    },
+    continueBadgeText: {
+        fontSize: 10,
+        letterSpacing: 1,
+    },
+    continueCardFooter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    continueCardInfo: {
+        flex: 1,
+        marginRight: 16,
+    },
+    continuePlayButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
     },
 });
 
