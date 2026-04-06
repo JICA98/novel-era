@@ -200,20 +200,33 @@ export async function getNovelReadingStatus(
     const hasReading = chapterTrackers.some(c => c.status === 'reading');
     const allRead = chapterTrackers.every(c => c.status === 'read');
 
-    // Calculate average progress
-    const totalProgress = chapterTrackers.reduce((sum, c) => sum + c.chapterProgress, 0);
-    const avgProgress = chapterTrackers.length > 0 ? totalProgress / chapterTrackers.length : 0;
+    // Calculate overall progress: (completed chapters + partial progress of current chapter) / total chapters
+    const completedChapters = chapterTrackers.filter(c => c.chapterProgress >= 1 || c.status === 'read').length;
+    const readingChapter = chapterTrackers.find(c => c.chapterProgress > 0 && c.chapterProgress < 1);
+    const partialProgress = readingChapter ? readingChapter.chapterProgress : 0;
+    
+    // Use the novel's latestChapter if available, otherwise fall back to tracked chapters count
+    const totalChapters = novel.latestChapter || chapterTrackers.length;
+    const overallProgress = totalChapters > 0 ? (completedChapters + partialProgress) / totalChapters : 0;
 
     // Find the last read chapter (most recent lastRead timestamp)
     const lastReadChapter = chapterTrackers.reduce((latest, current) =>
         current.lastRead > latest.lastRead ? current : latest
     , chapterTrackers[0]);
 
-    const status: NovelReadingStatus['status'] = hasReading || !allRead ? 'Reading' : 'Completed';
+    // Determine status based on overall progress against total chapters
+    let status: NovelReadingStatus['status'];
+    if (completedChapters >= totalChapters) {
+        status = 'Completed';
+    } else if (hasReading || completedChapters > 0) {
+        status = 'Reading';
+    } else {
+        status = 'Plan to Read';
+    }
 
     return {
         status,
-        progress: avgProgress,
+        progress: overallProgress,
         lastChapterRead: lastReadChapter.chapterId,
         lastReadTimestamp: lastReadChapter.lastRead,
         totalChaptersTracked: chapterTrackers.length,

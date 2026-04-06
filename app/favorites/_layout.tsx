@@ -3,6 +3,7 @@ import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, Di
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { getFavoriteTrackersAsync, NovelTracker, NovelReadingStatus, getNovelReadingStatus, getAllTrackersAsync, ChapterTracker } from './tracker';
+import { fetchContentChapters } from '../contents/_layout';
 import BookItem from '../repos/bookItem';
 import { BookListItem } from '@/components/BookListItem';
 import { AtelierText } from '@/components/AtelierText';
@@ -43,12 +44,33 @@ const FavoriteScreen = () => {
         ]);
         const trackers = extractTrackers(novelTrackers);
 
-        // Enrich each novel tracker with reading status from chapter data
+        // Enrich each novel tracker with reading status and latest chapter count
         const enriched: EnrichedTracker[] = await Promise.all(
-            trackers.map(async (novelTracker) => ({
-                novelTracker,
-                readingStatus: await getNovelReadingStatus(novelTracker, chapterTrackers),
-            }))
+            trackers.map(async (novelTracker) => {
+                let enrichedNovel = novelTracker.novel;
+                
+                // Fetch latest chapter count if not available
+                if (!enrichedNovel.latestChapter) {
+                    try {
+                        const freshContent = await fetchContentChapters(
+                            novelTracker.repo,
+                            novelTracker.novel,
+                            true // use cache
+                        );
+                        if (freshContent.latestChapter) {
+                            enrichedNovel = freshContent;
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to fetch chapter count for ${novelTracker.novel.title}:`, error);
+                    }
+                }
+
+                const enrichedTracker = { ...novelTracker, novel: enrichedNovel };
+                return {
+                    novelTracker: enrichedTracker,
+                    readingStatus: await getNovelReadingStatus(enrichedTracker, chapterTrackers),
+                };
+            })
         );
         setEnrichedTrackers(enriched);
         setRefreshing(false);
@@ -83,12 +105,13 @@ const FavoriteScreen = () => {
     };
 
     const renderItem = ({ item, index }: { item: EnrichedTracker, index: number }) => {
+        const totalChapters = item.novelTracker.novel.latestChapter || item.readingStatus.totalChaptersTracked || undefined;
         const commonProps = {
             item: item.novelTracker.novel,
             repo: item.novelTracker.repo,
             status: item.readingStatus.status,
             progress: item.readingStatus.progress,
-            totalChapters: item.readingStatus.totalChaptersTracked,
+            totalChapters,
             lastReadTimestamp: item.readingStatus.lastReadTimestamp,
         };
 
