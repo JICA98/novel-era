@@ -66,17 +66,18 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
         loadHistory();
     }, []);
 
+    const fetchDiscovery = async () => {
+        setDiscoveryData({ isLoading: true });
+        try {
+            const data = await fetchContentList({ repo: selectedRepo, cached: false });
+            setDiscoveryData({ data, isLoading: false });
+        } catch (error) {
+            setDiscoveryData({ error, isLoading: false });
+        }
+    };
+
     // Fetch discovery data when repo changes
     useEffect(() => {
-        const fetchDiscovery = async () => {
-            setDiscoveryData({ isLoading: true });
-            try {
-                const data = await fetchContentList({ repo: selectedRepo, cached: true });
-                setDiscoveryData({ data, isLoading: false });
-            } catch (error) {
-                setDiscoveryData({ error, isLoading: false });
-            }
-        };
         fetchDiscovery();
     }, [selectedRepo]);
 
@@ -133,6 +134,10 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                     <AtelierText style={{ marginTop: 12 }} color={themeColors.onSurfaceVariant}>Curating your library...</AtelierText>
                 </View>
             );
+        }
+
+        if (discoveryData.error) {
+            return <FeedbackView type="error" onRetry={fetchDiscovery} />;
         }
 
         return (
