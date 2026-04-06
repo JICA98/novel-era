@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, SafeAreaView, Dimensions, ScrollView, Modal, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
-import { getFavoriteTrackersAsync, NovelTracker } from './tracker';
+import { getFavoriteTrackersAsync, NovelTracker, NovelReadingStatus, getNovelReadingStatus, getAllTrackersAsync, ChapterTracker } from './tracker';
 import BookItem from '../repos/bookItem';
 import { BookListItem } from '@/components/BookListItem';
 import { AtelierText } from '@/components/AtelierText';
@@ -19,8 +19,13 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+interface EnrichedTracker {
+    novelTracker: NovelTracker;
+    readingStatus: NovelReadingStatus;
+}
+
 const FavoriteScreen = () => {
-    const [favoriteTrackers, setFavoriteTrackers] = useState<NovelTracker[]>([]);
+    const [enrichedTrackers, setEnrichedTrackers] = useState<EnrichedTracker[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
     const [filterStatus, setFilterStatus] = useState('All');
@@ -35,30 +40,42 @@ const FavoriteScreen = () => {
 
     const fetchFavoriteTrackers = async () => {
         setRefreshing(true);
-        const trackers = await getFavoriteTrackersAsync();
-        setFavoriteTrackers(extractTrackers(trackers));
+        const [novelTrackers, chapterTrackers] = await Promise.all([
+            getFavoriteTrackersAsync(),
+            getAllTrackersAsync(),
+        ]);
+        const trackers = extractTrackers(novelTrackers);
+
+        // Enrich each novel tracker with reading status from chapter data
+        const enriched: EnrichedTracker[] = await Promise.all(
+            trackers.map(async (novelTracker) => ({
+                novelTracker,
+                readingStatus: await getNovelReadingStatus(novelTracker, chapterTrackers),
+            }))
+        );
+        setEnrichedTrackers(enriched);
         setRefreshing(false);
     };
 
     const displayedTrackers = useMemo(() => {
-        let filtered = [...favoriteTrackers];
-        
-        // Filtering
+        let filtered = [...enrichedTrackers];
+
+        // Filtering by real reading status
         if (filterStatus !== 'All') {
-            filtered = filtered.filter(t => (t.favorite ? 'Reading' : 'Dropped') === filterStatus);
+            filtered = filtered.filter(t => t.readingStatus.status === filterStatus);
         }
 
         // Sorting
         return filtered.sort((a, b) => {
             if (sortBy === 'Title') {
-                return a.novel.title.localeCompare(b.novel.title);
+                return a.novelTracker.novel.title.localeCompare(b.novelTracker.novel.title);
             } else if (sortBy === 'Rating') {
-                return (parseFloat(b.novel.rating || '0')) - (parseFloat(a.novel.rating || '0'));
+                return (parseFloat(b.novelTracker.novel.rating || '0')) - (parseFloat(a.novelTracker.novel.rating || '0'));
             } else {
-                return b.updated - a.updated;
+                return b.novelTracker.updated - a.novelTracker.updated;
             }
         });
-    }, [favoriteTrackers, filterStatus, sortBy]);
+    }, [enrichedTrackers, filterStatus, sortBy]);
 
     const handleFilterChange = (status: string) => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -70,18 +87,20 @@ const FavoriteScreen = () => {
         setViewType(type);
     };
 
-    const renderItem = ({ item, index }: { item: NovelTracker, index: number }) => {
+    const renderItem = ({ item, index }: { item: EnrichedTracker, index: number }) => {
         const commonProps = {
-            item: item.novel,
-            repo: item.repo,
-            status: (item.favorite ? 'Reading' : 'Dropped') as any,
-            progress: 0.45,
+            item: item.novelTracker.novel,
+            repo: item.novelTracker.repo,
+            status: item.readingStatus.status,
+            progress: item.readingStatus.progress,
+            totalChapters: item.readingStatus.totalChaptersTracked,
+            lastReadTimestamp: item.readingStatus.lastReadTimestamp,
         };
 
         return (
-            <Animated.View 
-                layout={LinearTransition.springify()} 
-                entering={FadeInDown.delay(index * 50)} 
+            <Animated.View
+                layout={LinearTransition.springify()}
+                entering={FadeInDown.delay(index * 50)}
                 exiting={FadeOut}
                 style={viewType === 'grid' ? { width: '50%' } : { width: '100%' }}
             >
@@ -183,8 +202,8 @@ const FavoriteScreen = () => {
             <FlatList
                 data={displayedTrackers}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.novel.bookId}
-                ListHeaderComponent={() => favoriteTrackers.length > 0 ? (
+                keyExtractor={(item) => item.novelTracker.novel.bookId}
+                ListHeaderComponent={() => enrichedTrackers.length > 0 ? (
                     <View style={styles.listHeader}>
                         <AtelierText variant="headline" bold style={styles.listTitle}>My Library</AtelierText>
                         <AtelierText variant="body" color={themeColors.onSurfaceVariant} style={styles.listSubtitle}>
@@ -210,7 +229,7 @@ const FavoriteScreen = () => {
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.filterTabs}
                         >
-                            {['All', 'Reading', 'Completed', 'Dropped'].map((status) => {
+                            {['All', 'Reading', 'Completed', 'Plan to Read', 'Dropped'].map((status) => {
                                 const isActive = filterStatus === status;
                                 return (
                                     <TouchableOpacity

@@ -12,13 +12,15 @@ interface BookItemProps {
     item: Content;
     status?: 'Reading' | 'Completed' | 'Dropped' | 'Plan to Read';
     progress?: number; // 0 to 1
+    totalChapters?: number;
+    lastReadTimestamp?: number;
     onLinkPress?: (link: string, item: Content) => void;
 }
 
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width - 48) / 2; // 2 columns with padding
 
-export default function BookItem({ repo, item, status = 'Reading', progress = 0.65, onLinkPress }: BookItemProps) {
+export default function BookItem({ repo, item, status = 'Reading', progress = 0.65, totalChapters, lastReadTimestamp, onLinkPress }: BookItemProps) {
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
     const themeColors = Colors[colorScheme];
@@ -30,6 +32,7 @@ export default function BookItem({ repo, item, status = 'Reading', progress = 0.
         switch (status) {
             case 'Completed': return '#15803d'; // Green-700
             case 'Dropped': return themeColors.onSurfaceVariant;
+            case 'Plan to Read': return themeColors.outline;
             default: return themeColors.primary;
         }
     };

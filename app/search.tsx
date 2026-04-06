@@ -431,24 +431,6 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-            {/* Universal Header (Brand + Profile) */}
-            <View style={styles.header}>
-                <View style={styles.headerLeft}>
-                    <TouchableOpacity style={styles.profileButton}>
-                        <Image 
-                            source={{ uri: 'https://picsum.photos/100/100?random=40' }} 
-                            style={styles.profileImage}
-                        />
-                    </TouchableOpacity>
-                    <AtelierText variant="title" italic bold style={styles.headerTitle}>
-                        The Atelier
-                    </AtelierText>
-                </View>
-                <TouchableOpacity onPress={() => setViewState(viewState === 'focus' ? 'discovery' : 'focus')}>
-                    <MaterialCommunityIcons name={viewState === 'focus' ? "close" : "magnify"} size={28} color={themeColors.primary} />
-                </TouchableOpacity>
-            </View>
-
             <Animated.View style={{ flex: 1 }} layout={LinearTransition.springify()}>
                 {viewState === 'discovery' && <DiscoveryView />}
                 {viewState === 'focus' && <FocusView />}
@@ -519,33 +501,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 24,
-        paddingTop: 8,
-        paddingBottom: 8,
-    },
-    headerLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    profileButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        overflow: 'hidden',
-        marginRight: 12,
-        backgroundColor: '#eee',
-    },
-    profileImage: {
-        width: '100%',
-        height: '100%',
-    },
-    headerTitle: {
-        fontSize: 22,
-    },
     scrollContent: {
         paddingHorizontal: 24,
         paddingBottom: 100,
@@ -556,7 +511,7 @@ const styles = StyleSheet.create({
         height: 64,
         borderRadius: 16,
         paddingHorizontal: 20,
-        marginTop: 16,
+        marginTop: 24,
     },
     placeholderText: {
         marginLeft: 12,

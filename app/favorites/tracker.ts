@@ -163,6 +163,69 @@ export async function getFavoriteTrackersAsync() {
     return await getDataByKeyPrefix<NovelTracker>('favoritev1-');
 }
 
+export interface NovelReadingStatus {
+    status: 'Reading' | 'Completed' | 'Dropped' | 'Plan to Read';
+    progress: number;
+    lastChapterRead?: string;
+    lastReadTimestamp?: number;
+    totalChaptersTracked: number;
+}
+
+export async function getNovelReadingStatus(
+    novelTracker: NovelTracker,
+    allChapterTrackers?: Record<string, ChapterTracker>
+): Promise<NovelReadingStatus> {
+    const { repo, novel, favorite } = novelTracker;
+
+    if (!favorite) {
+        return { status: 'Dropped', progress: 0, totalChaptersTracked: 0 };
+    }
+
+    // Load chapter trackers for this novel
+    let chapterTrackers: ChapterTracker[] = [];
+    if (allChapterTrackers) {
+        const prefix = `trackerv1-${repo.id}-${novel.bookId}-`;
+        chapterTrackers = Object.entries(allChapterTrackers)
+            .filter(([key]) => key.startsWith(prefix))
+            .map(([, tracker]) => tracker);
+    } else {
+        chapterTrackers = await getChaptersForNovel(repo.id, novel.bookId);
+    }
+
+    if (chapterTrackers.length === 0) {
+        return { status: 'Plan to Read', progress: 0, totalChaptersTracked: 0 };
+    }
+
+    // Aggregate status
+    const hasReading = chapterTrackers.some(c => c.status === 'reading');
+    const allRead = chapterTrackers.every(c => c.status === 'read');
+
+    // Calculate average progress
+    const totalProgress = chapterTrackers.reduce((sum, c) => sum + c.chapterProgress, 0);
+    const avgProgress = chapterTrackers.length > 0 ? totalProgress / chapterTrackers.length : 0;
+
+    // Find the last read chapter (most recent lastRead timestamp)
+    const lastReadChapter = chapterTrackers.reduce((latest, current) =>
+        current.lastRead > latest.lastRead ? current : latest
+    , chapterTrackers[0]);
+
+    const status: NovelReadingStatus['status'] = hasReading || !allRead ? 'Reading' : 'Completed';
+
+    return {
+        status,
+        progress: avgProgress,
+        lastChapterRead: lastReadChapter.chapterId,
+        lastReadTimestamp: lastReadChapter.lastRead,
+        totalChaptersTracked: chapterTrackers.length,
+    };
+}
+
+async function getChaptersForNovel(repoId: string, novelId: string): Promise<ChapterTracker[]> {
+    const prefix = `trackerv1-${repoId}-${novelId}-`;
+    const allData = await getDataByKeyPrefix<ChapterTracker>(prefix);
+    return Object.values(allData);
+}
+
 export async function saveTracker(tracker: ChapterTracker) {
     const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
     await storeData(key, tracker);

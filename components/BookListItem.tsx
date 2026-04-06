@@ -8,20 +8,48 @@ import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
+function formatRelativeDate(timestamp?: number): string {
+    if (!timestamp) return '';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatChapterDisplay(progress: number, totalChapters?: number): { current: number; total: number } {
+    if (totalChapters && totalChapters > 0) {
+        const current = Math.max(1, Math.round(progress * totalChapters));
+        return { current, total: totalChapters };
+    }
+    // Fallback: estimate from progress alone
+    const estimatedTotal = progress > 0 ? Math.max(1, Math.round(1 / progress)) * 10 : 10;
+    const current = Math.round(progress * estimatedTotal);
+    return { current, total: estimatedTotal };
+}
+
 interface BookListItemProps {
     repo: Repo;
     item: Content;
     status?: 'Reading' | 'Completed' | 'Dropped' | 'Plan to Read';
     progress?: number;
+    totalChapters?: number;
+    lastReadTimestamp?: number;
     onPress?: () => void;
 }
 
-export const BookListItem: React.FC<BookListItemProps> = ({ 
-    repo, 
-    item, 
-    status = 'Reading', 
+export const BookListItem: React.FC<BookListItemProps> = ({
+    repo,
+    item,
+    status = 'Reading',
     progress = 0.35,
-    onPress 
+    totalChapters,
+    lastReadTimestamp,
+    onPress
 }) => {
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
@@ -31,10 +59,12 @@ export const BookListItem: React.FC<BookListItemProps> = ({
 
     const getStatusColors = (status: string) => {
         switch (status) {
-            case 'Completed': 
+            case 'Completed':
                 return { bg: themeColors.surfaceContainerHighest, text: themeColors.onSurfaceVariant };
-            case 'Dropped': 
+            case 'Dropped':
                 return { bg: '#ffdad6', text: '#93000a' }; // Error container
+            case 'Plan to Read':
+                return { bg: themeColors.outlineVariant, text: themeColors.onSurfaceVariant };
             default: // Reading
                 return { bg: themeColors.secondaryContainer, text: themeColors.onSecondaryContainer };
         }
@@ -90,7 +120,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                         <View style={styles.progressSection}>
                             <View style={styles.progressLabelRow}>
                                 <AtelierText variant="caption" bold color={themeColors.onSurfaceVariant} style={styles.progressText}>
-                                    Chapter {Math.round(progress * 120)} of 120
+                                    Chapter {formatChapterDisplay(progress, totalChapters).current} of {formatChapterDisplay(progress, totalChapters).total}
                                 </AtelierText>
                                 <AtelierText variant="caption" bold color={themeColors.onSurfaceVariant}>
                                     {Math.round(progress * 100)}%
@@ -109,13 +139,19 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                                 </AtelierText>
                             </View>
                             <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>
-                                Read on May 12, 2023
+                                {formatRelativeDate(lastReadTimestamp) || `Read ${formatChapterDisplay(progress, totalChapters).total} chapters`}
+                            </AtelierText>
+                        </View>
+                    ) : status === 'Dropped' ? (
+                        <View style={styles.droppedSection}>
+                            <AtelierText variant="caption" italic color={themeColors.onSurfaceVariant}>
+                                Stopped at Chapter {formatChapterDisplay(progress, totalChapters).current}
                             </AtelierText>
                         </View>
                     ) : (
                         <View style={styles.droppedSection}>
                             <AtelierText variant="caption" italic color={themeColors.onSurfaceVariant}>
-                                "Stopped at Chapter 12"
+                                Not started yet
                             </AtelierText>
                         </View>
                     )}
