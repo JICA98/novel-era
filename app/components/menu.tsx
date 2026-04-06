@@ -33,3 +33,5 @@ export function MenuFunction({ items, children }: { items?: MenuItem[]; children
         </View>
     );
 }
+
+export default function() { return null; }

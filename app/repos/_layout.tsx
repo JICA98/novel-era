@@ -51,7 +51,6 @@ export async function fetchContentList({ repo, searchQuery, cached }: { repo: Re
                         rating = processData(item, selector.rating);
                     }
                     bookImage = normalizeUrl(bookImage, repo.repoUrl);
-                    console.log({ title, bookImage, bookLink, bookId, rating });
                     return { title, bookImage, bookLink, bookId, rating };
                 });
             }

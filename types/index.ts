@@ -56,6 +56,7 @@ export interface ListSelector extends Selector {
     title: Selector;
     bookLink: Selector;
     bookId: Selector;
+    rating?: Selector;
 }
 
 export interface Selector {

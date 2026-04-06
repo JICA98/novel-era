@@ -90,6 +90,11 @@
                     "attribute": "href",
                     "regex": "book/(.*)"
                 },
+                "rating": {
+                    "type": "attribute",
+                    "selector": ".novel-stats .info-rating",
+                    "attribute": "data-rating"
+                },
                 "bookLink": {
                     "type": "text",
                     "selector": "a",

@@ -235,3 +235,4 @@ export async function saveNovelTracker(tracker: NovelTracker) {
     const key = novelKey(tracker.repo.id, tracker.novel.bookId);
     await storeData(key, tracker);
 }
+export default function() { return null; }

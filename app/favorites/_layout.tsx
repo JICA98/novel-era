@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, SafeAreaView, Dimensions, ScrollView, Modal, Pressable, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, Dimensions, ScrollView, Modal, Pressable, LayoutAnimation } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { getFavoriteTrackersAsync, NovelTracker, NovelReadingStatus, getNovelReadingStatus, getAllTrackersAsync, ChapterTracker } from './tracker';
 import BookItem from '../repos/bookItem';
@@ -14,10 +15,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 interface EnrichedTracker {
     novelTracker: NovelTracker;
@@ -69,8 +66,6 @@ const FavoriteScreen = () => {
         return filtered.sort((a, b) => {
             if (sortBy === 'Title') {
                 return a.novelTracker.novel.title.localeCompare(b.novelTracker.novel.title);
-            } else if (sortBy === 'Rating') {
-                return (parseFloat(b.novelTracker.novel.rating || '0')) - (parseFloat(a.novelTracker.novel.rating || '0'));
             } else {
                 return b.novelTracker.updated - a.novelTracker.updated;
             }
@@ -281,7 +276,7 @@ const FavoriteScreen = () => {
                         <View style={[styles.dragHandle, { backgroundColor: themeColors.outlineVariant }]} />
                         <AtelierText variant="title" bold style={styles.modalTitle}>Sort Library</AtelierText>
                         
-                        {['Updated', 'Title', 'Rating'].map((option) => (
+                        {['Updated', 'Title'].map((option) => (
                             <TouchableOpacity 
                                 key={option} 
                                 style={styles.sortOption}

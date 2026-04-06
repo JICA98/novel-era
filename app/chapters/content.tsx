@@ -211,3 +211,5 @@ function getCurrentSentence(viewables: ViewToken<Sentence>[]): Sentence | undefi
     return undefined;
 }
 
+
+export default function() { return null; }

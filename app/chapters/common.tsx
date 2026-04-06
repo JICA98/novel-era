@@ -73,3 +73,4 @@ export const timeAgo = (timeInMillis: number): JSX.Element => {
     if (!timeInMillis) return <View />;
     return <TimeAgo dateTo={new Date(timeInMillis)} />;;
 };
+export default function() { return null; }

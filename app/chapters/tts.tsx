@@ -254,3 +254,4 @@ export function toQueue(sentences: Sentence[]): Sentence[] {
     });
     return queue;
 }
+export default function() { return null; }

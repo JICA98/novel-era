@@ -18,9 +18,14 @@ interface FetchData<T> {
 export const asyncStorage = () => createJSONStorage(() => AsyncStorage);
 
 const useRepositoryStore = create(persist(
-    (set) => ({
+    (set, get) => ({
         repositories: { isLoading: true } as FetchData<ReposData>,
         fetchData: () => {
+            const current = (get() as any).repositories;
+            // If data is already loaded from persistence, don't reset to loading
+            if (current.data && !current.isLoading) {
+                return;
+            }
             set({ repositories: { isLoading: true } });
             // Use local repository data instead of fetching from GitHub
             setTimeout(() => {

@@ -117,3 +117,5 @@ const CONTAINER_XML =
     '    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml" />' +
     "  </rootfiles>" +
     "</container>";
+
+export default function() { return null; }

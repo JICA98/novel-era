@@ -5,7 +5,7 @@ import { AtelierText } from '@/components/AtelierText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import BookItem from './repos/bookItem';
 import { useSearchStore } from './store/searchStore';
@@ -34,7 +34,6 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [discoveryData, setDiscoveryData] = useState<FetchData<Content[]>>({ isLoading: true });
     const router = useRouter();
-    const inputRef = useRef<TextInput>(null);
 
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
@@ -122,7 +121,19 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
         } as any);
     };
 
-    const DiscoveryView = () => {
+    const searchScale = useSharedValue(1);
+    const searchAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: searchScale.value }],
+    }));
+
+    const handleSearchPress = () => {
+        setViewState('focus');
+        searchScale.value = withSpring(0.96, { damping: 15, stiffness: 200 }, () => {
+            searchScale.value = withSpring(1, { damping: 15, stiffness: 200 });
+        });
+    };
+
+    const discoveryView = useMemo(() => {
         const trending = discoveryData.data?.slice(0, 6) ?? [];
         const curated = discoveryData.data?.slice(6, 9) ?? [];
         const fresh = discoveryData.data?.slice(9, 14) ?? [];
@@ -137,7 +148,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
         }
 
         if (discoveryData.error) {
-            return <FeedbackView type="error" onRetry={fetchDiscovery} />;
+            return feedbackView({ type: 'error', onRetry: fetchDiscovery });
         }
 
         return (
@@ -146,19 +157,18 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Search Bar Section */}
-                <TouchableOpacity 
-                    activeOpacity={0.9} 
-                    onPress={() => {
-                        setViewState('focus');
-                        setTimeout(() => inputRef.current?.focus(), 100);
-                    }}
-                    style={[styles.searchBarTrigger, { backgroundColor: themeColors.surfaceContainerLow }]}
-                >
-                    <MaterialCommunityIcons name="magnify" size={24} color={themeColors.onSurfaceVariant} />
-                    <AtelierText color={themeColors.onSurfaceVariant + '88'} style={styles.placeholderText}>
-                        Find your next masterpiece...
-                    </AtelierText>
-                </TouchableOpacity>
+                <Animated.View sharedTransitionTag="searchBar" style={searchAnimatedStyle}>
+                    <TouchableOpacity 
+                        activeOpacity={1} 
+                        onPress={handleSearchPress}
+                        style={[styles.searchBarTrigger, { backgroundColor: themeColors.surfaceContainerLow }]}
+                    >
+                        <MaterialCommunityIcons name="magnify" size={24} color={themeColors.onSurfaceVariant} />
+                        <AtelierText color={themeColors.onSurfaceVariant + '88'} style={styles.placeholderText}>
+                            Find your next masterpiece...
+                        </AtelierText>
+                    </TouchableOpacity>
+                </Animated.View>
 
                 {/* Genre Chips */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
@@ -263,15 +273,67 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 )}
             </ScrollView>
         );
-    };
+    }, [discoveryData, themeColors, selectedRepo, searchAnimatedStyle]);
 
-    const FocusView = () => (
+    const focusContent = useMemo(() => (
+        <ScrollView 
+            contentContainerStyle={styles.focusContent}
+        >
+        {/* Recent Searches */}
+        <View style={styles.sectionHeader}>
+            <AtelierText variant="subtitle" bold color={themeColors.primary}>Recent Searches</AtelierText>
+            <TouchableOpacity onPress={clearRecent}>
+                <AtelierText variant="caption" bold color={themeColors.primary}>CLEAR ALL</AtelierText>
+            </TouchableOpacity>
+        </View>
+        <View style={[styles.recentList, { backgroundColor: themeColors.surfaceContainerLow }]}>
+            {recentSearches.map((item, index) => (
+                <TouchableOpacity 
+                    key={item} 
+                    style={[styles.recentItem, index < recentSearches.length - 1 && { borderBottomWidth: 1, borderBottomColor: themeColors.outlineVariant + '11' }]}
+                    onPress={() => handleSearchSubmit(item)}
+                >
+                    <View style={styles.recentLeft}>
+                        <MaterialCommunityIcons name="history" size={20} color={themeColors.onSurfaceVariant} />
+                        <AtelierText style={styles.recentText}>{item}</AtelierText>
+                    </View>
+                    <TouchableOpacity onPress={() => removeRecent(item)}>
+                        <MaterialCommunityIcons name="close" size={18} color={themeColors.onSurfaceVariant} />
+                    </TouchableOpacity>
+                </TouchableOpacity>
+            ))}
+        </View>
+
+        {/* Suggested Tags */}
+        <AtelierText variant="subtitle" bold color={themeColors.primary} style={styles.sectionTitle}>Suggested Tags</AtelierText>
+        <View style={styles.tagGrid}>
+            {['Overpowered MC', 'Isekai', 'Slow Burn', 'System', 'Historical Romance', 'Grimdark', 'Cultivation'].map(tag => (
+                <TouchableOpacity key={tag} style={[styles.tagChip, { backgroundColor: themeColors.secondaryContainer }]} onPress={() => handleSearchSubmit(tag)}>
+                    <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>{tag}</AtelierText>
+                </TouchableOpacity>
+            ))}
+        </View>
+
+        {/* Bento Style Recommendation */}
+        <View style={[styles.promoCard, { backgroundColor: themeColors.primary }]}>
+            <AtelierText variant="caption" bold color={themeColors.onPrimary + '88'}>CURATED RECOMMENDATION</AtelierText>
+            <AtelierText variant="title" color={themeColors.onPrimary} italic style={styles.promoTitle}>Discover: Shadows of the Atelier</AtelierText>
+            <TouchableOpacity style={styles.promoButton}>
+                <AtelierText variant="label" bold color={themeColors.primary}>Explore Series</AtelierText>
+            </TouchableOpacity>
+        </View>
+        </ScrollView>
+    ), [themeColors, recentSearches, handleSearchSubmit, clearRecent, removeRecent]);
+
+    const focusView = (
         <View style={styles.focusContainer}>
             {/* Search Input Bar */}
-            <View style={[styles.activeSearchBar, { backgroundColor: themeColors.surfaceContainerLowest, borderColor: themeColors.outlineVariant + '33' }]}>
+            <Animated.View 
+                sharedTransitionTag="searchBar"
+                style={[styles.activeSearchBar, { backgroundColor: themeColors.surfaceContainerLowest, borderColor: themeColors.outlineVariant + '33' }]}
+            >
                 <MaterialCommunityIcons name="magnify" size={24} color={themeColors.primary} style={styles.searchIcon} />
                 <TextInput 
-                    ref={inputRef}
                     style={[styles.searchInput, { color: themeColors.text }]}
                     placeholder="Sword Master's..."
                     placeholderTextColor={themeColors.onSurfaceVariant + '88'}
@@ -283,157 +345,121 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 <TouchableOpacity onPress={() => { setSearchQuery(''); setViewState('discovery'); }}>
                     <MaterialCommunityIcons name="close-circle" size={20} color={themeColors.onSurfaceVariant} />
                 </TouchableOpacity>
-            </View>
+            </Animated.View>
 
-            <ScrollView contentContainerStyle={styles.focusContent}>
-                {/* Recent Searches */}
-                <View style={styles.sectionHeader}>
-                    <AtelierText variant="subtitle" bold color={themeColors.primary}>Recent Searches</AtelierText>
-                    <TouchableOpacity onPress={clearRecent}>
-                        <AtelierText variant="caption" bold color={themeColors.primary}>CLEAR ALL</AtelierText>
-                    </TouchableOpacity>
-                </View>
-                <View style={[styles.recentList, { backgroundColor: themeColors.surfaceContainerLow }]}>
-                    {recentSearches.map((item, index) => (
-                        <TouchableOpacity 
-                            key={item} 
-                            style={[styles.recentItem, index < recentSearches.length - 1 && { borderBottomWidth: 1, borderBottomColor: themeColors.outlineVariant + '11' }]}
-                            onPress={() => handleSearchSubmit(item)}
-                        >
-                            <View style={styles.recentLeft}>
-                                <MaterialCommunityIcons name="history" size={20} color={themeColors.onSurfaceVariant} />
-                                <AtelierText style={styles.recentText}>{item}</AtelierText>
-                            </View>
-                            <TouchableOpacity onPress={() => removeRecent(item)}>
-                                <MaterialCommunityIcons name="close" size={18} color={themeColors.onSurfaceVariant} />
-                            </TouchableOpacity>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                {/* Suggested Tags */}
-                <AtelierText variant="subtitle" bold color={themeColors.primary} style={styles.sectionTitle}>Suggested Tags</AtelierText>
-                <View style={styles.tagGrid}>
-                    {['Overpowered MC', 'Isekai', 'Slow Burn', 'System', 'Historical Romance', 'Grimdark', 'Cultivation'].map(tag => (
-                        <TouchableOpacity key={tag} style={[styles.tagChip, { backgroundColor: themeColors.secondaryContainer }]} onPress={() => handleSearchSubmit(tag)}>
-                            <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>{tag}</AtelierText>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-
-                {/* Bento Style Recommendation */}
-                <View style={[styles.promoCard, { backgroundColor: themeColors.primary }]}>
-                    <AtelierText variant="caption" bold color={themeColors.onPrimary + '88'}>CURATED RECOMMENDATION</AtelierText>
-                    <AtelierText variant="title" color={themeColors.onPrimary} italic style={styles.promoTitle}>Discover: Shadows of the Atelier</AtelierText>
-                    <TouchableOpacity style={styles.promoButton}>
-                        <AtelierText variant="label" bold color={themeColors.primary}>Explore Series</AtelierText>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+            <Animated.View 
+                entering={FadeInDown.delay(200).duration(400)}
+                style={{ flex: 1 }}
+            >
+                {focusContent}
+            </Animated.View>
         </View>
     );
 
-    const FeedbackView = ({ type = 'empty', onRetry }: { type?: 'empty' | 'error', onRetry?: () => void }) => {
-        const recommendations = discoveryData.data?.slice(0, 3) ?? [];
-        const isError = type === 'error';
-        
-        return (
-            <ScrollView contentContainerStyle={styles.emptyViewContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.emptyStatusHeader}>
-                    <View style={styles.searchTag}>
-                        <MaterialIcons name={isError ? "error-outline" : "history"} size={14} color={isError ? themeColors.error : themeColors.onSurfaceVariant} />
-                        <AtelierText variant="caption" bold color={isError ? themeColors.error : themeColors.onSurfaceVariant}> 
-                            {isError ? "CONNECTION ERROR" : `SEARCH: "${searchQuery}"`}
+    const feedbackView = useMemo(() => {
+        const InnerFeedbackView = ({ type = 'empty', onRetry }: { type?: 'empty' | 'error', onRetry?: () => void }) => {
+            const recommendations = discoveryData.data?.slice(0, 3) ?? [];
+            const isError = type === 'error';
+            
+            return (
+                <ScrollView contentContainerStyle={styles.emptyViewContent} showsVerticalScrollIndicator={false}>
+                    <View style={styles.emptyStatusHeader}>
+                        <View style={styles.searchTag}>
+                            <MaterialIcons name={isError ? "error-outline" : "history"} size={14} color={isError ? themeColors.error : themeColors.onSurfaceVariant} />
+                            <AtelierText variant="caption" bold color={isError ? themeColors.error : themeColors.onSurfaceVariant}> 
+                                {isError ? "CONNECTION ERROR" : `SEARCH: "${searchQuery}"`}
+                            </AtelierText>
+                        </View>
+                        <AtelierText variant="headline" bold color={themeColors.primary} style={styles.emptyTitle}>
+                            {isError ? "The archive is out of reach" : "No stories found for that search"}
+                        </AtelierText>
+                        <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant} style={styles.emptySub}>
+                            {isError 
+                                ? "We couldn\'t connect to the repository. Please check your connection or try again later."
+                                : "Our curators couldn\'t find a match. Try adjusting your filters or explore our selected recommendations below."}
                         </AtelierText>
                     </View>
-                    <AtelierText variant="headline" bold color={themeColors.primary} style={styles.emptyTitle}>
-                        {isError ? "The archive is out of reach" : "No stories found for that search"}
-                    </AtelierText>
-                    <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant} style={styles.emptySub}>
-                        {isError 
-                            ? "We couldn\'t connect to the repository. Please check your connection or try again later."
-                            : "Our curators couldn\'t find a match. Try adjusting your filters or explore our selected recommendations below."}
-                    </AtelierText>
-                </View>
 
-                <View style={[styles.illustrationCard, { backgroundColor: isError ? themeColors.errorContainer + '22' : themeColors.surfaceContainerLow }]}>
-                    <View style={[styles.illustrationIcon, { backgroundColor: isError ? themeColors.errorContainer : themeColors.surfaceContainerLowest }]}>
-                        <MaterialIcons name={isError ? "cloud-off" : "auto-stories"} size={48} color={isError ? themeColors.error : themeColors.primary} />
-                    </View>
-                    <AtelierText variant="title" bold style={styles.illustrationText}>
-                        {isError ? "The ink has run dry." : "The shelves are silent."}
-                    </AtelierText>
-                    <View style={styles.emptyButtons}>
-                        {isError ? (
+                    <View style={[styles.illustrationCard, { backgroundColor: isError ? themeColors.errorContainer + '22' : themeColors.surfaceContainerLow }]}>
+                        <View style={[styles.illustrationIcon, { backgroundColor: isError ? themeColors.errorContainer : themeColors.surfaceContainerLowest }]}>
+                            <MaterialIcons name={isError ? "cloud-off" : "auto-stories"} size={48} color={isError ? themeColors.error : themeColors.primary} />
+                        </View>
+                        <AtelierText variant="title" bold style={styles.illustrationText}>
+                            {isError ? "The ink has run dry." : "The shelves are silent."}
+                        </AtelierText>
+                        <View style={styles.emptyButtons}>
+                            {isError ? (
+                                <TouchableOpacity 
+                                    style={[styles.emptyPrimaryBtn, { backgroundColor: themeColors.error }]}
+                                    onPress={onRetry}
+                                >
+                                    <AtelierText variant="label" bold color={themeColors.onError}>Try Again</AtelierText>
+                                </TouchableOpacity>
+                            ) : (
+                                <TouchableOpacity 
+                                    style={[styles.emptyPrimaryBtn, { backgroundColor: themeColors.primary }]}
+                                    onPress={() => setViewState('discovery')}
+                                >
+                                    <AtelierText variant="label" bold color={themeColors.onPrimary}>Clear Filters</AtelierText>
+                                </TouchableOpacity>
+                            )}
                             <TouchableOpacity 
-                                style={[styles.emptyPrimaryBtn, { backgroundColor: themeColors.error }]}
-                                onPress={onRetry}
-                            >
-                                <AtelierText variant="label" bold color={themeColors.onError}>Try Again</AtelierText>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity 
-                                style={[styles.emptyPrimaryBtn, { backgroundColor: themeColors.primary }]}
+                                style={[styles.emptySecondaryBtn, { borderColor: isError ? themeColors.error : themeColors.outlineVariant }]} 
                                 onPress={() => setViewState('discovery')}
                             >
-                                <AtelierText variant="label" bold color={themeColors.onPrimary}>Clear Filters</AtelierText>
+                                <AtelierText variant="label" bold color={isError ? themeColors.error : themeColors.primary}>Browse All</AtelierText>
                             </TouchableOpacity>
-                        )}
-                        <TouchableOpacity 
-                            style={[styles.emptySecondaryBtn, { borderColor: isError ? themeColors.error : themeColors.outlineVariant }]} 
-                            onPress={() => setViewState('discovery')}
-                        >
-                            <AtelierText variant="label" bold color={isError ? themeColors.error : themeColors.primary}>Browse All</AtelierText>
-                        </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
 
-                {/* Recommendations Bento */}
-                {recommendations.length > 0 && (
-                    <>
-                        <View style={styles.sectionHeader}>
-                            <View>
-                                <AtelierText variant="title" bold color={themeColors.primary}>Recommended for You</AtelierText>
-                                <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>Hand-picked by our curators for your taste.</AtelierText>
-                            </View>
-                        </View>
-
-                        <View style={styles.bentoGridResults}>
-                            <TouchableOpacity style={[styles.bentoLargeItem, { backgroundColor: themeColors.surfaceContainerHigh }]} onPress={() => navigateToBook(recommendations[0])}>
-                                <Image source={{ uri: recommendations[0]?.bookImage }} style={styles.bentoImage} />
-                                <View style={styles.bentoGradient}>
-                                    <View style={[styles.editorTag, { backgroundColor: themeColors.secondaryContainer }]}>
-                                        <AtelierText variant="caption" bold color={themeColors.onSecondaryContainer}>EDITOR\'S CHOICE</AtelierText>
-                                    </View>
-                                    <AtelierText variant="title" bold color="#fff" numberOfLines={1}>{recommendations[0]?.title}</AtelierText>
-                                    <AtelierText variant="caption" color="rgba(255,255,255,0.7)" numberOfLines={2}>Discover this hidden gem from the {selectedRepo.name} collection.</AtelierText>
+                    {/* Recommendations Bento */}
+                    {recommendations.length > 0 && (
+                        <>
+                            <View style={styles.sectionHeader}>
+                                <View>
+                                    <AtelierText variant="title" bold color={themeColors.primary}>Recommended for You</AtelierText>
+                                    <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>Hand-picked by our curators for your taste.</AtelierText>
                                 </View>
-                            </TouchableOpacity>
-
-                            <View style={styles.bentoStackResults}>
-                                {recommendations.slice(1, 3).map((rec, i) => (
-                                    <TouchableOpacity key={i} style={[styles.bentoSmallResultItem, { backgroundColor: themeColors.surfaceContainerHigh, marginTop: i === 1 ? 12 : 0 }]} onPress={() => navigateToBook(rec)}>
-                                        <Image source={{ uri: rec.bookImage }} style={styles.bentoSmallThumb} />
-                                        <View style={styles.bentoSmallInfo}>
-                                            <AtelierText variant="label" bold numberOfLines={1}>{rec.title}</AtelierText>
-                                            <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>{selectedRepo.name}</AtelierText>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
                             </View>
-                        </View>
-                    </>
-                )}
-            </ScrollView>
-        );
-    };
+
+                            <View style={styles.bentoGridResults}>
+                                <TouchableOpacity style={[styles.bentoLargeItem, { backgroundColor: themeColors.surfaceContainerHigh }]} onPress={() => navigateToBook(recommendations[0])}>
+                                    <Image source={{ uri: recommendations[0]?.bookImage }} style={styles.bentoImage} />
+                                    <View style={styles.bentoGradient}>
+                                        <View style={[styles.editorTag, { backgroundColor: themeColors.secondaryContainer }]}>
+                                            <AtelierText variant="caption" bold color={themeColors.onSecondaryContainer}>EDITOR\'S CHOICE</AtelierText>
+                                        </View>
+                                        <AtelierText variant="title" bold color="#fff" numberOfLines={1}>{recommendations[0]?.title}</AtelierText>
+                                        <AtelierText variant="caption" color="rgba(255,255,255,0.7)" numberOfLines={2}>Discover this hidden gem from the {selectedRepo.name} collection.</AtelierText>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <View style={styles.bentoStackResults}>
+                                    {recommendations.slice(1, 3).map((rec, i) => (
+                                        <TouchableOpacity key={i} style={[styles.bentoSmallResultItem, { backgroundColor: themeColors.surfaceContainerHigh, marginTop: i === 1 ? 12 : 0 }]} onPress={() => navigateToBook(rec)}>
+                                            <Image source={{ uri: rec.bookImage }} style={styles.bentoSmallThumb} />
+                                            <View style={styles.bentoSmallInfo}>
+                                                <AtelierText variant="label" bold numberOfLines={1}>{rec.title}</AtelierText>
+                                                <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>{selectedRepo.name}</AtelierText>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </View>
+                        </>
+                    )}
+                </ScrollView>
+            );
+        };
+        return InnerFeedbackView;
+    }, [discoveryData, themeColors, searchQuery, selectedRepo, setViewState]);
 
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
-            <Animated.View style={{ flex: 1 }} layout={LinearTransition.springify()}>
-                {viewState === 'discovery' && <DiscoveryView />}
-                {viewState === 'focus' && <FocusView />}
+            <View style={{ flex: 1 }}>
+                {viewState === 'discovery' && discoveryView}
+                {viewState === 'focus' && focusView}
                 {viewState === 'results' && (
                     <RepoContentLayout
                         key={selectedRepo.id}
@@ -443,8 +469,8 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         initialSearchBarVisible={false}
                         initialSearchQuery={searchQuery}
                         hideSearchBar={true}
-                        emptyComponent={<FeedbackView type="empty" />}
-                        errorComponent={({ onRetry }) => <FeedbackView type="error" onRetry={onRetry} />}
+                        emptyComponent={React.createElement(feedbackView, { type: 'empty' })}
+                        errorComponent={({ onRetry }) => React.createElement(feedbackView, { type: 'error', onRetry })}
                         topAccessory={(
                             <View style={styles.resultsHeader}>
                                 <View style={styles.resultsTitleRow}>
@@ -487,7 +513,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         )}
                     />
                 )}
-            </Animated.View>
+            </View>
         </SafeAreaView>
     );
 }
@@ -626,14 +652,14 @@ const styles = StyleSheet.create({
     },
     focusContainer: {
         flex: 1,
-        paddingTop: 8,
+        paddingTop: 24,
     },
     activeSearchBar: {
         flexDirection: 'row',
         alignItems: 'center',
         marginHorizontal: 24,
-        height: 60,
-        borderRadius: 30,
+        height: 64,
+        borderRadius: 16,
         paddingHorizontal: 20,
         borderWidth: 1,
     },
