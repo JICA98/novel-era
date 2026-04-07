@@ -1,21 +1,72 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions, Platform } from "react-native";
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Platform, Share, useColorScheme } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useColorScheme } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Snackbar, Switch, useTheme } from "react-native-paper";
+import { Button, Dialog, Portal, Snackbar, Switch, TextInput } from "react-native-paper";
 
 import { Colors } from "@/constants/Colors";
 import { AtelierText } from "@/components/AtelierText";
-import { userPrefStore, getUserPreference, ThemeOptions } from "../userpref";
-import { authStateStore } from "../lib/auth";
+import { userPrefStore, getUserPreference, ThemeOptions, UserProfilePreferences } from "../userpref";
 import { useAccountSettings, AuthDialogs } from "./accountSettings";
 import { SettingsSection, SettingsItem, StatBox } from "./components";
 import UseRepositoryLayout from "../_repos";
 import { Repo } from "@/types";
-import { chapterTrackerStore, noveFavoriteStore } from "../favorites/tracker";
+import { ChapterTracker, NovelTracker, chapterTrackerStore, noveFavoriteStore } from "../favorites/tracker";
 
-const { width } = Dimensions.get('screen');
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.jica98.novelera';
+const DEFAULT_PROFILE_TAGLINE = 'Librarian of the Nocturne Realm';
+
+function getBoundStoreContent<T>(store: any): T | undefined {
+    if (!store) {
+        return undefined;
+    }
+    if (typeof store.getState === 'function') {
+        return store.getState().content as T;
+    }
+    return store.content as T | undefined;
+}
+
+function normalizeDateKey(timestamp: number): string {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatStatNumber(value: number): string {
+    if (!Number.isFinite(value) || value <= 0) {
+        return '0';
+    }
+    if (value >= 1000) {
+        const compact = value / 1000;
+        return `${compact % 1 === 0 ? compact.toFixed(0) : compact.toFixed(1)}k`;
+    }
+    return value % 1 === 0 ? value.toFixed(0) : value.toFixed(1);
+}
+
+function calculateReadingStreak(dayKeys: string[]): number {
+    if (!dayKeys.length) {
+        return 0;
+    }
+
+    const timestamps = dayKeys
+        .map((dayKey) => new Date(`${dayKey}T00:00:00`).getTime())
+        .sort((a, b) => b - a);
+
+    let streak = 1;
+    for (let index = 1; index < timestamps.length; index += 1) {
+        const previous = timestamps[index - 1];
+        const current = timestamps[index];
+        const dayDifference = Math.round((previous - current) / (24 * 60 * 60 * 1000));
+        if (dayDifference !== 1) {
+            break;
+        }
+        streak += 1;
+    }
+
+    return streak;
+}
 
 export default function Settings() {
     const systemColorScheme = useColorScheme();
@@ -25,6 +76,9 @@ export default function Settings() {
     const userPref = userPrefStore((state: any) => state.userPref);
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
     const [snackbarText, setSnackbarText] = useState('');
+    const [showEditProfile, setShowEditProfile] = useState(false);
+    const [draftDisplayName, setDraftDisplayName] = useState('');
+    const [draftTagline, setDraftTagline] = useState('');
 
     const actions = useAccountSettings(setSnackbarText);
     const { authUser } = actions;
@@ -32,9 +86,53 @@ export default function Settings() {
     // Stats data
     const allTrackers = chapterTrackerStore((state: any) => state.content);
     const favoriteTrackers = noveFavoriteStore((state: any) => state.content);
+    const profile = userPref?.profile;
 
-    const totalRead = allTrackers instanceof Map ? allTrackers.size : Object.keys(allTrackers || {}).length;
-    const favoriteCount = favoriteTrackers instanceof Map ? favoriteTrackers.size : Object.keys(favoriteTrackers || {}).length;
+    const profileStats = useMemo(() => {
+        const chapterTrackers = allTrackers instanceof Map
+            ? Array.from(allTrackers.values())
+                .map((trackerStore) => getBoundStoreContent<ChapterTracker>(trackerStore))
+                .filter((tracker): tracker is ChapterTracker => Boolean(tracker))
+            : [];
+
+        const novelTrackers = favoriteTrackers instanceof Map
+            ? Array.from(favoriteTrackers.values())
+                .map((trackerStore) => getBoundStoreContent<NovelTracker>(trackerStore))
+                .filter((tracker): tracker is NovelTracker => Boolean(tracker))
+            : [];
+
+        const startedNovels = new Set<string>();
+        const activeDayKeys = new Set<string>();
+        let chaptersRead = 0;
+
+        for (const tracker of chapterTrackers) {
+            const hasProgress = tracker.status !== 'unread' || tracker.chapterProgress > 0;
+            if (!hasProgress) {
+                continue;
+            }
+
+            startedNovels.add(`${tracker.repo.id}:${tracker.novel.bookId}`);
+            chaptersRead += tracker.status === 'read' || tracker.chapterProgress >= 1
+                ? 1
+                : Math.max(tracker.chapterProgress, 0);
+
+            if (tracker.lastRead) {
+                activeDayKeys.add(normalizeDateKey(tracker.lastRead));
+            }
+        }
+
+        const libraryCount = novelTrackers.filter((tracker) => tracker.favorite).length;
+
+        return {
+            booksStarted: startedNovels.size,
+            chaptersRead,
+            streakDays: calculateReadingStreak(Array.from(activeDayKeys)),
+            libraryCount,
+        };
+    }, [allTrackers, favoriteTrackers]);
+
+    const resolvedDisplayName = profile?.displayName?.trim() || authUser.email?.split('@')[0] || "Elias Thorne";
+    const resolvedTagline = profile?.tagline?.trim() || DEFAULT_PROFILE_TAGLINE;
 
     useEffect(() => {
         async function fetchUserPreferences() {
@@ -43,6 +141,53 @@ export default function Settings() {
         }
         fetchUserPreferences();
     }, [setUserPref]);
+
+    function openEditProfile() {
+        setDraftDisplayName(profile?.displayName || resolvedDisplayName);
+        setDraftTagline(profile?.tagline || resolvedTagline);
+        setShowEditProfile(true);
+    }
+
+    function saveProfile() {
+        if (!userPref) {
+            setShowEditProfile(false);
+            return;
+        }
+        const nextProfile: UserProfilePreferences = {
+            displayName: draftDisplayName.trim(),
+            tagline: draftTagline.trim(),
+        };
+        setUserPref({
+            ...userPref,
+            profile: nextProfile,
+        });
+        setShowEditProfile(false);
+        setSnackbarText('Profile updated');
+    }
+
+    async function handleShareProfile() {
+        const streakSuffix = profileStats.streakDays === 1 ? 'day' : 'days';
+        const message = [
+            `Check out ${resolvedDisplayName}'s Nocturne Reader stats:`,
+            '',
+            `Books started: ${profileStats.booksStarted}`,
+            `Chapters read: ${formatStatNumber(profileStats.chaptersRead)}`,
+            `Library saved: ${profileStats.libraryCount}`,
+            `Reading streak: ${profileStats.streakDays} ${streakSuffix}`,
+            '',
+            `Read with Nocturne Reader: ${PLAY_STORE_URL}`,
+        ].join('\n');
+
+        try {
+            await Share.share({
+                message,
+                title: `${resolvedDisplayName}'s reading stats`,
+            });
+        } catch (error) {
+            console.error('Failed to share profile stats:', error);
+            setSnackbarText('Unable to open share sheet');
+        }
+    }
 
     return (
         <View style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -71,17 +216,23 @@ export default function Settings() {
                             
                             <View style={styles.profileInfo}>
                                 <AtelierText variant="headline" bold style={{ color: '#ffffff' }}>
-                                    {authUser.email?.split('@')[0] || "Elias Thorne"}
+                                    {resolvedDisplayName}
                                 </AtelierText>
                                 <AtelierText variant="body" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                                    Librarian of the Nocturne Realm
+                                    {resolvedTagline}
                                 </AtelierText>
                                 
                                 <View style={styles.profileActions}>
-                                    <TouchableOpacity style={[styles.actionButton, { backgroundColor: '#ffffff' }]}>
+                                    <TouchableOpacity
+                                        style={[styles.actionButton, { backgroundColor: '#ffffff' }]}
+                                        onPress={openEditProfile}
+                                    >
                                         <AtelierText variant="label" bold style={{ color: themeColors.primary }}>Edit Profile</AtelierText>
                                     </TouchableOpacity>
-                                    <TouchableOpacity style={[styles.actionButton, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }]}>
+                                    <TouchableOpacity
+                                        style={[styles.actionButton, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }]}
+                                        onPress={handleShareProfile}
+                                    >
                                         <AtelierText variant="label" bold style={{ color: '#ffffff' }}>Share</AtelierText>
                                     </TouchableOpacity>
                                 </View>
@@ -90,9 +241,9 @@ export default function Settings() {
 
                         {/* Bento Stats Row */}
                         <View style={styles.statsRow}>
-                            <StatBox value={`${totalRead} Books`} label="Total Read" />
-                            <StatBox value="452 hrs" label="Time Spent" />
-                            <StatBox value="15 Days" label="Streak" />
+                            <StatBox value={profileStats.booksStarted} label="Books Started" />
+                            <StatBox value={formatStatNumber(profileStats.chaptersRead)} label="Chapters Read" />
+                            <StatBox value={`${profileStats.streakDays} Days`} label="Streak" />
                         </View>
                     </LinearGradient>
                 </View>
@@ -211,6 +362,34 @@ export default function Settings() {
 
             {/* Auth Dialogs */}
             <AuthDialogs actions={actions} setSnackbarText={setSnackbarText} />
+
+            <Portal>
+                <Dialog visible={showEditProfile} onDismiss={() => setShowEditProfile(false)}>
+                    <Dialog.Title>Edit Profile</Dialog.Title>
+                    <Dialog.Content>
+                        <TextInput
+                            mode="outlined"
+                            label="Display Name"
+                            value={draftDisplayName}
+                            onChangeText={setDraftDisplayName}
+                            autoCapitalize="words"
+                            style={styles.dialogInput}
+                        />
+                        <TextInput
+                            mode="outlined"
+                            label="Tagline"
+                            value={draftTagline}
+                            onChangeText={setDraftTagline}
+                            autoCapitalize="sentences"
+                            style={styles.dialogInput}
+                        />
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={() => setShowEditProfile(false)}>Cancel</Button>
+                        <Button onPress={saveProfile}>Save</Button>
+                    </Dialog.Actions>
+                </Dialog>
+            </Portal>
 
             <Snackbar
                 visible={!!snackbarText.length}
@@ -386,6 +565,9 @@ const styles = StyleSheet.create({
     sliderFill: {
         height: '100%',
         borderRadius: 3,
+    },
+    dialogInput: {
+        marginBottom: 12,
     },
     logoutButton: {
         flexDirection: 'row',

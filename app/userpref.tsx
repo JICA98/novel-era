@@ -22,6 +22,11 @@ export interface TTSConfig {
     volume: number;
 }
 
+export interface UserProfilePreferences {
+    displayName?: string;
+    tagline?: string;
+}
+
 export const defaultTTSConfig: TTSConfig = {
     rate: 1,
     voice: 'system',
@@ -43,6 +48,7 @@ export interface UserPreferences {
     ttsConfig: TTSConfig;
     preferredRepositoryId?: string;
     defaultUniversalSearch?: boolean;
+    profile?: UserProfilePreferences;
 }
 
 export const userPrefStore = create((set, get: any) => ({
@@ -69,6 +75,15 @@ export const userPrefStore = create((set, get: any) => ({
         set({ userPref: updated });
         setUserPreference(updated).then(() => { });
     },
+    setProfile: (profile: UserProfilePreferences) => {
+        const current: UserPreferences | null = get().userPref;
+        if (!current) {
+            return;
+        }
+        const updated = { ...current, profile };
+        set({ userPref: updated });
+        setUserPreference(updated).then(() => { });
+    },
     setTTSConfig: (ttsConfig: TTSConfig) => {
         const userPref: UserPreferences = get().userPref;
         userPref.ttsConfig = ttsConfig;
@@ -84,6 +99,7 @@ export async function getUserPreference(): Promise<UserPreferences> {
         ttsConfig: userPref?.ttsConfig ?? defaultTTSConfig,
         preferredRepositoryId: userPref?.preferredRepositoryId,
         defaultUniversalSearch: userPref?.defaultUniversalSearch ?? false,
+        profile: userPref?.profile ?? {},
     };
 }
 

@@ -6,6 +6,17 @@ import { Animated, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshC
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Snackbar, useTheme, MD3Theme, FAB, IconButton } from "react-native-paper";
 import { BlurView } from "expo-blur";
+import Reanimated, { 
+    useSharedValue, 
+    useAnimatedStyle, 
+    withSpring, 
+    interpolate, 
+    Extrapolate, 
+    runOnJS,
+    FadeInDown,
+    FadeOutUp,
+    SharedValue
+} from "react-native-reanimated";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
 import { allDownloadsStore } from "../downloads/utils";
@@ -18,6 +29,7 @@ import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore
 import { errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { ChaptersLoadingView } from "./skeletons";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 400;
@@ -151,7 +163,25 @@ export default function ContentLayout() {
     }, [content, novelTracker, setNovelTracker]);
 
     const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters'>('synopsis');
+    const [isTabTransitioning, setIsTabTransitioning] = useState(false);
     const [selectedVolumeIndex, setSelectedVolumeIndex] = useState(0);
+    const tabProgress = useSharedValue(0);
+
+    const handleTabChange = (tab: 'synopsis' | 'chapters') => {
+        if (tab === activeTab) return;
+        
+        tabProgress.value = withSpring(tab === 'chapters' ? 1 : 0, { damping: 20, stiffness: 90 });
+        
+        if (tab === 'chapters') {
+            setIsTabTransitioning(true);
+            setActiveTab(tab);
+            setTimeout(() => {
+                setIsTabTransitioning(false);
+            }, 600);
+        } else {
+            setActiveTab(tab);
+        }
+    };
 
     const volumes = useMemo(() => {
         if (!content?.latestChapter) return [];
@@ -198,18 +228,18 @@ export default function ContentLayout() {
                 refreshControl={<RefreshControl refreshing={false} onRefresh={() => handleContentFetch()} />}
             >
                 {/* Hero Section */}
-                <NovelHero content={content!} activeTab={activeTab} />
+                <NovelHero content={content!} tabProgress={tabProgress} />
 
                 {/* Tab Navigation */}
                 <View style={styles.tabNav}>
                     <TouchableOpacity
-                        onPress={() => setActiveTab('synopsis')}
+                        onPress={() => handleTabChange('synopsis')}
                         style={[styles.tabButton, activeTab === 'synopsis' && [styles.activeTabButton, { borderBottomColor: theme.colors.primary }]]}
                     >
                         <Text style={[styles.tabButtonText, { color: theme.colors.onSurfaceVariant }, activeTab === 'synopsis' && [styles.activeTabButtonText, { color: theme.colors.primary }]]}>SYNOPSIS</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        onPress={() => setActiveTab('chapters')}
+                        onPress={() => handleTabChange('chapters')}
                         style={[styles.tabButton, activeTab === 'chapters' && [styles.activeTabButton, { borderBottomColor: theme.colors.primary }]]}
                     >
                         <Text style={[styles.tabButtonText, { color: theme.colors.onSurfaceVariant }, activeTab === 'chapters' && [styles.activeTabButtonText, { color: theme.colors.primary }]]}>CHAPTERS</Text>
@@ -217,15 +247,25 @@ export default function ContentLayout() {
                 </View>
 
                 {activeTab === 'synopsis' ? (
-                    <SynopsisTab content={content!} />
+                    <Reanimated.View key="synopsis" entering={FadeInDown.duration(400)} exiting={FadeOutUp.duration(400)}>
+                        <SynopsisTab content={content!} />
+                    </Reanimated.View>
                 ) : (
-                    <ChaptersTab
-                        repo={repo}
-                        content={content!}
-                        volumes={volumes}
-                        selectedIndex={selectedVolumeIndex}
-                        onVolumePress={setSelectedVolumeIndex}
-                    />
+                    isTabTransitioning ? (
+                        <Reanimated.View key="loading" entering={FadeInDown.duration(400)} exiting={FadeOutUp.duration(400)}>
+                            <ChaptersLoadingView />
+                        </Reanimated.View>
+                    ) : (
+                        <Reanimated.View key="chapters" entering={FadeInDown.duration(400)}>
+                            <ChaptersTab
+                                repo={repo}
+                                content={content!}
+                                volumes={volumes}
+                                selectedIndex={selectedVolumeIndex}
+                                onVolumePress={setSelectedVolumeIndex}
+                            />
+                        </Reanimated.View>
+                    )
                 )}
             </Animated.ScrollView>
 
@@ -323,68 +363,108 @@ const Header = ({ scrollY, title, onExport }: { scrollY: Animated.Value, title: 
     );
 };
 
-const NovelHero = ({ content, activeTab }: { content: Content, activeTab: string }) => {
+const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: SharedValue<number> }) => {
     const theme = useTheme();
-    if (activeTab === 'chapters') {
-        return (
-            <View style={styles.chapterHero}>
-                <Image source={{ uri: content.bookImage }} style={styles.chapterHeroBackground} blurRadius={10} />
-                <LinearGradient colors={['transparent', theme.colors.surface]} style={styles.heroGradient} />
-                <View style={styles.chapterHeroContent}>
-                    <View style={styles.heroCoverShadow}>
-                        <View style={styles.heroCoverContainer}>
-                            <Image
-                                source={{ uri: content.bookImage }}
-                                style={styles.heroCover}
-                                resizeMode="cover"
-                            />
-                        </View>
-                    </View>
-                    <View style={styles.heroDetails}>
-                        <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>DARK FANTASY • ONGOING</Text>
-                        <Text style={[styles.heroTitle, { color: theme.colors.primary }]}>{content.title}</Text>
-                        <View style={styles.heroAuthorRow}>
-                            <View style={[styles.authorAvatar, { backgroundColor: theme.colors.secondaryContainer }]} />
-                            <Text style={[styles.heroAuthor, { color: theme.colors.onSurfaceVariant }]}>{content.author || 'Unknown Author'}</Text>
-                        </View>
-                    </View>
-                </View>
-            </View>
-        );
-    }
+
+    const heroStyle = useAnimatedStyle(() => {
+        const height = interpolate(tabProgress.value, [0, 1], [400, 380]);
+        return { height };
+    });
+
+    const coverStyle = useAnimatedStyle(() => {
+        const scale = interpolate(tabProgress.value, [0, 1], [0.8, 1]);
+        const translateX = interpolate(tabProgress.value, [0, 1], [0, 0]);
+        const translateY = interpolate(tabProgress.value, [0, 1], [0, 0]);
+        const borderRadius = interpolate(tabProgress.value, [0, 1], [16, 16]);
+        const widthVal = interpolate(tabProgress.value, [0, 1], [width * 0.5, 120]);
+        return {
+            transform: [{ scale }, { translateX }, { translateY }],
+            borderRadius,
+            width: widthVal,
+            height: interpolate(tabProgress.value, [0, 1], [(width * 0.5) * 1.5, 180]),
+        };
+    });
+
+    const detailsStyle = useAnimatedStyle(() => {
+        const translateX = interpolate(tabProgress.value, [0, 1], [0, 20]);
+        const translateY = interpolate(tabProgress.value, [0, 1], [0, -10]);
+        return {
+            transform: [{ translateX }, { translateY }],
+            marginLeft: interpolate(tabProgress.value, [0, 1], [0, 0]),
+            marginTop: interpolate(tabProgress.value, [0, 1], [0, 12]),
+        };
+    });
+
+    const backgroundOpacity = useAnimatedStyle(() => ({
+        opacity: interpolate(tabProgress.value, [0, 1], [0, 0.4]),
+    }));
+
+    const statsOpacity = useAnimatedStyle(() => ({
+        opacity: interpolate(tabProgress.value, [0.5, 1], [1, 0]),
+        transform: [{ translateY: interpolate(tabProgress.value, [0, 1], [0, 20]) }],
+    }));
+
+    const authorRowOpacity = useAnimatedStyle(() => ({
+        opacity: interpolate(tabProgress.value, [0, 0.5], [0, 1]),
+        transform: [{ translateY: interpolate(tabProgress.value, [0, 1], [10, 0]) }],
+    }));
+
+    const titleStyle = useAnimatedStyle(() => ({
+        fontSize: interpolate(tabProgress.value, [0, 1], [32, 28]),
+    }));
 
     return (
-        <View style={styles.synopsisHero}>
-            <View style={[styles.glow, { backgroundColor: theme.colors.secondaryContainer }]} />
-            <View style={styles.synopsisHeroRow}>
-                <View style={styles.heroCoverContainerSmall}>
-                    <Image source={{ uri: content.bookImage }} style={styles.heroCover} resizeMode="cover" />
-                </View>
-                <View style={styles.synopsisHeroDetails}>
-                    <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>ONGOING SERIES</Text>
-                    <Text style={[styles.heroTitle, { fontSize: 32, color: theme.colors.primary }]}>{content.title}</Text>
-                    <Text style={[styles.heroAuthorSub, { color: theme.colors.onSurfaceVariant }]}>{content.author || 'Unknown Author'} • 1.2M Words</Text>
-                </View>
-            </View>
+        <Reanimated.View style={[styles.heroContainer, heroStyle]}>
+            <Reanimated.Image source={{ uri: content.bookImage }} style={[styles.chapterHeroBackground, backgroundOpacity]} blurRadius={10} />
+            <LinearGradient colors={['transparent', theme.colors.surface]} style={styles.heroGradient} />
 
-            <View style={styles.statsRow}>
-                <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
-                    <MaterialCommunityIcons name="star" size={20} color={theme.colors.primary} />
-                    <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>4.9</Text>
-                    <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>RATING</Text>
-                </View>
-                <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
-                    <MaterialCommunityIcons name="eye" size={20} color={theme.colors.primary} />
-                    <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>240K</Text>
-                    <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>VIEWS</Text>
-                </View>
-                <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
-                    <MaterialCommunityIcons name="bookmark" size={20} color={theme.colors.primary} />
-                    <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>15K</Text>
-                    <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>FOLLOWS</Text>
-                </View>
+            <Reanimated.View style={[styles.glow, { backgroundColor: theme.colors.secondaryContainer }, statsOpacity]} />
+
+            <View style={styles.heroFlexLayer}>
+                <Reanimated.View style={[styles.heroMainRow, { flexDirection: 'row', alignItems: 'flex-end' }]}>
+                    <Reanimated.View style={[styles.heroCoverShadow, coverStyle]}>
+                        <View style={styles.heroCoverContainer}>
+                            <Image source={{ uri: content.bookImage }} style={styles.heroCover} resizeMode="cover" />
+                        </View>
+                    </Reanimated.View>
+
+                    <Reanimated.View style={[styles.heroDynamicDetails, detailsStyle]}>
+                        <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>ONGOING • DARK FANTASY</Text>
+                        <Reanimated.Text style={[styles.heroTitle, { color: theme.colors.primary }, titleStyle]}>{content.title}</Reanimated.Text>
+
+                        {/* Author row only visible in Chapters mode (Compact) */}
+                        <Reanimated.View style={[styles.heroAuthorRow, authorRowOpacity]}>
+                            <View style={[styles.authorAvatar, { backgroundColor: theme.colors.secondaryContainer }]} />
+                            <Text style={[styles.heroAuthor, { color: theme.colors.onSurfaceVariant }]}>{content.author || 'Unknown Author'}</Text>
+                        </Reanimated.View>
+
+                        {/* Sub author only visible in Synopsis mode (Expanded) */}
+                        <Reanimated.Text style={[styles.heroAuthorSub, { color: theme.colors.onSurfaceVariant }, statsOpacity]}>
+                            {content.author || 'Unknown Author'} • 1.2M Words
+                        </Reanimated.Text>
+                    </Reanimated.View>
+                </Reanimated.View>
+
+                {/* Stats Row only visible in Synopsis mode */}
+                <Reanimated.View style={[styles.statsRow, statsOpacity]}>
+                    <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
+                        <MaterialCommunityIcons name="star" size={20} color={theme.colors.primary} />
+                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>4.9</Text>
+                        <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>RATING</Text>
+                    </View>
+                    <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
+                        <MaterialCommunityIcons name="eye" size={20} color={theme.colors.primary} />
+                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>240K</Text>
+                        <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>VIEWS</Text>
+                    </View>
+                    <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
+                        <MaterialCommunityIcons name="bookmark" size={20} color={theme.colors.primary} />
+                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>15K</Text>
+                        <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>FOLLOWS</Text>
+                    </View>
+                </Reanimated.View>
             </View>
-        </View>
+        </Reanimated.View>
     );
 };
 
@@ -565,6 +645,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
     },
     // Hero Styles
+    heroContainer: {
+        width: '100%',
+        overflow: 'hidden',
+    },
+    heroFlexLayer: {
+        flex: 1,
+        padding: 24,
+        paddingTop: 120, // Space for fixed header
+        justifyContent: 'flex-end',
+    },
+    heroMainRow: {
+        width: '100%',
+    },
+    heroDynamicDetails: {
+        flex: 1,
+    },
     chapterHero: {
         height: 380,
         justifyContent: 'flex-end',
