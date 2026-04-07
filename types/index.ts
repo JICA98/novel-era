@@ -56,6 +56,7 @@ export interface ListSelector extends Selector {
     title: Selector;
     bookLink: Selector;
     bookId: Selector;
+    rating?: Selector;
 }
 
 export interface Selector {
@@ -157,4 +158,24 @@ export function processData(data: any, selector: Selector): string {
     }
 
     return typeof result === 'string' ? result : String(result ?? '');
+}
+
+/**
+ * Normalizes a URL by ensuring it has a protocol and is absolute if a base URL is provided.
+ * Supports:
+ * - //example.com -> https://example.com
+ * - /path/to/img -> https://base.com/path/to/img
+ */
+export function normalizeUrl(url?: string, baseUrl?: string): string {
+    if (!url || url.trim().length === 0) return '';
+    let res = url.trim();
+    if (res.startsWith('//')) {
+        res = 'https:' + res;
+    } else if (res.startsWith('/')) {
+        if (baseUrl) {
+            const base = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+            res = base + (res.startsWith('/') ? '' : '/') + res;
+        }
+    }
+    return res;
 }

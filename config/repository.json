@@ -12,10 +12,9 @@
             },
             "repoIcon": "https://novelfire.net/logo.svg?v=2",
             "repoSearch": {
-                "type": "http",
+                "type": "text",
                 "method": "GET",
-                "path": "/ajax/searchLive?inputContent=[text]",
-                "jsonPath": "$.html",
+                "path": "/search?title=[text]",
                 "selector": ".novel-list .novel-item",
                 "page": "search",
                 "bookId": {
@@ -90,6 +89,11 @@
                     "selector": "a",
                     "attribute": "href",
                     "regex": "book/(.*)"
+                },
+                "rating": {
+                    "type": "attribute",
+                    "selector": ".novel-stats .info-rating",
+                    "attribute": "data-rating"
                 },
                 "bookLink": {
                     "type": "text",

@@ -1,14 +1,13 @@
 import { Repo, ReposData } from "@/types";
 import React, { useEffect } from "react";
 import { View } from "react-native";
-import { ActivityIndicator, Button, Title } from "react-native-paper";
+import { ActivityIndicator } from "react-native-paper";
 import { create } from "zustand";
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { StyleSheet } from 'react-native';
 import { errorPlaceholder } from "./placeholders";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const repoLink = 'https://raw.githubusercontent.com/JICA98/novel-era/refs/heads/psycho/config/repository.json';
+import repositoryData from "@/config/repository.json";
 
 interface FetchData<T> {
     data?: T;
@@ -19,18 +18,19 @@ interface FetchData<T> {
 export const asyncStorage = () => createJSONStorage(() => AsyncStorage);
 
 const useRepositoryStore = create(persist(
-    (set) => ({
+    (set, get) => ({
         repositories: { isLoading: true } as FetchData<ReposData>,
         fetchData: () => {
+            const current = (get() as any).repositories;
+            // If data is already loaded from persistence, don't reset to loading
+            if (current.data && !current.isLoading) {
+                return;
+            }
             set({ repositories: { isLoading: true } });
-            fetch(repoLink)
-                .then(response => response.json())
-                .then(data => {
-                    set({ repositories: { data, isLoading: false } });
-                })
-                .catch(error => {
-                    set({ repositories: { error, isLoading: false } });
-                });
+            // Use local repository data instead of fetching from GitHub
+            setTimeout(() => {
+                set({ repositories: { data: repositoryData, isLoading: false } });
+            }, 100); // Simulate async loading
         }
     }),
     {

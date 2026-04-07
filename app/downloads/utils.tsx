@@ -144,3 +144,4 @@ export async function moveToAlbum(fileName: string, mimeType: string): Promise<s
         throw e;
     }
 }
+export default function() { return null; }

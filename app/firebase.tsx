@@ -52,3 +52,5 @@ if (Platform.OS === "web") {
 }
 
 export { app, analytics, auth, db, firebaseConfig };
+
+export default function() { return null; }

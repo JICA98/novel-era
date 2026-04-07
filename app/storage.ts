@@ -69,6 +69,13 @@ export async function httpGet<T>(
     options: HttpGetOptions<T> = {}): Promise<T> {
     let { init, cached, cachedKey, onCache, onResponse } = options;
     cachedKey = cachedKey ?? input.toString();
+
+    const defaultHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+    };
+
     if (cached) {
         const cachedData = await getCachedValue<T>(cachedKey);
         if (cachedData && (!onCache || onCache(cachedData))) {
@@ -76,9 +83,17 @@ export async function httpGet<T>(
             return cachedData;
         }
     }
+
     try {
         console.log('API ->', input);
-        const response = await fetch(input, init);
+        const fetchInit: RequestInit = {
+            ...init,
+            headers: {
+                ...defaultHeaders,
+                ...init?.headers,
+            }
+        };
+        const response = await fetch(input, fetchInit);
         if (!onResponse) {
             if (options.text) {
                 return await response.text() as T;

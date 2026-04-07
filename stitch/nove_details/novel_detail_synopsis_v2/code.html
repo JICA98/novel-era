@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Digital Curator - Novel Detail</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;0,900;1,900&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#f0edf0",
+                    "surface-tint": "#575c7f",
+                    "surface-variant": "#e5e1e4",
+                    "on-primary-fixed-variant": "#404566",
+                    "on-tertiary-fixed-variant": "#6a3b0e",
+                    "tertiary-fixed": "#ffdcc3",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f6f3f6",
+                    "tertiary-container": "#532900",
+                    "background": "#fcf8fb",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#c7c5ce",
+                    "primary": "#171c3c",
+                    "tertiary": "#341800",
+                    "on-primary-container": "#959ac1",
+                    "primary-fixed-dim": "#c0c4ed",
+                    "on-secondary-fixed": "#11183d",
+                    "on-tertiary-fixed-variant": "#6a3b0e",
+                    "on-tertiary-container": "#ce8f5b",
+                    "on-surface": "#1b1b1e",
+                    "outline": "#77767e",
+                    "on-surface-variant": "#46464d",
+                    "on-secondary-fixed-variant": "#3d446b",
+                    "inverse-on-surface": "#f3f0f3",
+                    "primary-fixed": "#dee0ff",
+                    "surface-bright": "#fcf8fb",
+                    "primary-container": "#2d3252",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e5e1e4",
+                    "secondary-fixed-dim": "#bdc4f2",
+                    "on-tertiary-fixed": "#2f1500",
+                    "inverse-primary": "#c0c4ed",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#eae7ea",
+                    "on-secondary": "#ffffff",
+                    "on-background": "#1b1b1e",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#dee1ff",
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#c8cffe",
+                    "secondary": "#555c84",
+                    "surface-container-lowest": "#ffffff",
+                    "surface": "#fcf8fb",
+                    "on-primary-fixed": "#141938",
+                    "inverse-surface": "#303032",
+                    "tertiary-fixed-dim": "#feb880",
+                    "on-secondary-container": "#50577f",
+                    "surface-dim": "#dcd9dc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Noto Serif"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-shadow {
+            box-shadow: 0px 12px 32px rgba(27, 27, 30, 0.08);
+        }
+        .glass-header {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-secondary-container">
+<!-- Top Navigation Anchor -->
+<nav class="fixed top-0 w-full z-50 bg-slate-50/70 backdrop-blur-xl flex items-center justify-between px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="text-[#171c3c] hover:opacity-80 transition-opacity scale-95 active:duration-100 flex items-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<span class="font-['Noto_Serif'] text-xl font-bold tracking-tight text-[#171c3c]">Digital Curator</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-[#171c3c] hover:opacity-80 transition-opacity scale-95 active:duration-100">
+<span class="material-symbols-outlined" data-icon="bookmark_add">bookmark_add</span>
+</button>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="pt-20 pb-32 max-w-5xl mx-auto px-4 md:px-8">
+<!-- Hero Section: Cover & Key Info -->
+<section class="relative mb-12 flex flex-col md:flex-row gap-8 items-end">
+<!-- Cover Art Image (Overlap Layout) -->
+<div class="relative w-full md:w-72 aspect-[2/3] shrink-0 rounded-xl overflow-hidden editorial-shadow group">
+<img class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" data-alt="Stunning cinematic light novel cover art featuring a mysterious gothic library with ethereal blue lighting and dust motes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3k2ZFATWxAcy_xVtySpcd3Mn36v5LyWNaATxWYEBbO7PZ6ifrUpdnMx9CFKThRF4DPRo8cP7PIfDYYw17e87QYdoSpQlVbnfX7ac4l6E_4lXJpzTq8t3qPdHjHic2bLS9GOCQDtlPhTZb6NMqg5cCnkHds4EWEbFOYxjmNUk2Ly7tJr-gBJkX1Q-NP_DyCYriojb579wk9g9MXHxzLDDH0haTjin04VyYV6DWeKhAxnI168dRUuERilheZnNWktixRHofm9cJNUQS"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent"></div>
+</div>
+<!-- Title & Stats -->
+<div class="flex-grow pb-2 space-y-6">
+<div class="space-y-2">
+<h1 class="font-headline text-4xl md:text-5xl font-black text-primary leading-tight tracking-tight">The Midnight Archive</h1>
+<p class="font-body text-on-surface-variant font-medium tracking-wide">by Seraphina Thorne</p>
+</div>
+<!-- Stats Bento Row -->
+<div class="flex flex-wrap gap-4 items-center">
+<div class="bg-surface-container-low px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-bold text-sm">4.9</span>
+<span class="text-xs text-on-surface-variant">(1.2k)</span>
+</div>
+<div class="bg-surface-container-low px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">visibility</span>
+<span class="font-bold text-sm">840k</span>
+</div>
+<div class="bg-surface-container-low px-4 py-2 rounded-full flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">menu_book</span>
+<span class="font-bold text-sm">128 Chapters</span>
+</div>
+</div>
+<!-- CTA Button -->
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 rounded-full font-bold text-sm tracking-widest uppercase editorial-shadow hover:opacity-90 transition-all flex items-center gap-3 active:scale-95">
+                    Continue Reading
+                    <span class="material-symbols-outlined">auto_stories</span>
+</button>
+</div>
+</section>
+<!-- Tab Selector (No-Line Structural Shift) -->
+<div class="sticky top-[72px] z-40 bg-background/80 glass-header py-4 -mx-4 px-4 flex gap-8 items-center mb-8">
+<button class="relative group">
+<span class="font-label font-bold text-sm tracking-widest uppercase text-primary">Synopsis</span>
+<div class="absolute -bottom-2 left-0 w-full h-1 bg-primary rounded-full"></div>
+</button>
+<button class="relative group">
+<span class="font-label font-bold text-sm tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors">Chapters</span>
+</button>
+</div>
+<!-- Content Grid: Asymmetric Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+<!-- Main Content Area -->
+<div class="md:col-span-8 space-y-12">
+<!-- Genre Chips -->
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase">Mystery</span>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase">Dark Fantasy</span>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase">Slow Burn</span>
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-lg text-xs font-bold tracking-wider uppercase">LitRPG</span>
+</div>
+<!-- About Section -->
+<div class="space-y-6">
+<h3 class="font-headline text-2xl font-bold text-primary italic">About the Story</h3>
+<div class="font-body text-on-surface-variant leading-relaxed space-y-4 text-lg">
+<p>In the heart of the capital, there exists a library that only opens when the clock strikes thirteen. Elias, a disgraced curator, discovers a series of books written in the future. As he reads his own death in the ink of tomorrow, he must navigate a web of celestial politics and ancient pacts to rewrite the ending of his own tale.</p>
+<p>The Midnight Archive is a cerebral journey through memory and fate, blending traditional gothic aesthetics with a high-stakes progression system that redefines the genre.</p>
+</div>
+</div>
+<!-- Author's Note (Surface Tier Shift) -->
+<div class="bg-surface-container-low p-8 rounded-xl relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-sm">history_edu</span>
+</div>
+<h4 class="font-label font-bold uppercase tracking-widest text-xs text-primary">Note from Author</h4>
+</div>
+<p class="font-body italic text-on-surface-variant">"Thank you for embarking on this journey with me. This story has been five years in the making, and Elias is a piece of my own soul. I update every Wednesday and Saturday. Happy reading, curating the shadows."</p>
+</div>
+</div>
+<!-- Sidebar Info -->
+<aside class="md:col-span-4 space-y-8">
+<div class="bg-surface-container-high p-6 rounded-xl space-y-6">
+<h5 class="font-label font-extrabold text-[10px] uppercase tracking-widest text-on-surface-variant">Information</h5>
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<span class="text-xs text-on-surface-variant font-medium">Status</span>
+<span class="text-xs font-bold text-primary uppercase tracking-tighter">Ongoing</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-on-surface-variant font-medium">Type</span>
+<span class="text-xs font-bold text-primary uppercase tracking-tighter">Original</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-on-surface-variant font-medium">Language</span>
+<span class="text-xs font-bold text-primary uppercase tracking-tighter">English</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-xs text-on-surface-variant font-medium">Word Count</span>
+<span class="text-xs font-bold text-primary uppercase tracking-tighter">182,430</span>
+</div>
+</div>
+</div>
+<!-- Subtle Decorative Divider (Tonal Shift) -->
+<div class="h-[1px] bg-outline-variant/20"></div>
+<div class="space-y-4">
+<h5 class="font-label font-extrabold text-[10px] uppercase tracking-widest text-on-surface-variant">Recent Activity</h5>
+<div class="flex items-start gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-xs text-primary">update</span>
+</div>
+<div>
+<p class="text-xs font-bold">Chapter 128: The Void's Echo</p>
+<p class="text-[10px] text-on-surface-variant">Uploaded 4 hours ago</p>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full h-20 bg-slate-50/70 backdrop-blur-xl flex justify-around items-center px-4 pb-safe z-50 rounded-t-[1.5rem] shadow-[0px_-12px_32px_rgba(27,27,30,0.08)]">
+<!-- Library -->
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-[#171c3c] transition-colors scale-90 active:duration-150">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span class="font-['Manrope'] text-[10px] uppercase tracking-widest font-bold">Library</span>
+</button>
+<!-- Discover -->
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-[#171c3c] transition-colors scale-90 active:duration-150">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-['Manrope'] text-[10px] uppercase tracking-widest font-bold">Discover</span>
+</button>
+<!-- Shelf (Active Contextual Match for Library/Reading flow) -->
+<button class="flex flex-col items-center gap-1 text-[#171c3c] bg-[#dee1ff]/30 rounded-full px-5 py-2 scale-90 active:duration-150">
+<span class="material-symbols-outlined" data-icon="collections_bookmark" style="font-variation-settings: 'FILL' 1;">collections_bookmark</span>
+<span class="font-['Manrope'] text-[10px] uppercase tracking-widest font-bold">Shelf</span>
+</button>
+<!-- Profile -->
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-[#171c3c] transition-colors scale-90 active:duration-150">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-['Manrope'] text-[10px] uppercase tracking-widest font-bold">Profile</span>
+</button>
+</nav>
+</body></html>

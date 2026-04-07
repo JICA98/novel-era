@@ -2,7 +2,7 @@ import { ActivityIndicator, Appbar, useTheme } from "react-native-paper";
 import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Content, FetchData, processData, Repo, SelectorType } from "@/types";
+import { Content, FetchData, normalizeUrl, processData, Repo, SelectorType } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import IDOMParser from "advanced-html-parser";
@@ -13,7 +13,7 @@ import BookItem from "./bookItem";
 import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 
-async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
+export async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
     try {
         const selector = searchQuery ? repo.repoSearch : repo.listSelector;
         if (!selector) {
@@ -40,14 +40,17 @@ async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; sea
 
                 return Array.from(list).map((item) => {
                     const title = processData(item, selector.title);
-                    const bookImage = processData(item, selector.bookImage);
+                    let bookImage = processData(item, selector.bookImage);
+                    if (!bookImage && selector.bookImage.attribute !== 'src') {
+                        bookImage = processData(item, { ...selector.bookImage, attribute: 'src' });
+                    }
                     const bookLink = processData(item, selector.bookLink);
                     const bookId = processData(item, selector.bookId);
                     let rating = undefined;
                     if ('rating' in selector) {
                         rating = processData(item, selector.rating);
                     }
-                    console.log({ title, bookImage, bookLink, bookId, rating });
+                    bookImage = normalizeUrl(bookImage, repo.repoUrl);
                     return { title, bookImage, bookLink, bookId, rating };
                 });
             }
@@ -65,6 +68,10 @@ interface RepoContentLayoutProps {
     enableSearchToggle?: boolean;
     initialSearchBarVisible?: boolean;
     topAccessory?: ReactNode;
+    initialSearchQuery?: string;
+    emptyComponent?: React.ReactElement;
+    errorComponent?: (props: { onRetry: () => void }) => React.ReactElement;
+    hideSearchBar?: boolean;
 }
 
 export function RepoContentLayout({
@@ -74,6 +81,10 @@ export function RepoContentLayout({
     enableSearchToggle = true,
     initialSearchBarVisible = false,
     topAccessory,
+    initialSearchQuery,
+    emptyComponent,
+    errorComponent,
+    hideSearchBar = false,
 }: RepoContentLayoutProps) {
     const theme = useTheme();
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
@@ -95,8 +106,13 @@ export function RepoContentLayout({
     );
 
     useEffect(() => {
-        fetchContent({ cached: true });
-    }, [fetchContent]);
+        if (initialSearchQuery) {
+            setSearchQuery(initialSearchQuery);
+            fetchContent({ cached: false, searchQuery: initialSearchQuery });
+        } else {
+            fetchContent({ cached: true });
+        }
+    }, [fetchContent, initialSearchQuery]);
 
     const hasDataLoaded = !!content.data && !content.isLoading;
 
@@ -110,6 +126,9 @@ export function RepoContentLayout({
         }
 
         if (content.error) {
+            if (errorComponent) {
+                return errorComponent({ onRetry: () => fetchContent({ cached: false }) });
+            }
             return errorPlaceholder({ onRetry: () => fetchContent({ cached: false }) });
         }
 
@@ -120,7 +139,7 @@ export function RepoContentLayout({
                 keyExtractor={(_, index) => index.toString()}
                 contentContainerStyle={styles.grid}
                 style={{ flex: 1 }}
-                ListEmptyComponent={emptyPlaceholder('No content found')}
+                ListEmptyComponent={emptyComponent || emptyPlaceholder('No content found')}
                 ListFooterComponent={<View style={{ height: 120 }} />}
                 ListHeaderComponent={<View style={{ height: 20 }} />}
                 refreshControl={
@@ -168,7 +187,7 @@ export function RepoContentLayout({
                 <View style={styles.accessoryContainer}>{topAccessory}</View>
             )}
 
-            {(searchBarVisible || (!enableSearchToggle && !content.isLoading)) && (
+            {!hideSearchBar && (searchBarVisible || (!enableSearchToggle && !content.isLoading)) && (
                 <View style={styles.searchBar}>
                     <Searchbar
                         placeholder="Search"

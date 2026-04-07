@@ -19,3 +19,7 @@ android/
 
 expo-env.d.ts
 # @end expo-cli
+
+mcp_audit.db
+mcp_security.log
+.junie

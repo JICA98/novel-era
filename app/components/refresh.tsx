@@ -33,3 +33,4 @@ export const Refresh = () => {
       justifyContent: 'center',
     },
   });
+export default function() { return null; }

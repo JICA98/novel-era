@@ -163,6 +163,82 @@ export async function getFavoriteTrackersAsync() {
     return await getDataByKeyPrefix<NovelTracker>('favoritev1-');
 }
 
+export interface NovelReadingStatus {
+    status: 'Reading' | 'Completed' | 'Dropped' | 'Plan to Read';
+    progress: number;
+    lastChapterRead?: string;
+    lastReadTimestamp?: number;
+    totalChaptersTracked: number;
+}
+
+export async function getNovelReadingStatus(
+    novelTracker: NovelTracker,
+    allChapterTrackers?: Record<string, ChapterTracker>
+): Promise<NovelReadingStatus> {
+    const { repo, novel, favorite } = novelTracker;
+
+    if (!favorite) {
+        return { status: 'Dropped', progress: 0, totalChaptersTracked: 0 };
+    }
+
+    // Load chapter trackers for this novel
+    let chapterTrackers: ChapterTracker[] = [];
+    if (allChapterTrackers) {
+        const prefix = `trackerv1-${repo.id}-${novel.bookId}-`;
+        chapterTrackers = Object.entries(allChapterTrackers)
+            .filter(([key]) => key.startsWith(prefix))
+            .map(([, tracker]) => tracker);
+    } else {
+        chapterTrackers = await getChaptersForNovel(repo.id, novel.bookId);
+    }
+
+    if (chapterTrackers.length === 0) {
+        return { status: 'Plan to Read', progress: 0, totalChaptersTracked: 0 };
+    }
+
+    // Aggregate status
+    const hasReading = chapterTrackers.some(c => c.status === 'reading');
+    const allRead = chapterTrackers.every(c => c.status === 'read');
+
+    // Calculate overall progress: (completed chapters + partial progress of current chapter) / total chapters
+    const completedChapters = chapterTrackers.filter(c => c.chapterProgress >= 1 || c.status === 'read').length;
+    const readingChapter = chapterTrackers.find(c => c.chapterProgress > 0 && c.chapterProgress < 1);
+    const partialProgress = readingChapter ? readingChapter.chapterProgress : 0;
+
+    // Use the novel's latestChapter if available, otherwise fall back to tracked chapters count
+    const totalChapters = novel.latestChapter || chapterTrackers.length;
+    const overallProgress = totalChapters > 0 ? (completedChapters + partialProgress) / totalChapters : 0;
+
+    // Find the last read chapter (most recent lastRead timestamp)
+    const lastReadChapter = chapterTrackers.reduce((latest, current) =>
+        current.lastRead > latest.lastRead ? current : latest
+    , chapterTrackers[0]);
+
+    // Determine status based on overall progress against total chapters
+    let status: NovelReadingStatus['status'];
+    if (completedChapters >= totalChapters) {
+        status = 'Completed';
+    } else if (hasReading || completedChapters > 0) {
+        status = 'Reading';
+    } else {
+        status = 'Plan to Read';
+    }
+
+    return {
+        status,
+        progress: overallProgress,
+        lastChapterRead: lastReadChapter.chapterId,
+        lastReadTimestamp: lastReadChapter.lastRead,
+        totalChaptersTracked: chapterTrackers.length,
+    };
+}
+
+export async function getChaptersForNovel(repoId: string, novelId: string): Promise<ChapterTracker[]> {
+    const prefix = `trackerv1-${repoId}-${novelId}-`;
+    const allData = await getDataByKeyPrefix<ChapterTracker>(prefix);
+    return Object.values(allData);
+}
+
 export async function saveTracker(tracker: ChapterTracker) {
     const key = trackerKey(tracker.repo.id, tracker.novel.bookId, tracker.chapterId);
     await storeData(key, tracker);
@@ -172,3 +248,4 @@ export async function saveNovelTracker(tracker: NovelTracker) {
     const key = novelKey(tracker.repo.id, tracker.novel.bookId);
     await storeData(key, tracker);
 }
+export default function() { return null; }

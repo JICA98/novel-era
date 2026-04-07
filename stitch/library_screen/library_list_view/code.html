@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Atelier - Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@700;900&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-variant": "#e5e1e4",
+                  "background": "#fcf8fb",
+                  "tertiary-fixed-dim": "#feb880",
+                  "surface": "#fcf8fb",
+                  "on-tertiary-fixed": "#2f1500",
+                  "primary-fixed-dim": "#c0c4ed",
+                  "tertiary": "#341800",
+                  "surface-container-lowest": "#ffffff",
+                  "on-secondary": "#ffffff",
+                  "on-tertiary": "#ffffff",
+                  "on-error": "#ffffff",
+                  "inverse-on-surface": "#f3f0f3",
+                  "error": "#ba1a1a",
+                  "on-secondary-fixed": "#11183d",
+                  "on-primary-fixed": "#141938",
+                  "on-primary": "#ffffff",
+                  "on-tertiary-fixed-variant": "#6a3b0e",
+                  "on-tertiary-container": "#ce8f5b",
+                  "inverse-surface": "#303032",
+                  "surface-container-highest": "#e5e1e4",
+                  "on-primary-fixed-variant": "#404566",
+                  "primary-fixed": "#dee0ff",
+                  "surface-container": "#f0edf0",
+                  "surface-container-high": "#eae7ea",
+                  "primary": "#171c3c",
+                  "surface-container-low": "#f6f3f6",
+                  "surface-tint": "#575c7f",
+                  "on-secondary-container": "#50577f",
+                  "primary-container": "#2d3252",
+                  "tertiary-container": "#532900",
+                  "inverse-primary": "#c0c4ed",
+                  "secondary-fixed": "#dee1ff",
+                  "surface-bright": "#fcf8fb",
+                  "outline-variant": "#c7c5ce",
+                  "error-container": "#ffdad6",
+                  "on-secondary-fixed-variant": "#3d446b",
+                  "on-surface-variant": "#46464d",
+                  "tertiary-fixed": "#ffdcc3",
+                  "on-primary-container": "#959ac1",
+                  "outline": "#77767e",
+                  "surface-dim": "#dcd9dc",
+                  "secondary": "#555c84",
+                  "on-background": "#1b1b1e",
+                  "secondary-container": "#c8cffe",
+                  "on-surface": "#1b1b1e",
+                  "secondary-fixed-dim": "#bdc4f2",
+                  "on-error-container": "#93000a"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "fontFamily": {
+                  "headline": ["Noto Serif"],
+                  "body": ["Manrope"],
+                  "label": ["Manrope"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body { font-family: 'Manrope', sans-serif; background-color: #fcf8fb; color: #1b1b1e; }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .tonal-shift-surface-container-low { background-color: #f6f3f6; }
+    .tonal-depth-surface-container-highest { background-color: #e5e1e4; }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-50/70 backdrop-blur-xl shadow-[0px_12px_32px_rgba(27,27,30,0.08)] flex justify-between items-center px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center overflow-hidden">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="close-up portrait of a sophisticated person with minimalist aesthetic, soft studio lighting, muted tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjoe44fDAC1YqlYGpNRgDxbe7_aZPAJakZOSEK07KAmBeFyMgII2-dlr4OHBJLZkTYlnqLNv-brbHFXCHwnHVMllML8pBmnqK-XA4FJvtMUhaRbd0EmV5VpNBMsGpohQ_n0Qv5wg40ZW1g_B741R-cZnMFTT-oREPt7VQHlMguS5QPWayqlpwoaWUZSQRO7Xi5ndWPB5iUdEc3RUghA7vd6Ur1Ztk_SzWpSkB7oOu6mpvQxUELQr7SeXXe6i-Zw9RcKlfZUKTClksb"/>
+</div>
+<h1 class="font-serif text-2xl font-bold tracking-tight text-[#171c3c]">The Atelier</h1>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#171c3c] hover:opacity-80 transition-opacity">search</button>
+</div>
+</header>
+<main class="pt-24 pb-32 px-6 max-w-4xl mx-auto">
+<!-- Filter & Sort Header -->
+<div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="font-serif text-4xl font-black text-primary tracking-tight mb-2">My Library</h2>
+<p class="text-on-surface-variant font-body text-sm">Curating your personal literary collection.</p>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex bg-surface-container rounded-full p-1">
+<button class="material-symbols-outlined p-2 text-primary bg-surface-container-lowest rounded-full shadow-sm">view_list</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:text-primary transition-colors">grid_view</button>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-low hover:bg-surface-container-high transition-colors rounded-full text-on-surface-variant font-label text-sm font-semibold">
+<span class="material-symbols-outlined text-sm">sort</span>
+          Recently Read
+        </button>
+</div>
+</div>
+<!-- Status Tabs -->
+<div class="flex gap-4 mb-8 overflow-x-auto pb-2 no-scrollbar">
+<button class="whitespace-nowrap px-6 py-2 rounded-full bg-primary text-on-primary text-sm font-bold shadow-md">All Works</button>
+<button class="whitespace-nowrap px-6 py-2 rounded-full bg-secondary-container text-on-secondary-container text-sm font-bold">Reading</button>
+<button class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container text-on-surface-variant text-sm font-bold hover:bg-surface-container-high">Completed</button>
+<button class="whitespace-nowrap px-6 py-2 rounded-full bg-surface-container text-on-surface-variant text-sm font-bold hover:bg-surface-container-high">Dropped</button>
+</div>
+<!-- Library List -->
+<div class="space-y-6">
+<!-- Book Item: Reading -->
+<div class="group flex gap-6 p-4 rounded-xl hover:bg-surface-container-lowest transition-all duration-300">
+<div class="relative w-24 h-36 flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow overflow-hidden rounded-lg">
+<img alt="Book Cover" class="w-full h-full object-cover" data-alt="abstract book cover with deep blue and gold swirling marble textures, elegant serif typography, moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_MMp06vPmNulFAsCPV0PhC9qLsNI5Slzil09vVqkXIMt3-kIIvtJS9s_xRHgVxfqGkqLFCXzlOd8xK4iqd8fH9Ri-e4KLRnQER9PXsTewsdXgLWYDN-hbHQ0UNZDxu3v5nKRP3OFH1FV_Uir-WEU_-P5hAHWSmsKuE7C6Q9i66uuLpZsSKqR5VnISSn6XSmC5ShDz21znwvf8q9yrC5TMy9BKmbyF7Sq5AAsuS1FrkoirZkQoT0iHy8wATT2vKvdncCd9Tiuhtvy8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+</div>
+<div class="flex flex-col justify-between py-1 flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-serif text-xl font-bold text-primary group-hover:text-primary-container transition-colors leading-tight">Shadows of the Ethereal Realm</h3>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Reading</span>
+</div>
+<p class="text-on-surface-variant font-body text-sm mt-1">S. J. Arisawa • Vol. 04</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-end text-[11px] font-bold text-on-surface-variant">
+<span>Chapter 42 of 120</span>
+<span>35%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 35%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Book Item: Completed -->
+<div class="group flex gap-6 p-4 rounded-xl hover:bg-surface-container-lowest transition-all duration-300">
+<div class="relative w-24 h-36 flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow overflow-hidden rounded-lg">
+<img alt="Book Cover" class="w-full h-full object-cover" data-alt="light novel cover featuring a minimalist cherry blossom illustration on a soft cream background, elegant vertical text" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDh938g28YKdZwxnl2EPYg42M3ZIA3kgTKPSjuQkTR-E7c106AUQDDWW4aJAs67dUQ60zUup-U7adg3qNh3ehDtPCspPAtLpJJzNCZOtJIywPKQO09STVO-cyaGt191IVtNkYr5iNJsI_m4FkyCeIEKwF0Gw10NoBGoPhm2JUKvApqBEul82XGWKSvgT8Nr6P4FTN6TmbgTHGlFFAPdDpn5W3kp2-SLCcMaYE7F35SMhenMcb92hoG5fTMaRZpuYX_gqEndFD-e9-1x"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+<div class="flex flex-col justify-between py-1 flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-serif text-xl font-bold text-primary group-hover:text-primary-container transition-colors leading-tight">The Alchemist's Silence</h3>
+<span class="bg-surface-container-highest text-on-surface-variant text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Completed</span>
+</div>
+<p class="text-on-surface-variant font-body text-sm mt-1">Ren Kusanagi • One-Shot</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1 text-tertiary-container font-bold text-xs">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+              4.9 Rating
+            </div>
+<span class="text-on-surface-variant text-xs font-body">Read on May 12, 2023</span>
+</div>
+</div>
+</div>
+<!-- Book Item: Dropped -->
+<div class="group flex gap-6 p-4 rounded-xl hover:bg-surface-container-lowest transition-all duration-300 opacity-70 hover:opacity-100">
+<div class="relative w-24 h-36 flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow overflow-hidden rounded-lg grayscale group-hover:grayscale-0 transition-all">
+<img alt="Book Cover" class="w-full h-full object-cover" data-alt="dark fantasy book cover with a silhouette of a castle against a crimson moon, sharp typography, atmospheric fog" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASDmjYQ5uQ7tFMhdxuxMCr5BljRQsNESCdNFLvx0vjzVOuLhJacr61g0wEQntTaCufcGueXNQOVkywbw221uZXcB3o2l1xBi9MsL-VFyFqlUdeBR4R1YyYh7nswY9lytPU_Mun0UYUtiX6gld29enomSK2NOION0ejwBQtLVEiFXq34pcOhxCl4NW7-8dF4cvhywIHot8FU6NdlaJpizC7DhAY-FLqda1eOrvGRYbFUULO_GRhAXL1S8udRsZ6EUkDcTGrcaaCPnQb"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+</div>
+<div class="flex flex-col justify-between py-1 flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-serif text-xl font-bold text-primary group-hover:text-primary-container transition-colors leading-tight">Neon Zenith: Retribution</h3>
+<span class="bg-error-container text-on-error-container text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Dropped</span>
+</div>
+<p class="text-on-surface-variant font-body text-sm mt-1">V. K. Sterling • Vol. 01</p>
+</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant text-xs italic font-body">"Lost interest in the pacing at Chapter 12."</p>
+</div>
+</div>
+</div>
+<!-- Book Item: Reading -->
+<div class="group flex gap-6 p-4 rounded-xl hover:bg-surface-container-lowest transition-all duration-300">
+<div class="relative w-24 h-36 flex-shrink-0 shadow-lg group-hover:shadow-xl transition-shadow overflow-hidden rounded-lg">
+<img alt="Book Cover" class="w-full h-full object-cover" data-alt="warm yellow book cover with a simple outline of a mountain, clean typography, soft texture paper look" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbTQr1rbCrML7sIELTmREg5UZ39alAVhjzA616F-GTsQcohxM59P6OLa1fjb3KN11EmU-zlcpyyP-1zjJFW5fjoFkfcf5brkJf7vQk9RcMvDukSa46i3apulNL3397gv8y83RqtplOXOF0mMSs2qn9-QN_oDGcLb4c2cucNpfalNywZNNeqTJfeWtAsWJ2HqCCpIJ7eeGU6nAMDLaa-tXtaeowfm_WFv0PYnV1cD_Ec7cY0pLZnH7YMxdpeZ99GSLtD1AMpNS_ZhSI"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+</div>
+<div class="flex flex-col justify-between py-1 flex-grow">
+<div>
+<div class="flex justify-between items-start">
+<h3 class="font-serif text-xl font-bold text-primary group-hover:text-primary-container transition-colors leading-tight">Echoes of the Summit</h3>
+<span class="bg-secondary-container text-on-secondary-container text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Reading</span>
+</div>
+<p class="text-on-surface-variant font-body text-sm mt-1">Elena Frost • Vol. 02</p>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-end text-[11px] font-bold text-on-surface-variant">
+<span>Chapter 8 of 54</span>
+<span>15%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 15%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/70 backdrop-blur-xl shadow-[0px_-12px_32px_rgba(27,27,30,0.05)] rounded-t-3xl border-t border-white/10">
+<button class="flex flex-col items-center justify-center text-slate-400 px-6 py-2 hover:text-[#171c3c] transition-colors active:scale-90 duration-300">
+<span class="material-symbols-outlined">auto_stories</span>
+<span class="font-sans text-[11px] font-semibold uppercase tracking-widest mt-1">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#171c3c] bg-[#dee1ff]/20 rounded-full px-6 py-2 active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shelves</span>
+<span class="font-sans text-[11px] font-semibold uppercase tracking-widest mt-1">Library</span>
+</button>
+</nav>
+</body></html>

@@ -1,4 +1,5 @@
 import { RefreshControl, SafeAreaView, ScrollView, View, Image, Text, FlatList, ImageBackground } from "react-native";
+import { normalizeUrl } from "@/types";
 import { FAB, IconButton, List, SegmentedButtons, Title, useTheme } from "react-native-paper";
 import { ChapterTracker, getAllTrackersAsync, saveTracker } from "./favorites/tracker";
 import React, { useState, useCallback, useEffect } from 'react';
@@ -80,7 +81,7 @@ export default function Recents() {
             left={() => (
                 <View style={{ marginLeft: 8 }}>
                     <Image
-                        source={{ uri: chapter.novel.bookImage }}
+                        source={{ uri: normalizeUrl(chapter.novel.bookImage, chapter.repo.repoUrl) || `https://picsum.photos/seed/${chapter.novel.bookId}/200/300` }}
                         style={{ width: 60, height: 90 }} />
                 </View>
             )}

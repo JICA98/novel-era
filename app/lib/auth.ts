@@ -241,3 +241,5 @@ function resolveGoogleNativeError(error: unknown): string | undefined {
 
   return undefined;
 }
+
+export default function() { return null; }

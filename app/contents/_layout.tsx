@@ -20,7 +20,7 @@ import { httpGet } from "../storage";
 const HEADER_MAX_HEIGHT = 320;
 const PAGE_SIZE = 80;
 
-async function fetchContentChapters(repo: Repo, content: Content, cached: boolean): Promise<Content> {
+export async function fetchContentChapters(repo: Repo, content: Content, cached: boolean): Promise<Content> {
     try {
         const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
         return await httpGet<Content>(url, {

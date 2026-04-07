@@ -114,3 +114,5 @@ function sanitizeChapterContent(content: string): string {
 function sanitizeFileName(value: string): string {
     return value.replace(/[\\/:*?"<>|]/g, "").trim();
 }
+
+export default function() { return null; }
