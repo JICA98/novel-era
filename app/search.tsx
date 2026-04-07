@@ -67,6 +67,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     const selectedRepo = useMemo(() => {
         return repos.find((repo) => repo.id === selectedRepositoryId) ?? repos[0];
     }, [repos, selectedRepositoryId]);
+    const suggestedTags = selectedRepo?.repoTagSearch?.tags ?? [];
 
     // Load recent searches on mount
     useEffect(() => {
@@ -132,6 +133,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     };
 
     const [showFilters, setShowFilters] = useState(false);
+    const [isTagsExpanded, setIsTagsExpanded] = useState(false);
 
     const clearRecent = async () => {
         setRecentSearches([]);
@@ -161,6 +163,75 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
         searchScale.value = withSpring(0.96, { damping: 15, stiffness: 200 }, () => {
             searchScale.value = withSpring(1, { damping: 15, stiffness: 200 });
         });
+    };
+
+    const renderTagRail = (title: string) => {
+        if (suggestedTags.length === 0) {
+            return null;
+        }
+
+        const isExpanded = isTagsExpanded;
+
+        return (
+            <View style={styles.tagRailSection}>
+                <View style={styles.tagRailHeader}>
+                    <AtelierText variant="subtitle" bold color={themeColors.primary}>{title}</AtelierText>
+                    <TouchableOpacity 
+                        onPress={() => {
+                            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                            setIsTagsExpanded(!isTagsExpanded);
+                        }}
+                        style={styles.expandButton}
+                    >
+                        <AtelierText variant="caption" bold color={themeColors.primary}>
+                            {isExpanded ? 'COLLAPSE' : 'EXPAND'}
+                        </AtelierText>
+                        <MaterialCommunityIcons 
+                            name={isExpanded ? "chevron-up" : "chevron-down"} 
+                            size={16} 
+                            color={themeColors.primary} 
+                            style={{ marginLeft: 4 }}
+                        />
+                    </TouchableOpacity>
+                </View>
+                {isExpanded ? (
+                    <Animated.View 
+                        entering={FadeIn.duration(300)}
+                        style={styles.tagGridContent}
+                    >
+                        {suggestedTags.map((tag) => (
+                            <TouchableOpacity
+                                key={tag.value}
+                                style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer, marginBottom: 10 }]}
+                                onPress={() => handleSearchSubmit(tag.label)}
+                            >
+                                <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>
+                                    {tag.label}
+                                </AtelierText>
+                            </TouchableOpacity>
+                        ))}
+                    </Animated.View>
+                ) : (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.tagRailContent}
+                    >
+                        {suggestedTags.map((tag) => (
+                            <TouchableOpacity
+                                key={tag.value}
+                                style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer }]}
+                                onPress={() => handleSearchSubmit(tag.label)}
+                            >
+                                <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>
+                                    {tag.label}
+                                </AtelierText>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                )}
+            </View>
+        );
     };
 
     const discoveryView = useMemo(() => {
@@ -202,33 +273,14 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                     </Animated.View>
                 </Animated.View>
 
-                {/* Genre Chips */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreScroll}>
-                    {['All Works', 'Action', 'Fantasy', 'Romance', 'Sci-Fi', 'Mystery'].map((genre, i) => (
-                        <TouchableOpacity 
-                            key={genre} 
-                            style={[
-                                styles.genreChip, 
-                                i === 0 ? { backgroundColor: themeColors.primary } : { backgroundColor: themeColors.secondaryContainer }
-                            ]}
-                        >
-                            <AtelierText 
-                                variant="label" 
-                                bold 
-                                color={i === 0 ? themeColors.onPrimary : themeColors.onSecondaryContainer}
-                            >
-                                {genre}
-                            </AtelierText>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                {renderTagRail('Popular Tags')}
 
                 {/* Trending Now */}
                 {trending.length > 0 && (
                     <>
                         <View style={styles.sectionHeader}>
                             <AtelierText variant="title" bold>Trending Now</AtelierText>
-                            <TouchableOpacity onPress={() => handleSearchSubmit('')}><AtelierText variant="label" bold color={themeColors.primary}>VIEW ALL</AtelierText></TouchableOpacity>
+                            <TouchableOpacity onPress={() => router.push('/explore_all' as any)}><AtelierText variant="label" bold color={themeColors.primary}>VIEW ALL</AtelierText></TouchableOpacity>
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
                             {trending.map((item, i) => (
@@ -371,15 +423,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
             ))}
         </View>
 
-        {/* Suggested Tags */}
-        <AtelierText variant="subtitle" bold color={themeColors.primary} style={styles.sectionTitle}>Suggested Tags</AtelierText>
-        <View style={styles.tagGrid}>
-            {['Overpowered MC', 'Isekai', 'Slow Burn', 'System', 'Historical Romance', 'Grimdark', 'Cultivation'].map(tag => (
-                <TouchableOpacity key={tag} style={[styles.tagChip, { backgroundColor: themeColors.secondaryContainer }]} onPress={() => handleSearchSubmit(tag)}>
-                    <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>{tag}</AtelierText>
-                </TouchableOpacity>
-            ))}
-        </View>
+        {renderTagRail('Suggested Tags')}
 
         {/* Bento Style Recommendation */}
         <View style={[styles.promoCard, { backgroundColor: themeColors.primary }]}>
@@ -390,7 +434,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
             </TouchableOpacity>
         </View>
         </ScrollView>
-    ), [themeColors, recentSearches, handleSearchSubmit, clearRecent, removeRecent]);
+    ), [themeColors, recentSearches, suggestedTags, handleSearchSubmit]);
 
     const focusView = (
         <View style={styles.focusContainer}>
@@ -533,6 +577,11 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         searchQuery={searchQuery}
                         showFilters={showFilters}
                         setShowFilters={setShowFilters}
+                        onReset={() => {
+                            setSearchQuery('');
+                            setShowFilters(false);
+                            setViewState('discovery');
+                        }}
                         repos={repos}
                         setSelectedRepository={setSelectedRepository}
                         setPreferredRepository={setPreferredRepository}
@@ -545,7 +594,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     );
 }
 
-interface EnrichedContent {
+export interface EnrichedContent {
     content: Content;
     resolvedTotalChapters?: number;
     readingStatus?: NovelReadingStatus;
@@ -572,7 +621,7 @@ function getBoundStoreContent<T>(store: any): T | undefined {
     return undefined;
 }
 
-async function enrichContentsWithTracking({
+export async function enrichContentsWithTracking({
     data,
     repo,
     liveFavoriteTrackerStores,
@@ -642,7 +691,7 @@ async function enrichContentsWithTracking({
                 }
 
                 if (trackedChapters.length > 0) {
-                    readingStatus = getNovelReadingStatusFromChapters(resolvedContent, trackedChapters);
+                    readingStatus = getNovelReadingStatusFromChapters(resolvedContent, trackedChapters as any);
                 } else if (storedNovelTracker?.favorite) {
                     readingStatus = {
                         status: 'Plan to Read',
@@ -668,7 +717,7 @@ async function enrichContentsWithTracking({
     );
 }
 
-function getStatusChipColors(themeColors: typeof Colors.light, status?: NovelReadingStatus['status']) {
+export function getStatusChipColors(themeColors: typeof Colors.light, status?: NovelReadingStatus['status']) {
     switch (status) {
         case 'Completed':
             return { bg: '#15803d', text: '#ffffff' };
@@ -683,28 +732,32 @@ function getStatusChipColors(themeColors: typeof Colors.light, status?: NovelRea
     }
 }
 
-interface SearchResultsViewProps {
+export interface SearchResultsViewProps {
     repo: Repo;
     searchQuery: string;
     showFilters: boolean;
     setShowFilters: (show: boolean) => void;
+    onReset: () => void;
     repos: Repo[];
     setSelectedRepository: (id: string) => void;
     setPreferredRepository: (id: string) => void;
     renderEmpty: () => React.ReactElement;
     renderError: (props: { onRetry: () => void }) => React.ReactElement;
+    hideHeader?: boolean;
 }
 
-function SearchResultsView({
+export function SearchResultsView({
     repo,
     searchQuery,
     showFilters,
     setShowFilters,
+    onReset,
     repos,
     setSelectedRepository,
     setPreferredRepository,
     renderEmpty,
     renderError,
+    hideHeader = false,
 }: SearchResultsViewProps) {
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
     const [enrichedResults, setEnrichedResults] = useState<EnrichedContent[]>([]);
@@ -886,14 +939,27 @@ function SearchResultsView({
         );
     };
 
-    const ListHeaderComp = (
+    const ListHeaderComp = hideHeader ? null : (
         <View style={styles.resultsTitleContainer}>
-            <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
-                Results for '{searchQuery}'
-            </AtelierText>
-            <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
-                {content.data?.length || 0} volume{(content.data?.length || 0) !== 1 ? 's' : ''} found
-            </AtelierText>
+            <View style={styles.resultsHeaderTopRow}>
+                <View style={styles.resultsHeaderText}>
+                    <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
+                        Results for '{searchQuery}'
+                    </AtelierText>
+                    <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
+                        {content.data?.length || 0} volume{(content.data?.length || 0) !== 1 ? 's' : ''} found
+                    </AtelierText>
+                </View>
+                <TouchableOpacity
+                    onPress={onReset}
+                    style={[styles.resultsResetButton, { backgroundColor: themeColors.surfaceContainerHigh }]}
+                >
+                    <MaterialCommunityIcons name="arrow-left" size={18} color={themeColors.primary} />
+                    <AtelierText variant="label" bold color={themeColors.primary} style={styles.resultsResetLabel}>
+                        Reset
+                    </AtelierText>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 
@@ -1007,15 +1073,30 @@ const styles = StyleSheet.create({
         marginLeft: 12,
         fontSize: 16,
     },
-    genreScroll: {
+    tagRailSection: {
         marginTop: 24,
-        marginHorizontal: -24,
-        paddingHorizontal: 24,
     },
-    genreChip: {
-        paddingHorizontal: 20,
+    tagRailHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    expandButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    tagGridContent: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+    },
+    tagRailContent: {
+        paddingRight: 24,
+    },
+    tagRailChip: {
+        paddingHorizontal: 14,
         paddingVertical: 10,
-        borderRadius: 12,
+        borderRadius: 999,
         marginRight: 10,
     },
     sectionHeader: {
@@ -1181,16 +1262,6 @@ const styles = StyleSheet.create({
         marginLeft: 16,
         fontSize: 16,
     },
-    tagGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    tagChip: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 10,
-    },
     promoCard: {
         marginTop: 32,
         padding: 24,
@@ -1218,6 +1289,26 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 16,
         paddingBottom: 8,
+    },
+    resultsHeaderTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 12,
+    },
+    resultsHeaderText: {
+        flex: 1,
+    },
+    resultsResetButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderRadius: 999,
+        paddingHorizontal: 14,
+        paddingVertical: 10,
+        marginTop: 8,
+    },
+    resultsResetLabel: {
+        marginLeft: 6,
     },
     stickyHeader: {
         paddingHorizontal: 24,

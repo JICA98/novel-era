@@ -130,14 +130,14 @@ export const StatBox: React.FC<StatBoxProps> = ({ value, label }) => {
       <AtelierText 
         variant="subtitle" 
         bold 
-        style={{ color: '#ffffff', fontSize: 20, marginBottom: 4 }}
+        style={{ color: '#ffffff', fontSize: 20, marginBottom: 4, textAlign: 'center' }}
       >
         {value}
       </AtelierText>
       <AtelierText 
         variant="caption" 
         bold 
-        style={{ color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase', letterSpacing: 1 }}
+        style={{ color: 'rgba(255, 255, 255, 0.6)', textTransform: 'uppercase', letterSpacing: 1, textAlign: 'center' }}
       >
         {label}
       </AtelierText>

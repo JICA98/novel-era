@@ -43,6 +43,59 @@
                     "selector": ".novel-title"
                 }
             },
+            "repoTagSearch": {
+                "type": "text",
+                "method": "GET",
+                "path": "/tags/[tag]/order-popular",
+                "selector": ".novel-list.grid .novel-item",
+                "page": "search",
+                "tags": [
+                    { "label": "Fanfiction", "value": "fanfiction" },
+                    { "label": "Female Protagonist", "value": "female-protagonist" },
+                    { "label": "Weak to Strong", "value": "weak-to-strong" },
+                    { "label": "Handsome Male Lead", "value": "handsome-male-lead" },
+                    { "label": "Male Protagonist", "value": "male-protagonist" },
+                    { "label": "Beautiful Female Lead", "value": "beautiful-female-lead" },
+                    { "label": "Cultivation", "value": "cultivation" },
+                    { "label": "Clever Protagonist", "value": "clever-protagonist" },
+                    { "label": "Transmigration", "value": "transmigration" },
+                    { "label": "Calm Protagonist", "value": "calm-protagonist" },
+                    { "label": "Romantic Subplot", "value": "romantic-subplot" },
+                    { "label": "Demons", "value": "demons" },
+                    { "label": "Ruthless Protagonist", "value": "ruthless-protagonist" },
+                    { "label": "Modern Day", "value": "modern-day" },
+                    { "label": "Monsters", "value": "monsters" },
+                    { "label": "Game Elements", "value": "game-elements" },
+                    { "label": "Cunning Protagonist", "value": "cunning-protagonist" },
+                    { "label": "Strong Love Interests", "value": "strong-love-interests" },
+                    { "label": "Love Interest Falls in Love First", "value": "love-interest-falls-in-love-first" }
+                ],
+                "bookId": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "href",
+                    "regex": "book/(.*)"
+                },
+                "rating": {
+                    "type": "text",
+                    "selector": ".badge._br"
+                },
+                "bookLink": {
+                    "type": "text",
+                    "selector": "a",
+                    "attribute": "href"
+                },
+                "bookImage": {
+                    "type": "text",
+                    "selector": ".novel-cover img",
+                    "attribute": "data-src"
+                },
+                "title": {
+                    "type": "attribute",
+                    "selector": "a",
+                    "attribute": "title"
+                }
+            },
             "homeSelector": {
                 "type": "text",
                 "path": "/book/[bookId]",

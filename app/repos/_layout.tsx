@@ -2,7 +2,7 @@ import { ActivityIndicator, Appbar, useTheme } from "react-native-paper";
 import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Content, FetchData, normalizeUrl, processData, Repo, SelectorType } from "@/types";
+import { Content, FetchData, normalizeUrl, processData, Repo, resolveRepoTag, SelectorType } from "@/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import IDOMParser from "advanced-html-parser";
@@ -15,12 +15,17 @@ import { httpGet } from "../storage";
 
 export async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
     try {
-        const selector = searchQuery ? repo.repoSearch : repo.listSelector;
+        const matchedTag = resolveRepoTag(repo, searchQuery);
+        const selector = searchQuery
+            ? (matchedTag ? repo.repoTagSearch : repo.repoSearch)
+            : repo.listSelector;
         if (!selector) {
             return [];
         }
 
-        const safePath = selector.path?.replace('[text]', encodeURIComponent(searchQuery ?? '')) ?? '';
+        const safePath = selector.path
+            ?.replace('[text]', encodeURIComponent(searchQuery ?? ''))
+            .replace('[tag]', encodeURIComponent(matchedTag?.value ?? '')) ?? '';
         const url = `${repo.repoUrl}${safePath}`;
         return await httpGet<Content[]>(url, {
             cached,
@@ -47,7 +52,7 @@ export async function fetchContentList({ repo, searchQuery, cached }: { repo: Re
                     const bookLink = processData(item, selector.bookLink);
                     const bookId = processData(item, selector.bookId);
                     let rating = undefined;
-                    if ('rating' in selector) {
+                    if ('rating' in selector && selector.rating) {
                         rating = processData(item, selector.rating);
                     }
                     bookImage = normalizeUrl(bookImage, repo.repoUrl);

@@ -21,13 +21,9 @@ const useRepositoryStore = create(persist(
     (set, get) => ({
         repositories: { isLoading: true } as FetchData<ReposData>,
         fetchData: () => {
-            const current = (get() as any).repositories;
-            // If data is already loaded from persistence, don't reset to loading
-            if (current.data && !current.isLoading) {
-                return;
-            }
             set({ repositories: { isLoading: true } });
-            // Use local repository data instead of fetching from GitHub
+            // Always refresh from the bundled repository config so new fields
+            // like tag metadata are picked up even when persisted state exists.
             setTimeout(() => {
                 set({ repositories: { data: repositoryData, isLoading: false } });
             }, 100); // Simulate async loading

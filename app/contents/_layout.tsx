@@ -25,7 +25,7 @@ import { ChapterCard } from "./chapterCard";
 import { exportChapters } from "../exports/exportUtils";
 import { Tab, TabBar } from "../components/tabs";
 import { AppBar } from "../components/appbar";
-import { getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, NovelTracker, saveNovelTracker } from "../favorites/tracker";
+import { ChapterTracker, chapterTrackerStore, getOrCreateNovelTrackerStore, inverseFavoriteTracker, noveFavoriteStore, NovelTracker, saveNovelTracker } from "../favorites/tracker";
 import { errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -34,6 +34,23 @@ import { ChaptersLoadingView } from "./skeletons";
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 400;
 const PAGE_SIZE = 100;
+
+function getBoundStoreContent<T>(store: any): T | undefined {
+    if (!store) {
+        return undefined;
+    }
+    if (typeof store.getState === 'function') {
+        return store.getState().content as T;
+    }
+    return store.content as T | undefined;
+}
+
+function normalizeNovelTitle(title?: string): string {
+    return (title || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
 
 export async function fetchContentChapters(repo: Repo, content: Content, cached: boolean): Promise<Content> {
     try {
@@ -80,6 +97,7 @@ export default function ContentLayout() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
     const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
+    const allChapterTrackerStore = chapterTrackerStore((state: any) => state.content);
     const novelTrackerStore = getOrCreateNovelTrackerStore({
         repo,
         content: _content,
@@ -88,6 +106,32 @@ export default function ContentLayout() {
     });
     const novelTracker = novelTrackerStore((state: any) => state.content) as NovelTracker;
     const setNovelTracker = novelTrackerStore((state: any) => state.setContent);
+    const continueReadingTracker = useMemo(() => {
+        if (!(allChapterTrackerStore instanceof Map)) {
+            return undefined;
+        }
+
+        const normalizedContentTitle = normalizeNovelTitle(content?.title || _content.title);
+        const trackers = Array.from(allChapterTrackerStore.values())
+            .map((trackerStore) => getBoundStoreContent<ChapterTracker>(trackerStore))
+            .filter((tracker): tracker is ChapterTracker => {
+                if (!tracker || tracker.repo.id !== repo.id) {
+                    return false;
+                }
+
+                const sameBookId = tracker.novel.bookId === _content.bookId || tracker.novel.bookId === content?.bookId;
+                const sameTitle = normalizedContentTitle.length > 0 &&
+                    normalizeNovelTitle(tracker.novel.title) === normalizedContentTitle;
+
+                return (sameBookId || sameTitle) &&
+                    (tracker.status === 'reading' || tracker.status === 'read' || tracker.chapterProgress > 0);
+            })
+            .sort((left, right) => right.lastRead - left.lastRead);
+
+        return trackers[0];
+    }, [allChapterTrackerStore, content?.bookId, content?.title, repo.id, _content.bookId, _content.title]);
+    const resumeChapterId = continueReadingTracker?.chapterId || "1";
+    const shouldContinueReading = Boolean(continueReadingTracker);
 
     const handleExportRequest = useCallback(
         async (range: [number, number], format: "epub" | "pdf") => {
@@ -284,22 +328,22 @@ export default function ContentLayout() {
                     });
                 }}
                 onReadPress={() => {
-                    // Navigate to first chapter or last read
-                    const firstChapterId = "1";
                     router.push({
                         pathname: '/chapters' as any,
                         params: {
                             props: JSON.stringify({
                                 focusedMode: false,
-                                id: firstChapterId,
+                                id: resumeChapterId,
                                 content,
                                 repo,
                                 enableNextPrev: true,
+                                continueReading: shouldContinueReading,
                                 data: ''
                             }),
                         }
                     });
                 }}
+                readLabel={shouldContinueReading ? 'Continue Reading' : 'Start Reading'}
             />
 
             <ExportDialog
@@ -367,51 +411,73 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
     const theme = useTheme();
 
     const heroStyle = useAnimatedStyle(() => {
-        const height = interpolate(tabProgress.value, [0, 1], [400, 380]);
+        // Essential for page layout below, but height 
+        const height = interpolate(tabProgress.value, [0, 1], [520, 320], Extrapolate.CLAMP);
         return { height };
     });
 
     const coverStyle = useAnimatedStyle(() => {
-        const scale = interpolate(tabProgress.value, [0, 1], [0.8, 1]);
-        const translateX = interpolate(tabProgress.value, [0, 1], [0, 0]);
-        const translateY = interpolate(tabProgress.value, [0, 1], [0, 0]);
-        const borderRadius = interpolate(tabProgress.value, [0, 1], [16, 16]);
-        const widthVal = interpolate(tabProgress.value, [0, 1], [width * 0.5, 120]);
+        const scale = interpolate(tabProgress.value, [0, 1], [1, 0.625], Extrapolate.CLAMP);
+        // Correcting the shift caused by scaling from center
+        const translateX = interpolate(tabProgress.value, [0, 1], [0, -30], Extrapolate.CLAMP);
+        const translateY = interpolate(tabProgress.value, [0, 1], [0, -45], Extrapolate.CLAMP);
         return {
             transform: [{ scale }, { translateX }, { translateY }],
-            borderRadius,
-            width: widthVal,
-            height: interpolate(tabProgress.value, [0, 1], [(width * 0.5) * 1.5, 180]),
+            width: width * 0.4,   // Fixed base width
+            height: (width * 0.4) * 1.5, // Fixed base height
         };
     });
 
     const detailsStyle = useAnimatedStyle(() => {
-        const translateX = interpolate(tabProgress.value, [0, 1], [0, 20]);
-        const translateY = interpolate(tabProgress.value, [0, 1], [0, -10]);
+        // Tightened gutter to ~12px for a more compact and professional look
+        const translateX = interpolate(tabProgress.value, [0, 1], [0, -38], Extrapolate.CLAMP);
+        const translateY = interpolate(tabProgress.value, [0, 1], [0, -10], Extrapolate.CLAMP);
         return {
+            flex: 1,
+            marginLeft: 20, 
             transform: [{ translateX }, { translateY }],
-            marginLeft: interpolate(tabProgress.value, [0, 1], [0, 0]),
-            marginTop: interpolate(tabProgress.value, [0, 1], [0, 12]),
+            justifyContent: 'center',
+        };
+    });
+
+    const rowStyle = useAnimatedStyle(() => {
+        return {
+            flexDirection: 'row',
+            alignItems: 'center',
         };
     });
 
     const backgroundOpacity = useAnimatedStyle(() => ({
-        opacity: interpolate(tabProgress.value, [0, 1], [0, 0.4]),
+        // Ensuring the blurred background is visible in both Synopsis (0.3) and Chapters (0.4)
+        opacity: interpolate(tabProgress.value, [0, 1], [0.3, 0.4], Extrapolate.CLAMP),
     }));
 
     const statsOpacity = useAnimatedStyle(() => ({
-        opacity: interpolate(tabProgress.value, [0.5, 1], [1, 0]),
-        transform: [{ translateY: interpolate(tabProgress.value, [0, 1], [0, 20]) }],
+        opacity: interpolate(tabProgress.value, [0, 0.4], [1, 0], Extrapolate.CLAMP),
+        transform: [{ translateY: interpolate(tabProgress.value, [0, 1], [0, 10], Extrapolate.CLAMP) }],
     }));
 
     const authorRowOpacity = useAnimatedStyle(() => ({
-        opacity: interpolate(tabProgress.value, [0, 0.5], [0, 1]),
-        transform: [{ translateY: interpolate(tabProgress.value, [0, 1], [10, 0]) }],
+        opacity: interpolate(tabProgress.value, [0.5, 1], [0, 1], Extrapolate.CLAMP),
+        transform: [{ translateY: interpolate(tabProgress.value, [0, 1], [10, 0], Extrapolate.CLAMP) }],
     }));
 
-    const titleStyle = useAnimatedStyle(() => ({
-        fontSize: interpolate(tabProgress.value, [0, 1], [32, 28]),
-    }));
+    const flexLayerStyle = useAnimatedStyle(() => {
+        // Refined translateY for perfect vertical centering in Chapters mode
+        const translateY = interpolate(tabProgress.value, [0, 1], [10, 20], Extrapolate.CLAMP);
+        return {
+            transform: [{ translateY }],
+        };
+    });
+
+    const titleStyle = useAnimatedStyle(() => {
+        const scale = interpolate(tabProgress.value, [0, 1], [1, 0.875], Extrapolate.CLAMP);
+        // Correcting internal scale drift to keep the title flush with the ONGOING text
+        const translateX = interpolate(tabProgress.value, [0, 1], [0, -12], Extrapolate.CLAMP);
+        return {
+            transform: [{ scale }, { translateX }],
+        };
+    });
 
     return (
         <Reanimated.View style={[styles.heroContainer, heroStyle]}>
@@ -420,8 +486,8 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
 
             <Reanimated.View style={[styles.glow, { backgroundColor: theme.colors.secondaryContainer }, statsOpacity]} />
 
-            <View style={styles.heroFlexLayer}>
-                <Reanimated.View style={[styles.heroMainRow, { flexDirection: 'row', alignItems: 'flex-end' }]}>
+            <Reanimated.View style={[styles.heroFlexLayer, flexLayerStyle]}>
+                <Reanimated.View style={[styles.heroMainRow, rowStyle]}>
                     <Reanimated.View style={[styles.heroCoverShadow, coverStyle]}>
                         <View style={styles.heroCoverContainer}>
                             <Image source={{ uri: content.bookImage }} style={styles.heroCover} resizeMode="cover" />
@@ -429,18 +495,17 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
                     </Reanimated.View>
 
                     <Reanimated.View style={[styles.heroDynamicDetails, detailsStyle]}>
-                        <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>ONGOING • DARK FANTASY</Text>
+                        <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>ONGOING</Text>
                         <Reanimated.Text style={[styles.heroTitle, { color: theme.colors.primary }, titleStyle]}>{content.title}</Reanimated.Text>
 
                         {/* Author row only visible in Chapters mode (Compact) */}
                         <Reanimated.View style={[styles.heroAuthorRow, authorRowOpacity]}>
-                            <View style={[styles.authorAvatar, { backgroundColor: theme.colors.secondaryContainer }]} />
-                            <Text style={[styles.heroAuthor, { color: theme.colors.onSurfaceVariant }]}>{content.author || 'Unknown Author'}</Text>
+                            <Text style={[styles.authorNameSmall, { color: theme.colors.onSurfaceVariant }]}>{content.author || 'Unknown Author'}</Text>
                         </Reanimated.View>
 
                         {/* Sub author only visible in Synopsis mode (Expanded) */}
-                        <Reanimated.Text style={[styles.heroAuthorSub, { color: theme.colors.onSurfaceVariant }, statsOpacity]}>
-                            {content.author || 'Unknown Author'} • 1.2M Words
+                        <Reanimated.Text style={[styles.heroAuthorSub, { color: theme.colors.onSurfaceVariant, fontSize: 16 }, statsOpacity]}>
+                            {content.author || 'Unknown Author'}
                         </Reanimated.Text>
                     </Reanimated.View>
                 </Reanimated.View>
@@ -463,13 +528,19 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
                         <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>FOLLOWS</Text>
                     </View>
                 </Reanimated.View>
-            </View>
+            </Reanimated.View>
         </Reanimated.View>
     );
 };
 
 const SynopsisTab = ({ content }: { content: Content }) => {
     const theme = useTheme();
+    const summaryText = content.summary || 'No description available for this novel.';
+    const words = summaryText.trim().split(/\s+/);
+    const hasMore = words.length > 7;
+    const headline = words.slice(0, 7).join(' ') + (hasMore ? '...' : '');
+    const remainingText = hasMore ? words.slice(7).join(' ') : '';
+
     return (
         <View style={styles.tabContent}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreRow}>
@@ -481,10 +552,12 @@ const SynopsisTab = ({ content }: { content: Content }) => {
             </ScrollView>
 
             <View style={styles.synopsisContainer}>
-                <Text style={[styles.synopsisHeadline, { color: theme.colors.onSurface }]}>A tapestry of fate woven in blood.</Text>
-                <Text style={[styles.synopsisText, { color: theme.colors.onSurfaceVariant }]}>
-                    {content.summary || 'No description available for this novel.'}
-                </Text>
+                <Text style={[styles.synopsisHeadline, { color: theme.colors.onSurface }]}>{headline}</Text>
+                {remainingText ? (
+                    <Text style={[styles.synopsisText, { color: theme.colors.onSurfaceVariant }]}>
+                        {remainingText}
+                    </Text>
+                ) : null}
             </View>
 
             <LinearGradient colors={[theme.colors.primary, theme.colors.primaryContainer]} style={styles.authorCard}>
@@ -579,7 +652,17 @@ const ChaptersTab = ({ repo, content, volumes, selectedIndex, onVolumePress }: {
     );
 };
 
-const BottomActionBar = ({ isFavorite, onFavoritePress, onReadPress }: { isFavorite: boolean, onFavoritePress: () => void, onReadPress: () => void }) => {
+const BottomActionBar = ({
+    isFavorite,
+    onFavoritePress,
+    onReadPress,
+    readLabel,
+}: {
+    isFavorite: boolean,
+    onFavoritePress: () => void,
+    onReadPress: () => void,
+    readLabel: string,
+}) => {
     const theme = useTheme();
     return (
         <View style={styles.bottomBar}>
@@ -587,7 +670,7 @@ const BottomActionBar = ({ isFavorite, onFavoritePress, onReadPress }: { isFavor
             <View style={styles.bottomBarContent}>
                 <TouchableOpacity style={[styles.readButton, { backgroundColor: theme.colors.primary, shadowColor: theme.colors.primary }]} onPress={onReadPress}>
                     <MaterialCommunityIcons name="book-open-page-variant" size={24} color={theme.colors.onPrimary} />
-                    <Text style={[styles.readButtonText, { color: theme.colors.onPrimary }]}>START READING</Text>
+                    <Text style={[styles.readButtonText, { color: theme.colors.onPrimary }]}>{readLabel.toUpperCase()}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[
@@ -650,16 +733,19 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     heroFlexLayer: {
-        flex: 1,
+        width: '100%',
         padding: 24,
-        paddingTop: 120, // Space for fixed header
-        justifyContent: 'flex-end',
+        paddingTop: 120, // Static base padding
     },
     heroMainRow: {
         width: '100%',
     },
     heroDynamicDetails: {
-        flex: 1,
+        width: '100%',
+    },
+    authorNameSmall: {
+        fontFamily: 'Manrope-Medium',
+        fontSize: 14,
     },
     chapterHero: {
         height: 380,
@@ -679,8 +765,6 @@ const styles = StyleSheet.create({
         paddingBottom: 32,
     },
     heroCoverShadow: {
-        width: 120,
-        height: 180,
         borderRadius: 16,
         elevation: 10,
         shadowColor: '#000',
@@ -763,20 +847,21 @@ const styles = StyleSheet.create({
     },
     heroAuthorSub: {
         fontFamily: 'Manrope-SemiBold',
-        fontSize: 14,
+        fontSize: 16,
         marginTop: 4,
     },
     statsRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 8,
+        marginTop: 32,
+        gap: 12,
     },
     statBox: {
         flex: 1,
         padding: 16,
         borderRadius: 16,
         alignItems: 'center',
-        marginHorizontal: 4,
+        justifyContent: 'center',
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.05)',
     },

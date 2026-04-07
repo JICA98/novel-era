@@ -19,9 +19,15 @@ export interface Repo {
         path: string;
     };
     repoSearch: RepoSearch;
+    repoTagSearch?: RepoTagSearch;
     listSelector: ListSelector;
     homeSelector: HomeSelector;
     chapterSelector: ChapterSelector;
+}
+
+export interface RepoTag {
+    label: string;
+    value: string;
 }
 
 export interface RepoSearch extends Selector {
@@ -30,6 +36,10 @@ export interface RepoSearch extends Selector {
     bookLink: Selector;
     bookId: Selector;
     rating: Selector;
+}
+
+export interface RepoTagSearch extends ListSelector {
+    tags: RepoTag[];
 }
 
 export interface ChapterSelector extends Selector {
@@ -178,4 +188,25 @@ export function normalizeUrl(url?: string, baseUrl?: string): string {
         }
     }
     return res;
+}
+
+function normalizeSearchValue(value?: string): string {
+    return (value ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ');
+}
+
+export function resolveRepoTag(repo: Repo, query?: string): RepoTag | undefined {
+    const normalizedQuery = normalizeSearchValue(query);
+    if (!normalizedQuery || !repo.repoTagSearch?.tags?.length) {
+        return undefined;
+    }
+
+    return repo.repoTagSearch.tags.find((tag) => {
+        return [
+            normalizeSearchValue(tag.label),
+            normalizeSearchValue(tag.value),
+        ].includes(normalizedQuery);
+    });
 }
