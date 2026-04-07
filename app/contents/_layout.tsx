@@ -1,4 +1,4 @@
-import { Content, FetchData, processData, Repo, SnackBarData } from "@/types";
+import { Content, FetchData, processData, processDataList, Repo, SnackBarData } from "@/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
@@ -64,7 +64,8 @@ export async function fetchContentChapters(repo: Repo, content: Content, cached:
                 const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
                 const summary = processData(dom, repo.homeSelector.summarySelector);
                 const author = processData(dom, repo.homeSelector.authorSelector);
-                return { ...content, latestChapter, summary, author };
+                const tags = processDataList(dom, repo.homeSelector.tagsSelector);
+                return { ...content, latestChapter, summary, author, tags };
             }
         });
     } catch (error) {
@@ -536,39 +537,45 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
 const SynopsisTab = ({ content }: { content: Content }) => {
     const theme = useTheme();
     const summaryText = content.summary || 'No description available for this novel.';
+    const tags = content.tags || [];
     const words = summaryText.trim().split(/\s+/);
     const hasMore = words.length > 7;
-    const headline = words.slice(0, 7).join(' ') + (hasMore ? '...' : '');
+    const headline = words.slice(0, 7).join(' '); // Removed ellipsis for inline continuation
     const remainingText = hasMore ? words.slice(7).join(' ') : '';
 
     return (
         <View style={styles.tabContent}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreRow}>
-                {['Dark Fantasy', 'Mystery', 'Psychological', 'Magic System'].map((genre) => (
-                    <View key={genre} style={[styles.genreTag, { backgroundColor: theme.colors.secondaryContainer }]}>
-                        <Text style={[styles.genreText, { color: theme.colors.onSecondaryContainer }]}>{genre}</Text>
-                    </View>
-                ))}
-            </ScrollView>
+            {tags.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreRow}>
+                    {tags.map((genre) => (
+                        <View key={genre} style={[styles.genreTag, { backgroundColor: theme.colors.secondaryContainer }]}>
+                            <Text style={[styles.genreText, { color: theme.colors.onSecondaryContainer }]}>{genre}</Text>
+                        </View>
+                    ))}
+                </ScrollView>
+            )}
 
             <View style={styles.synopsisContainer}>
-                <Text style={[styles.synopsisHeadline, { color: theme.colors.onSurface }]}>{headline}</Text>
-                {remainingText ? (
-                    <Text style={[styles.synopsisText, { color: theme.colors.onSurfaceVariant }]}>
-                        {remainingText}
-                    </Text>
-                ) : null}
+                <Text style={[styles.synopsisText, { color: theme.colors.onSurfaceVariant }]}>
+                    <Text style={[styles.synopsisHeadline, { color: theme.colors.onSurface }]}>{headline}</Text>
+                    {remainingText ? ` ${remainingText}` : ''}
+                </Text>
             </View>
 
-            <LinearGradient colors={[theme.colors.primary, theme.colors.primaryContainer]} style={styles.authorCard}>
-                <View style={[styles.authorPortrait, { backgroundColor: theme.colors.onPrimary + '33' }]} />
-                <View style={styles.authorInfo}>
-                    <Text style={[styles.authorNoteTitle, { color: theme.colors.onPrimary }]}>A Note from The Author</Text>
-                    <Text style={[styles.authorNoteText, { color: theme.colors.onPrimary + 'b3' }]}>
-                        "This story is for those who find beauty in the dark corners of the world. Silas is a complex character, and Oakhaven is a city built on secrets."
-                    </Text>
-                </View>
-            </LinearGradient>
+            {tags.length > 0 && (
+                <LinearGradient colors={[theme.colors.primary, theme.colors.primaryContainer]} style={styles.authorCard}>
+                    <View style={styles.authorInfo}>
+                        <Text style={[styles.authorNoteTitle, { color: theme.colors.onPrimary }]}>Tags</Text>
+                        <View style={styles.detailTagWrap}>
+                            {tags.map((tag) => (
+                                <View key={tag} style={[styles.detailTagChip, { backgroundColor: theme.colors.onPrimary + '1f' }]}>
+                                    <Text style={[styles.detailTagText, { color: theme.colors.onPrimary }]}>{tag}</Text>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+                </LinearGradient>
+            )}
 
             <View style={styles.reviewsSection}>
                 <View style={styles.reviewsHeader}>
@@ -929,7 +936,6 @@ const styles = StyleSheet.create({
     synopsisHeadline: {
         fontFamily: 'NotoSerif-Bold',
         fontSize: 22,
-        marginBottom: 16,
     },
     synopsisText: {
         fontFamily: 'Manrope-Regular',
@@ -940,20 +946,11 @@ const styles = StyleSheet.create({
         marginHorizontal: 24,
         padding: 24,
         borderRadius: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
         marginBottom: 32,
         elevation: 5,
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.2,
         shadowRadius: 10,
-    },
-    authorPortrait: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        marginRight: 16,
     },
     authorInfo: {
         flex: 1,
@@ -969,6 +966,22 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: 'rgba(255,255,255,0.7)',
         lineHeight: 20,
+    },
+    detailTagWrap: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginTop: 8,
+    },
+    detailTagChip: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 999,
+        marginRight: 8,
+        marginBottom: 8,
+    },
+    detailTagText: {
+        fontFamily: 'Manrope-Bold',
+        fontSize: 12,
     },
     reviewsSection: {
         paddingHorizontal: 24,

@@ -134,6 +134,15 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
 
     const [showFilters, setShowFilters] = useState(false);
     const [isTagsExpanded, setIsTagsExpanded] = useState(false);
+    const tagRotation = useSharedValue(0);
+
+    useEffect(() => {
+        tagRotation.value = withSpring(isTagsExpanded ? 180 : 0, { damping: 15, stiffness: 200 });
+    }, [isTagsExpanded]);
+
+    const chevronAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ rotate: `${tagRotation.value}deg` }],
+    }));
 
     const clearRecent = async () => {
         setRecentSearches([]);
@@ -179,57 +188,67 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                     <TouchableOpacity 
                         onPress={() => {
                             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                            setIsTagsExpanded(!isTagsExpanded);
+                            setIsTagsExpanded(!isExpanded);
                         }}
                         style={styles.expandButton}
                     >
                         <AtelierText variant="caption" bold color={themeColors.primary}>
                             {isExpanded ? 'COLLAPSE' : 'EXPAND'}
                         </AtelierText>
-                        <MaterialCommunityIcons 
-                            name={isExpanded ? "chevron-up" : "chevron-down"} 
-                            size={16} 
-                            color={themeColors.primary} 
-                            style={{ marginLeft: 4 }}
-                        />
+                        <Animated.View style={chevronAnimatedStyle}>
+                            <MaterialCommunityIcons 
+                                name="chevron-down" 
+                                size={16} 
+                                color={themeColors.primary} 
+                                style={{ marginLeft: 4 }}
+                            />
+                        </Animated.View>
                     </TouchableOpacity>
                 </View>
-                {isExpanded ? (
-                    <Animated.View 
-                        entering={FadeIn.duration(300)}
-                        style={styles.tagGridContent}
-                    >
-                        {suggestedTags.map((tag) => (
-                            <TouchableOpacity
-                                key={tag.value}
-                                style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer, marginBottom: 10 }]}
-                                onPress={() => handleSearchSubmit(tag.label)}
-                            >
-                                <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>
-                                    {tag.label}
-                                </AtelierText>
-                            </TouchableOpacity>
-                        ))}
-                    </Animated.View>
-                ) : (
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.tagRailContent}
-                    >
-                        {suggestedTags.map((tag) => (
-                            <TouchableOpacity
-                                key={tag.value}
-                                style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer }]}
-                                onPress={() => handleSearchSubmit(tag.label)}
-                            >
-                                <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>
-                                    {tag.label}
-                                </AtelierText>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                )}
+                <View style={styles.tagRailContainer}>
+                    {isExpanded ? (
+                        <View style={styles.tagGridContent}>
+                            {suggestedTags.map((tag, index) => (
+                                <Animated.View
+                                    key={tag.value}
+                                    entering={FadeInDown.delay(index * 30).springify().damping(12)}
+                                    layout={LinearTransition.springify().damping(12)}
+                                >
+                                    <TouchableOpacity
+                                        style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer, marginBottom: 10 }]}
+                                        onPress={() => handleSearchSubmit(tag.label)}
+                                    >
+                                        <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>
+                                            {tag.label}
+                                        </AtelierText>
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            ))}
+                        </View>
+                    ) : (
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.tagRailContent}
+                        >
+                            {suggestedTags.map((tag) => (
+                                <Animated.View 
+                                    key={tag.value}
+                                    layout={LinearTransition.springify().damping(12)}
+                                >
+                                    <TouchableOpacity
+                                        style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer }]}
+                                        onPress={() => handleSearchSubmit(tag.label)}
+                                    >
+                                        <AtelierText variant="label" bold color={themeColors.onSecondaryContainer}>
+                                            {tag.label}
+                                        </AtelierText>
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            ))}
+                        </ScrollView>
+                    )}
+                </View>
             </View>
         );
     };
@@ -392,7 +411,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 )}
             </ScrollView>
         );
-    }, [discoveryData, discoveryEnriched, themeColors, selectedRepo, searchAnimatedStyle]);
+    }, [discoveryData, discoveryEnriched, themeColors, selectedRepo, searchAnimatedStyle, isTagsExpanded]);
 
     const focusContent = useMemo(() => (
         <ScrollView 
@@ -434,7 +453,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
             </TouchableOpacity>
         </View>
         </ScrollView>
-    ), [themeColors, recentSearches, suggestedTags, handleSearchSubmit]);
+    ), [themeColors, recentSearches, suggestedTags, handleSearchSubmit, isTagsExpanded]);
 
     const focusView = (
         <View style={styles.focusContainer}>
@@ -1075,6 +1094,9 @@ const styles = StyleSheet.create({
     },
     tagRailSection: {
         marginTop: 24,
+    },
+    tagRailContainer: {
+        minHeight: 44,
     },
     tagRailHeader: {
         flexDirection: 'row',

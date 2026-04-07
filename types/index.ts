@@ -50,6 +50,7 @@ export interface HomeSelector extends Selector {
     latestChapterSelector: Selector;
     summarySelector: Selector;
     authorSelector: Selector;
+    tagsSelector?: Selector;
 }
 
 export interface SnackBarData {
@@ -109,6 +110,7 @@ export interface Content {
     latestChapter?: number;
     summary?: string;
     author?: string;
+    tags?: string[];
 }
 
 export function processData(data: any, selector: Selector): string {
@@ -168,6 +170,37 @@ export function processData(data: any, selector: Selector): string {
     }
 
     return typeof result === 'string' ? result : String(result ?? '');
+}
+
+export function processDataList(data: any, selector?: Selector): string[] {
+    if (!selector || !selector.selector || !data || typeof data.querySelectorAll !== 'function') {
+        return [];
+    }
+
+    const nodes = data.querySelectorAll(selector.selector) ?? [];
+    const values = Array.from(nodes)
+        .map((node: any) => {
+            let result: any = '';
+
+            if (selector.attribute) {
+                if (typeof node.getAttribute !== 'function') {
+                    return '';
+                }
+                result = node.getAttribute(selector.attribute) ?? '';
+            } else {
+                result = node.textContent ?? '';
+            }
+
+            if (selector.regex) {
+                const match = String(result ?? '').match(selector.regex);
+                result = match ? match[1] ?? '' : '';
+            }
+
+            return String(result ?? '').trim();
+        })
+        .filter(Boolean);
+
+    return Array.from(new Set(values));
 }
 
 /**

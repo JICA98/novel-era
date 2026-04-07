@@ -109,6 +109,10 @@
                     "selector": ".novel-info .author",
                     "regex": "Author: (.*)"
                 },
+                "tagsSelector": {
+                    "type": "text",
+                    "selector": ".tags .content .tag"
+                },
                 "summarySelector": {
                     "type": "text",
                     "selector": ".summary .content"
