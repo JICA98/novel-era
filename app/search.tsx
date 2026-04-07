@@ -17,7 +17,16 @@ import { useShallow } from 'zustand/react/shallow';
 import { userPrefStore } from './userpref';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getChaptersForNovel, NovelReadingStatus } from './favorites/tracker';
+import {
+    chapterTrackerStore,
+    getAllTrackersAsync,
+    getFavoriteTrackersAsync,
+    getNovelReadingStatusFromChapters,
+    NovelReadingStatus,
+    NovelTracker,
+    novelKey,
+    noveFavoriteStore,
+} from './favorites/tracker';
 
 const { width } = Dimensions.get('window');
 const RECENT_SEARCHES_KEY = 'explore-recent-searches';
@@ -35,11 +44,16 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
     const [discoveryData, setDiscoveryData] = useState<FetchData<Content[]>>({ isLoading: true });
+    const [discoveryEnriched, setDiscoveryEnriched] = useState<EnrichedContent[]>([]);
     const router = useRouter();
 
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
     const themeColors = Colors[colorScheme];
+    const favoriteTrackerStoreState = noveFavoriteStore((state: any) => state.content);
+    const chapterTrackerStoreState = chapterTrackerStore((state: any) => state.content);
+    const liveFavoriteTrackerStores = favoriteTrackerStoreState instanceof Map ? favoriteTrackerStoreState : undefined;
+    const liveChapterTrackerStores = chapterTrackerStoreState instanceof Map ? chapterTrackerStoreState : undefined;
 
     const { selectedRepositoryId, setSelectedRepository } = useSearchStore(
         useShallow((state) => ({
@@ -72,8 +86,22 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
         try {
             const data = await fetchContentList({ repo: selectedRepo, cached: false });
             setDiscoveryData({ data, isLoading: false });
+            try {
+                setDiscoveryEnriched(
+                    await enrichContentsWithTracking({
+                        data,
+                        repo: selectedRepo,
+                        liveFavoriteTrackerStores,
+                        liveChapterTrackerStores,
+                    })
+                );
+            } catch (enrichmentError) {
+                console.warn('Discovery enrichment failed, falling back to raw results:', enrichmentError);
+                setDiscoveryEnriched(data.map((item) => ({ content: item, resolvedTotalChapters: item.latestChapter })));
+            }
         } catch (error) {
             setDiscoveryData({ error, isLoading: false });
+            setDiscoveryEnriched([]);
         }
     };
 
@@ -136,9 +164,9 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     };
 
     const discoveryView = useMemo(() => {
-        const trending = discoveryData.data?.slice(0, 6) ?? [];
-        const curated = discoveryData.data?.slice(6, 9) ?? [];
-        const fresh = discoveryData.data?.slice(9, 14) ?? [];
+        const trending = discoveryEnriched.slice(0, 6);
+        const curated = discoveryEnriched.slice(6, 9);
+        const fresh = discoveryEnriched.slice(9, 14);
 
         if (discoveryData.isLoading) {
             return (
@@ -159,17 +187,19 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 contentContainerStyle={styles.scrollContent}
             >
                 {/* Search Bar Section */}
-                <Animated.View sharedTransitionTag="searchBar" style={searchAnimatedStyle}>
-                    <TouchableOpacity 
-                        activeOpacity={1} 
-                        onPress={handleSearchPress}
-                        style={[styles.searchBarTrigger, { backgroundColor: themeColors.surfaceContainerLow }]}
-                    >
-                        <MaterialCommunityIcons name="magnify" size={24} color={themeColors.onSurfaceVariant} />
-                        <AtelierText color={themeColors.onSurfaceVariant + '88'} style={styles.placeholderText}>
-                            Find your next masterpiece...
-                        </AtelierText>
-                    </TouchableOpacity>
+                <Animated.View sharedTransitionTag="searchBar">
+                    <Animated.View style={searchAnimatedStyle}>
+                        <TouchableOpacity 
+                            activeOpacity={1} 
+                            onPress={handleSearchPress}
+                            style={[styles.searchBarTrigger, { backgroundColor: themeColors.surfaceContainerLow }]}
+                        >
+                            <MaterialCommunityIcons name="magnify" size={24} color={themeColors.onSurfaceVariant} />
+                            <AtelierText color={themeColors.onSurfaceVariant + '88'} style={styles.placeholderText}>
+                                Find your next masterpiece...
+                            </AtelierText>
+                        </TouchableOpacity>
+                    </Animated.View>
                 </Animated.View>
 
                 {/* Genre Chips */}
@@ -202,10 +232,17 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
                             {trending.map((item, i) => (
-                                <TouchableOpacity key={i} style={styles.trendingCard} onPress={() => navigateToBook(item)}>
-                                    <Image source={{ uri: item.bookImage }} style={styles.trendingImage} />
+                                <TouchableOpacity key={i} style={styles.trendingCard} onPress={() => navigateToBook(item.content)}>
+                                    <Image source={{ uri: item.content.bookImage }} style={styles.trendingImage} />
+                                    {item.readingStatus?.status ? (
+                                        <View style={[styles.discoveryStatusChip, { backgroundColor: getStatusChipColors(themeColors, item.readingStatus.status)?.bg }]}>
+                                            <AtelierText variant="caption" bold style={[styles.discoveryStatusText, { color: getStatusChipColors(themeColors, item.readingStatus.status)?.text }]}>
+                                                {item.readingStatus.status.toUpperCase()}
+                                            </AtelierText>
+                                        </View>
+                                    ) : null}
                                     <View style={styles.cardInfo}>
-                                        <AtelierText variant="subtitle" bold numberOfLines={1}>{item.title}</AtelierText>
+                                        <AtelierText variant="subtitle" bold numberOfLines={1}>{item.content.title}</AtelierText>
                                         <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>{selectedRepo.name}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
@@ -220,25 +257,46 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         <AtelierText variant="title" bold style={styles.sectionTitle}>Curated Collections</AtelierText>
                         <View style={styles.bentoGrid}>
                             <View style={styles.bentoLeft}>
-                                <TouchableOpacity style={[styles.bentoCardLarge, { backgroundColor: themeColors.primaryContainer }]} onPress={() => curated[0] && navigateToBook(curated[0])}>
-                                    <Image source={{ uri: curated[0]?.bookImage }} style={styles.bentoImage} />
+                                <TouchableOpacity style={[styles.bentoCardLarge, { backgroundColor: themeColors.primaryContainer }]} onPress={() => curated[0] && navigateToBook(curated[0].content)}>
+                                    <Image source={{ uri: curated[0]?.content.bookImage }} style={styles.bentoImage} />
+                                    {curated[0]?.readingStatus?.status ? (
+                                        <View style={[styles.discoveryStatusChip, styles.bentoStatusChip, { backgroundColor: getStatusChipColors(themeColors, curated[0].readingStatus.status)?.bg }]}>
+                                            <AtelierText variant="caption" bold style={[styles.discoveryStatusText, { color: getStatusChipColors(themeColors, curated[0].readingStatus.status)?.text }]}>
+                                                {curated[0].readingStatus.status.toUpperCase()}
+                                            </AtelierText>
+                                        </View>
+                                    ) : null}
                                     <View style={styles.bentoOverlay}>
                                         <AtelierText variant="caption" bold color={themeColors.primary + 'AA'} style={styles.bentoTag}>EDITOR\'S PICK</AtelierText>
-                                        <AtelierText variant="subtitle" bold color="#fff" numberOfLines={2}>{curated[0]?.title}</AtelierText>
+                                        <AtelierText variant="subtitle" bold color="#fff" numberOfLines={2}>{curated[0]?.content.title}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
                             </View>
                             <View style={styles.bentoRight}>
-                                <TouchableOpacity style={[styles.bentoCardSmall, { backgroundColor: themeColors.secondaryContainer }]} onPress={() => curated[1] && navigateToBook(curated[1])}>
-                                    <Image source={{ uri: curated[1]?.bookImage }} style={styles.bentoImage} />
+                                <TouchableOpacity style={[styles.bentoCardSmall, { backgroundColor: themeColors.secondaryContainer }]} onPress={() => curated[1] && navigateToBook(curated[1].content)}>
+                                    <Image source={{ uri: curated[1]?.content.bookImage }} style={styles.bentoImage} />
+                                    {curated[1]?.readingStatus?.status ? (
+                                        <View style={[styles.discoveryStatusChip, styles.bentoStatusChip, { backgroundColor: getStatusChipColors(themeColors, curated[1].readingStatus.status)?.bg }]}>
+                                            <AtelierText variant="caption" bold style={[styles.discoveryStatusText, { color: getStatusChipColors(themeColors, curated[1].readingStatus.status)?.text }]}>
+                                                {curated[1].readingStatus.status.toUpperCase()}
+                                            </AtelierText>
+                                        </View>
+                                    ) : null}
                                     <View style={styles.bentoOverlay}>
-                                        <AtelierText variant="label" bold color="#fff" numberOfLines={1}>{curated[1]?.title || 'Fantasy Escapes'}</AtelierText>
+                                        <AtelierText variant="label" bold color="#fff" numberOfLines={1}>{curated[1]?.content.title || 'Fantasy Escapes'}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={[styles.bentoCardSmall, { backgroundColor: themeColors.primaryContainer, marginTop: 12 }]} onPress={() => curated[2] && navigateToBook(curated[2])}>
-                                    <Image source={{ uri: curated[2]?.bookImage }} style={styles.bentoImage} />
+                                <TouchableOpacity style={[styles.bentoCardSmall, { backgroundColor: themeColors.primaryContainer, marginTop: 12 }]} onPress={() => curated[2] && navigateToBook(curated[2].content)}>
+                                    <Image source={{ uri: curated[2]?.content.bookImage }} style={styles.bentoImage} />
+                                    {curated[2]?.readingStatus?.status ? (
+                                        <View style={[styles.discoveryStatusChip, styles.bentoStatusChip, { backgroundColor: getStatusChipColors(themeColors, curated[2].readingStatus.status)?.bg }]}>
+                                            <AtelierText variant="caption" bold style={[styles.discoveryStatusText, { color: getStatusChipColors(themeColors, curated[2].readingStatus.status)?.text }]}>
+                                                {curated[2].readingStatus.status.toUpperCase()}
+                                            </AtelierText>
+                                        </View>
+                                    ) : null}
                                     <View style={styles.bentoOverlay}>
-                                        <AtelierText variant="label" bold color="#fff" numberOfLines={1}>{curated[2]?.title || 'New Frontiers'}</AtelierText>
+                                        <AtelierText variant="label" bold color="#fff" numberOfLines={1}>{curated[2]?.content.title || 'New Frontiers'}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
                             </View>
@@ -251,19 +309,26 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                     <>
                         <AtelierText variant="title" bold style={styles.sectionTitle}>Fresh Arrivals</AtelierText>
                         {fresh.map((item, i) => (
-                            <TouchableOpacity key={i} style={[styles.arrivalItem, { backgroundColor: themeColors.surfaceContainerLow }]} onPress={() => navigateToBook(item)}>
-                                <Image source={{ uri: item.bookImage }} style={styles.arrivalImage} />
+                            <TouchableOpacity key={i} style={[styles.arrivalItem, { backgroundColor: themeColors.surfaceContainerLow }]} onPress={() => navigateToBook(item.content)}>
+                                <Image source={{ uri: item.content.bookImage }} style={styles.arrivalImage} />
                                 <View style={styles.arrivalInfo}>
-                                    <AtelierText variant="subtitle" bold numberOfLines={1}>{item.title}</AtelierText>
+                                    <AtelierText variant="subtitle" bold numberOfLines={1}>{item.content.title}</AtelierText>
                                     <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>{selectedRepo.name}</AtelierText>
                                     <View style={styles.arrivalMeta}>
                                         <View style={[styles.tag, { backgroundColor: themeColors.surfaceContainerHighest }]}>
-                                            <AtelierText variant="caption" bold color={themeColors.onSurfaceVariant}>CHAPTER {item.latestChapter || '1'}</AtelierText>
+                                            <AtelierText variant="caption" bold color={themeColors.onSurfaceVariant}>CHAPTER {item.resolvedTotalChapters || item.content.latestChapter || '1'}</AtelierText>
                                         </View>
-                                        {item.rating && (
+                                        {item.readingStatus?.status ? (
+                                            <View style={[styles.inlineDiscoveryStatusChip, { backgroundColor: getStatusChipColors(themeColors, item.readingStatus.status)?.bg }]}>
+                                                <AtelierText variant="caption" bold style={{ color: getStatusChipColors(themeColors, item.readingStatus.status)?.text }}>
+                                                    {item.readingStatus.status.toUpperCase()}
+                                                </AtelierText>
+                                            </View>
+                                        ) : null}
+                                        {item.content.rating && (
                                             <View style={styles.ratingRow}>
                                                 <MaterialIcons name="star" size={12} color={themeColors.primary} />
-                                                <AtelierText variant="caption" bold> {item.rating}</AtelierText>
+                                                <AtelierText variant="caption" bold> {item.content.rating}</AtelierText>
                                             </View>
                                         )}
                                     </View>
@@ -275,7 +340,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                 )}
             </ScrollView>
         );
-    }, [discoveryData, themeColors, selectedRepo, searchAnimatedStyle]);
+    }, [discoveryData, discoveryEnriched, themeColors, selectedRepo, searchAnimatedStyle]);
 
     const focusContent = useMemo(() => (
         <ScrollView 
@@ -471,8 +536,8 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         repos={repos}
                         setSelectedRepository={setSelectedRepository}
                         setPreferredRepository={setPreferredRepository}
-                        emptyComponent={React.createElement(feedbackView, { type: 'empty' })}
-                        errorComponent={({ onRetry }) => React.createElement(feedbackView, { type: 'error', onRetry })}
+                        renderEmpty={() => React.createElement(feedbackView, { type: 'empty' })}
+                        renderError={({ onRetry }) => React.createElement(feedbackView, { type: 'error', onRetry })}
                     />
                 )}
             </View>
@@ -482,7 +547,140 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
 
 interface EnrichedContent {
     content: Content;
+    resolvedTotalChapters?: number;
     readingStatus?: NovelReadingStatus;
+}
+
+interface SearchResultListItem {
+    type: 'result';
+    resultKey: string;
+    data: EnrichedContent;
+}
+
+function normalizeNovelIdentity(value?: string) {
+    return (value || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+}
+
+function getBoundStoreContent<T>(store: any): T | undefined {
+    if (store && typeof store.getState === 'function') {
+        return store.getState().content as T;
+    }
+
+    return undefined;
+}
+
+async function enrichContentsWithTracking({
+    data,
+    repo,
+    liveFavoriteTrackerStores,
+    liveChapterTrackerStores,
+}: {
+    data: Content[];
+    repo: Repo;
+    liveFavoriteTrackerStores?: Map<string, any>;
+    liveChapterTrackerStores?: Map<string, any>;
+}): Promise<EnrichedContent[]> {
+    const [favoriteTrackers, chapterTrackers] = await Promise.all([
+        getFavoriteTrackersAsync(),
+        getAllTrackersAsync(),
+    ]);
+    const favoriteTrackerValues = [
+        ...Object.values(favoriteTrackers),
+        ...(liveFavoriteTrackerStores
+            ? Array.from(liveFavoriteTrackerStores.values())
+                .map((store) => getBoundStoreContent<NovelTracker>(store))
+                .filter(Boolean)
+            : []),
+    ] as NovelTracker[];
+    const chapterTrackerValues = [
+        ...Object.values(chapterTrackers),
+        ...(liveChapterTrackerStores
+            ? Array.from(liveChapterTrackerStores.values())
+                .map((store) => getBoundStoreContent(store))
+                .filter(Boolean)
+            : []),
+    ];
+
+    return Promise.all(
+        data.map(async (item) => {
+            try {
+                let resolvedContent = item;
+                let readingStatus: NovelReadingStatus | undefined;
+                let resolvedTotalChapters = item.latestChapter;
+                const normalizedTitle = normalizeNovelIdentity(item.title);
+
+                const trackerStoreKey = novelKey(repo.id, item.bookId);
+                const liveNovelTracker = getBoundStoreContent<NovelTracker>(
+                    liveFavoriteTrackerStores?.get(trackerStoreKey)
+                );
+                const matchedNovelTrackerByTitle = favoriteTrackerValues.find((tracker) =>
+                    tracker?.repo?.id === repo.id &&
+                    normalizeNovelIdentity(tracker.novel.title) === normalizedTitle
+                );
+                const storedNovelTracker = liveNovelTracker ?? favoriteTrackers[trackerStoreKey] ?? matchedNovelTrackerByTitle;
+                const trackedChapters = chapterTrackerValues.filter((tracker: any) => {
+                    if (!tracker || tracker.repo?.id !== repo.id) {
+                        return false;
+                    }
+
+                    return (
+                        tracker.novel?.bookId === item.bookId ||
+                        normalizeNovelIdentity(tracker.novel?.title) === normalizedTitle
+                    );
+                });
+
+                if (storedNovelTracker) {
+                    resolvedTotalChapters = storedNovelTracker.novel.latestChapter || item.latestChapter;
+                    resolvedContent = {
+                        ...storedNovelTracker.novel,
+                        ...item,
+                        latestChapter: resolvedTotalChapters,
+                    };
+                }
+
+                if (trackedChapters.length > 0) {
+                    readingStatus = getNovelReadingStatusFromChapters(resolvedContent, trackedChapters);
+                } else if (storedNovelTracker?.favorite) {
+                    readingStatus = {
+                        status: 'Plan to Read',
+                        progress: 0,
+                        totalChaptersTracked: 0,
+                    };
+                }
+
+                return {
+                    content: resolvedContent,
+                    resolvedTotalChapters,
+                    readingStatus,
+                };
+            } catch (enrichmentError) {
+                console.warn(`Failed to enrich search result for ${item.title}:`, enrichmentError);
+                return {
+                    content: item,
+                    resolvedTotalChapters: item.latestChapter,
+                    readingStatus: undefined,
+                };
+            }
+        })
+    );
+}
+
+function getStatusChipColors(themeColors: typeof Colors.light, status?: NovelReadingStatus['status']) {
+    switch (status) {
+        case 'Completed':
+            return { bg: '#15803d', text: '#ffffff' };
+        case 'Dropped':
+            return { bg: '#ffdad6', text: '#93000a' };
+        case 'Plan to Read':
+            return { bg: themeColors.outlineVariant, text: themeColors.onSurfaceVariant };
+        case 'Reading':
+            return { bg: themeColors.secondaryContainer, text: themeColors.onSecondaryContainer };
+        default:
+            return undefined;
+    }
 }
 
 interface SearchResultsViewProps {
@@ -493,8 +691,8 @@ interface SearchResultsViewProps {
     repos: Repo[];
     setSelectedRepository: (id: string) => void;
     setPreferredRepository: (id: string) => void;
-    emptyComponent: React.ReactElement;
-    errorComponent: React.ReactElement<{ onRetry: () => void }>;
+    renderEmpty: () => React.ReactElement;
+    renderError: (props: { onRetry: () => void }) => React.ReactElement;
 }
 
 function SearchResultsView({
@@ -505,14 +703,18 @@ function SearchResultsView({
     repos,
     setSelectedRepository,
     setPreferredRepository,
-    emptyComponent,
-    errorComponent,
+    renderEmpty,
+    renderError,
 }: SearchResultsViewProps) {
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
     const [enrichedResults, setEnrichedResults] = useState<EnrichedContent[]>([]);
     const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
     const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
     const themeColors = Colors[colorScheme];
+    const favoriteTrackerStoreState = noveFavoriteStore((state: any) => state.content);
+    const chapterTrackerStoreState = chapterTrackerStore((state: any) => state.content);
+    const liveFavoriteTrackerStores = favoriteTrackerStoreState instanceof Map ? favoriteTrackerStoreState : undefined;
+    const liveChapterTrackerStores = chapterTrackerStoreState instanceof Map ? chapterTrackerStoreState : undefined;
 
     const fetchContent = async ({ cached }: { cached: boolean }) => {
         setContent({ isLoading: true });
@@ -520,56 +722,28 @@ function SearchResultsView({
             const data = await fetchContentList({ repo, searchQuery, cached });
             setContent({ data, isLoading: false });
 
-            // Enrich with reading status - query chapter trackers directly
-            const enriched = await Promise.all(
-                data.map(async (item) => {
-                    // Get chapter trackers for this novel
-                    const chapterTrackers = await getChaptersForNovel(repo.id, item.bookId);
-                    
-                    let readingStatus: NovelReadingStatus | undefined;
-                    
-                    if (chapterTrackers.length > 0) {
-                        // Calculate reading status from trackers
-                        const hasReading = chapterTrackers.some(c => c.status === 'reading');
-                        const allRead = chapterTrackers.every(c => c.status === 'read');
-                        const completedChapters = chapterTrackers.filter(c => c.chapterProgress >= 1 || c.status === 'read').length;
-                        const readingChapter = chapterTrackers.find(c => c.chapterProgress > 0 && c.chapterProgress < 1);
-                        const partialProgress = readingChapter ? readingChapter.chapterProgress : 0;
-                        
-                        const totalChapters = item.latestChapter || chapterTrackers.length;
-                        const overallProgress = totalChapters > 0 ? (completedChapters + partialProgress) / totalChapters : 0;
-                        
-                        const lastReadChapter = chapterTrackers.reduce((latest, current) =>
-                            current.lastRead > latest.lastRead ? current : latest
-                        , chapterTrackers[0]);
-                        
-                        let status: NovelReadingStatus['status'];
-                        if (completedChapters >= totalChapters) {
-                            status = 'Completed';
-                        } else if (hasReading || completedChapters > 0) {
-                            status = 'Reading';
-                        } else {
-                            status = 'Plan to Read';
-                        }
-                        
-                        readingStatus = {
-                            status,
-                            progress: overallProgress,
-                            lastChapterRead: lastReadChapter.chapterId,
-                            lastReadTimestamp: lastReadChapter.lastRead,
-                            totalChaptersTracked: chapterTrackers.length,
-                        };
-                    }
-                    
-                    return {
+            try {
+                setEnrichedResults(
+                    await enrichContentsWithTracking({
+                        data,
+                        repo,
+                        liveFavoriteTrackerStores,
+                        liveChapterTrackerStores,
+                    })
+                );
+            } catch (enrichmentError) {
+                console.warn('Search enrichment failed, falling back to raw results:', enrichmentError);
+                setEnrichedResults(
+                    data.map((item) => ({
                         content: item,
-                        readingStatus,
-                    };
-                })
-            );
-            setEnrichedResults(enriched);
-        } catch (error) {
-            setContent({ error, isLoading: false });
+                        resolvedTotalChapters: item.latestChapter,
+                        readingStatus: undefined,
+                    }))
+                );
+            }
+        } catch (fetchError) {
+            setContent({ error: fetchError, isLoading: false });
+            setEnrichedResults([]);
         }
     };
 
@@ -658,19 +832,20 @@ function SearchResultsView({
         if (item.type === 'row') {
             return (
                 <View style={styles.gridRow}>
-                    {item.items.map((res: any, i: number) => {
+                    {item.items.map((res: SearchResultListItem, i: number) => {
                         const result = res.data;
                         const commonProps = {
                             item: result.content,
                             repo,
-                            status: result.readingStatus?.status || 'Plan to Read',
+                            status: result.readingStatus?.status,
                             progress: result.readingStatus?.progress || 0,
-                            totalChapters: result.content.latestChapter || result.readingStatus?.totalChaptersTracked || undefined,
+                            totalChapters: result.resolvedTotalChapters || result.readingStatus?.totalChaptersTracked || undefined,
+                            lastChapterRead: result.readingStatus?.lastChapterRead,
                             lastReadTimestamp: result.readingStatus?.lastReadTimestamp,
                         };
                         return (
                             <Animated.View
-                                key={result.content.bookId}
+                                key={res.resultKey}
                                 layout={LinearTransition.springify()}
                                 entering={FadeInDown.delay((index - 1) * 50 + i * 50)}
                                 exiting={FadeOut}
@@ -688,9 +863,10 @@ function SearchResultsView({
         const commonProps = {
             item: result.content,
             repo,
-            status: result.readingStatus?.status || 'Plan to Read',
+            status: result.readingStatus?.status,
             progress: result.readingStatus?.progress || 0,
-            totalChapters: result.content.latestChapter || result.readingStatus?.totalChaptersTracked || undefined,
+            totalChapters: result.resolvedTotalChapters || result.readingStatus?.totalChaptersTracked || undefined,
+            lastChapterRead: result.readingStatus?.lastChapterRead,
             lastReadTimestamp: result.readingStatus?.lastReadTimestamp,
         };
 
@@ -726,7 +902,11 @@ function SearchResultsView({
             return [];
         }
         
-        const results = enrichedResults.map(item => ({ type: 'result', data: item }));
+        const results: SearchResultListItem[] = enrichedResults.map((item, index) => ({
+            type: 'result',
+            resultKey: `${item.content.bookId}-${index}`,
+            data: item,
+        }));
         
         if (viewType === 'grid') {
             const rows: any[] = [];
@@ -759,7 +939,7 @@ function SearchResultsView({
     if (content.error || !content.data) {
         return (
             <View style={styles.resultsContainer}>
-                {errorComponent}
+                {renderError({ onRetry: () => fetchContent({ cached: false }) })}
             </View>
         );
     }
@@ -767,7 +947,7 @@ function SearchResultsView({
     if (content.data.length === 0) {
         return (
             <View style={styles.resultsContainer}>
-                {emptyComponent}
+                {renderEmpty()}
             </View>
         );
     }
@@ -777,11 +957,14 @@ function SearchResultsView({
             <FlatList
                 data={data}
                 renderItem={renderListElement}
-    keyExtractor={(item, index) => {
-        if (item.type === 'sticky-header') return 'sticky';
-        if (item.type === 'row') return `row-${index}`;
-        return item.data.content.bookId;
-    }}
+                keyExtractor={(item, index) => {
+                    if (item.type === 'sticky-header') return 'sticky';
+                    if (item.type === 'row') {
+                        const rowKey = item.items.map((entry: SearchResultListItem) => entry.resultKey).join('__');
+                        return `row-${rowKey || index}`;
+                    }
+                    return item.resultKey;
+                }}
                 numColumns={1}
                 key={viewType}
                 stickyHeaderIndices={[0]}
@@ -863,6 +1046,23 @@ const styles = StyleSheet.create({
     cardInfo: {
         marginTop: 12,
     },
+    discoveryStatusChip: {
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 999,
+        zIndex: 2,
+    },
+    bentoStatusChip: {
+        top: 10,
+        left: 10,
+    },
+    discoveryStatusText: {
+        fontSize: 9,
+        letterSpacing: 0.8,
+    },
     bentoGrid: {
         flexDirection: 'row',
         height: 320,
@@ -925,6 +1125,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 4,
+        marginRight: 12,
+    },
+    inlineDiscoveryStatusChip: {
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 999,
         marginRight: 12,
     },
     ratingRow: {

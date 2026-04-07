@@ -32,12 +32,22 @@ function formatChapterDisplay(progress: number, totalChapters?: number): { curre
     return { current, total: estimatedTotal };
 }
 
+function resolveCurrentChapter(progress: number, totalChapters?: number, lastChapterRead?: string): number {
+    const parsedLastChapter = Number(lastChapterRead);
+    if (Number.isFinite(parsedLastChapter) && parsedLastChapter > 0) {
+        return parsedLastChapter;
+    }
+
+    return formatChapterDisplay(progress, totalChapters).current;
+}
+
 interface BookListItemProps {
     repo: Repo;
     item: Content;
     status?: 'Reading' | 'Completed' | 'Dropped' | 'Plan to Read';
     progress?: number;
     totalChapters?: number;
+    lastChapterRead?: string;
     lastReadTimestamp?: number;
     onPress?: () => void;
 }
@@ -45,9 +55,10 @@ interface BookListItemProps {
 export const BookListItem: React.FC<BookListItemProps> = ({
     repo,
     item,
-    status = 'Reading',
-    progress = 0.35,
+    status,
+    progress = 0,
     totalChapters,
+    lastChapterRead,
     lastReadTimestamp,
     onPress
 }) => {
@@ -70,7 +81,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
         }
     };
 
-    const statusTheme = getStatusColors(status);
+    const statusTheme = status ? getStatusColors(status) : undefined;
 
     const handlePress = () => {
         if (onPress) {
@@ -105,11 +116,13 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                         <AtelierText variant="body" bold numberOfLines={2} style={styles.title}>
                             {item.title}
                         </AtelierText>
-                        <View style={[styles.statusBadge, { backgroundColor: statusTheme.bg }]}>
-                            <AtelierText variant="caption" bold style={[styles.statusText, { color: statusTheme.text }]}>
-                                {status.toUpperCase()}
-                            </AtelierText>
-                        </View>
+                        {status && statusTheme ? (
+                            <View style={[styles.statusBadge, { backgroundColor: statusTheme.bg }]}>
+                                <AtelierText variant="caption" bold style={[styles.statusText, { color: statusTheme.text }]}>
+                                    {status.toUpperCase()}
+                                </AtelierText>
+                            </View>
+                        ) : null}
                     </View>
 
                     <AtelierText variant="caption" color={themeColors.onSurfaceVariant} style={styles.authorText}>
@@ -120,7 +133,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                         <View style={styles.progressSection}>
                             <View style={styles.progressLabelRow}>
                                 <AtelierText variant="caption" bold color={themeColors.onSurfaceVariant} style={styles.progressText}>
-                                    Chapter {formatChapterDisplay(progress, totalChapters).current} of {formatChapterDisplay(progress, totalChapters).total}
+                                    Chapter {resolveCurrentChapter(progress, totalChapters, lastChapterRead)} of {formatChapterDisplay(progress, totalChapters).total}
                                 </AtelierText>
                                 <AtelierText variant="caption" bold color={themeColors.onSurfaceVariant}>
                                     {Math.round(progress * 100)}%
@@ -148,13 +161,13 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                                 Stopped at Chapter {formatChapterDisplay(progress, totalChapters).current}
                             </AtelierText>
                         </View>
-                    ) : (
+                    ) : status === 'Plan to Read' ? (
                         <View style={styles.droppedSection}>
                             <AtelierText variant="caption" italic color={themeColors.onSurfaceVariant}>
                                 Not started yet
                             </AtelierText>
                         </View>
-                    )}
+                    ) : null}
                 </View>
             </View>
         </TouchableOpacity>

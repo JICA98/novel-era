@@ -15,24 +15,19 @@ import {
     signUpWithEmail,
 } from '../lib/auth'
 
-
-export default function Auth({ setSnackbarText }: { setSnackbarText: (text: string) => void }) {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [expanded, setExpanded] = useState(true);
-    const { colors } = useTheme();
-    const handlePress = () => setExpanded(!expanded);
+export function useAccountSettings(setSnackbarText: (text: string) => void) {
     const authUser: AuthUser = authStateStore((state: any) => state.content);
     const userPref: UserPreferences = userPrefStore((state: any) => state.userPref);
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
+    const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
+    const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
+    const allTrackers = chapterTrackerStore((state: any) => state.content);
+    const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
+
     const [showBackup, setBackup] = useState(false);
     const [showRestore, setRestore] = useState(false);
     const [showSignOut, setSignOut] = useState(false);
-    const allTrackers = chapterTrackerStore((state: any) => state.content);
-    const setAllTrackers = chapterTrackerStore((state: any) => state.setContent);
-    const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
-    const setAllNovelTracker = noveFavoriteStore((state: any) => state.setContent);
+    
     const [restorePreviewSummary, setRestorePreviewSummary] = useState<BackupSummaryData | undefined>();
     const [restorePreviewLoading, setRestorePreviewLoading] = useState(false);
     const [restorePreviewError, setRestorePreviewError] = useState<string | null>(null);
@@ -92,6 +87,137 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
             cancelled = true;
         };
     }, [showRestore, authUser.authId]);
+
+    const handleBackup = async () => {
+        const chapterPreferences = await getAllTrackersAsync();
+        const favPreferences = await getFavoriteTrackersAsync();
+        const result = await backupPreferences({
+            userId: authUser.authId ?? '',
+            userPref,
+            chapterPreferences,
+            favPreferences,
+        });
+
+        if (result?.error) {
+            setSnackbarText('Failed to back up preferences');
+        } else {
+            setSnackbarText('Preferences backed up successfully');
+            setBackup(false);
+        }
+    };
+
+    const handleRestore = async () => {
+        if (restorePreviewLoading) {
+            setSnackbarText('Still loading cloud backup preview. Please wait a moment.');
+            return;
+        }
+        if (restorePreviewError) {
+            setSnackbarText(restorePreviewError);
+            return;
+        }
+        const chapterPreferences = await getAllTrackersAsync();
+        const favPreferences = await getFavoriteTrackersAsync();
+        const result = await restorePreferences({
+            userId: authUser.authId ?? '',
+            userPref,
+            chapterPreferences,
+            favPreferences,
+            setUserPref,
+            setAllTrackers,
+            setAllNovelTracker,
+        });
+
+        if (result?.restored) {
+            setSnackbarText('Preferences restored from backup');
+            setRestore(false);
+        } else if (result?.missing) {
+            setSnackbarText('No backup found for this account');
+        } else if (result?.error) {
+            setSnackbarText('Failed to restore preferences');
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await signOutUser();
+            setSnackbarText('Signed out successfully');
+            setSignOut(false);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unable to sign out';
+            setSnackbarText(message);
+        }
+    };
+
+    return {
+        authUser,
+        showBackup, setBackup,
+        showRestore, setRestore,
+        showSignOut, setSignOut,
+        localBackupSummary,
+        restorePreviewSummary,
+        restorePreviewLoading,
+        restorePreviewError,
+        handleBackup,
+        handleRestore,
+        handleSignOut,
+    };
+}
+
+export function AuthDialogs({ 
+    actions, 
+    setSnackbarText 
+}: { 
+    actions: ReturnType<typeof useAccountSettings>, 
+    setSnackbarText: (text: string) => void 
+}) {
+    return (
+        <>
+            {actions.showSignOut && (
+                <PaperDialog 
+                    title={'Sign out'}
+                    description='This will sign you out of your account, continue?' 
+                    setVisible={actions.setSignOut}
+                    done={actions.handleSignOut}
+                />
+            )}
+            {actions.showBackup && (
+                <PaperDialog
+                    title={'Backup Preferences'}
+                    description='This will overwrite your existing cloud backup with current preferences. Continue?'
+                    details={<BackupSummary summary={actions.localBackupSummary} />}
+                    setVisible={actions.setBackup}
+                    done={actions.handleBackup}
+                />
+            )}
+            {actions.showRestore && (
+                <PaperDialog
+                    title={'Restore Preferences'}
+                    description='This will overwrite your local preferences with the cloud backup. Continue?'
+                    details={
+                        <BackupSummary
+                            summary={actions.restorePreviewSummary}
+                            loading={actions.restorePreviewLoading}
+                            error={actions.restorePreviewError}
+                        />
+                    }
+                    setVisible={actions.setRestore}
+                    done={actions.handleRestore}
+                />
+            )}
+        </>
+    );
+}
+
+export default function Auth({ setSnackbarText }: { setSnackbarText: (text: string) => void }) {
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [expanded, setExpanded] = useState(true);
+    const { colors } = useTheme();
+    const handlePress = () => setExpanded(!expanded);
+    
+    const actions = useAccountSettings(setSnackbarText);
+    const { authUser } = actions;
 
     function prevalidation(): boolean {
         if (!email || !password) {
@@ -212,7 +338,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                     <Button
                         mode="contained"
                         onPress={() => {
-                            setSignOut(true);
+                            actions.setSignOut(true);
                         }}
                     >
                         Sign out
@@ -222,7 +348,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         <Button
                             mode="contained-tonal"
                             onPress={() => {
-                                setBackup(true);
+                                actions.setBackup(true);
                             }}
                         >
                             Backup Preferences
@@ -230,7 +356,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         <Button
                             mode="contained-tonal"
                             onPress={() => {
-                                setRestore(true);
+                                actions.setRestore(true);
                             }}
                         >
                             Restore Preferences
@@ -243,91 +369,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
 
     return (
         <>
-            {showSignOut && <PaperDialog title={'Sign out'}
-                description='This will sign you out of your account, continue?' setVisible={setSignOut}
-                done={async () => {
-                    try {
-                        await signOutUser();
-                        setSnackbarText('Signed out successfully');
-                    } catch (error: unknown) {
-                        const message = error instanceof Error ? error.message : 'Unable to sign out';
-                        setSnackbarText(message);
-                    }
-                }}
-            />}
-            {showBackup && (
-                <PaperDialog
-                    title={'Backup Preferences'}
-                    description='This will overwrite your existing cloud backup with current preferences. Continue?'
-                    details={
-                        <BackupSummary
-                            summary={localBackupSummary}
-                        />
-                    }
-                    setVisible={setBackup}
-                    done={async () => {
-                        const chapterPreferences = await getAllTrackersAsync();
-                        const favPreferences = await getFavoriteTrackersAsync();
-                        const result = await backupPreferences({
-                            userId: authUser.authId ?? '',
-                            userPref,
-                            chapterPreferences,
-                            favPreferences,
-                        });
-
-                        if (result?.error) {
-                            setSnackbarText('Failed to back up preferences');
-                        } else {
-                            setSnackbarText('Preferences backed up successfully');
-                        }
-                    }}
-                />
-            )}
-            {showRestore && (
-                <PaperDialog
-                    title={'Restore Preferences'}
-                    description='This will overwrite your local preferences with the cloud backup. Continue?'
-                    details={
-                        <BackupSummary
-                            summary={restorePreviewSummary}
-                            loading={restorePreviewLoading}
-                            error={restorePreviewError}
-                        />
-                    }
-                    setVisible={setRestore}
-                    done={async () => {
-                        if (restorePreviewLoading) {
-                            setSnackbarText('Still loading cloud backup preview. Please wait a moment.');
-                            return;
-                        }
-                        if (restorePreviewError) {
-                            setSnackbarText(restorePreviewError);
-                            return;
-                        }
-                        const chapterPreferences = await getAllTrackersAsync();
-                        const favPreferences = await getFavoriteTrackersAsync();
-                        const result = await restorePreferences({
-                            userId: authUser.authId ?? '',
-                            userPref,
-                            chapterPreferences,
-                            favPreferences,
-                            setUserPref,
-                            setAllTrackers,
-                            setAllNovelTracker,
-                        });
-
-                        if (result?.restored) {
-                            setSnackbarText('Preferences restored from backup');
-                        } else if (result?.missing) {
-                            setSnackbarText('No backup found for this account');
-                        } else if (result?.error) {
-                            setSnackbarText('Failed to restore preferences');
-                        }
-                    }}
-                />
-            )}
-
-
+            <AuthDialogs actions={actions} setSnackbarText={setSnackbarText} />
             <List.Accordion
                 title="Account Settings"
                 left={(props) => <List.Icon {...props} icon="account" />}
@@ -335,14 +377,10 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                 onPress={handlePress}
                 titleStyle={{ color: colors.primary }}
             >
-
                 {authUser.state === AuthState.SIGNED_OUT && signInSignUpPage()}
                 {authUser.state === AuthState.SIGNED_IN && accountInfoPage()}
-
-
             </List.Accordion>
         </>
-
     )
 }
 
@@ -537,7 +575,7 @@ function collectTrackerContent(storeCollection: Map<string, any> | Record<string
 
 const styles = StyleSheet.create({
     container: {
-        paddingInline: 12,
+        paddingHorizontal: 12,
     },
     verticallySpaced: {
         paddingTop: 4,

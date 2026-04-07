@@ -1,6 +1,5 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle, TextStyle, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { AtelierText } from './AtelierText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
@@ -30,11 +29,8 @@ export const AtelierButton: React.FC<AtelierButtonProps> = ({
       activeOpacity={0.8}
       style={[styles.container, style]}
     >
-      <LinearGradient
-        colors={[themeColors.primary, themeColors.primaryContainer]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
+      <View
+        style={[styles.gradient, { backgroundColor: themeColors.primary }]}
       >
         <AtelierText
           variant="label"
@@ -45,7 +41,7 @@ export const AtelierButton: React.FC<AtelierButtonProps> = ({
           {title}
         </AtelierText>
         {icon && <View style={styles.iconContainer}>{icon}</View>}
-      </LinearGradient>
+      </View>
     </TouchableOpacity>
   );
 };

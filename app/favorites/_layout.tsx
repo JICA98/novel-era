@@ -201,7 +201,7 @@ const FavoriteScreen = () => {
                 data: ''
             };
             router.push({
-                pathname: '/chapters',
+                pathname: '/chapters' as any,
                 params: { props: JSON.stringify(chapterProps) }
             });
         };
@@ -210,53 +210,52 @@ const FavoriteScreen = () => {
             `https://picsum.photos/seed/${item.novelTracker.novel.bookId}/200/300`;
 
         return (
-            <Animated.View 
-                entering={FadeInDown.delay(200).springify()}
-                style={[styles.continueCardContainer, animatedStyle]}
-            >
-                <Pressable
-                    onPressIn={handlePressIn}
-                    onPressOut={handlePressOut}
-                    onPress={handlePress}
-                    style={styles.continueCardPressable}
-                >
-                    <ImageBackground
-                        source={{ uri: coverUri }}
-                        style={styles.continueCardBg}
-                        imageStyle={styles.continueCardImage}
-                        blurRadius={10}
+            <View>
+                <Animated.View style={[styles.continueCardContainer, animatedStyle]}>
+                    <Pressable
+                        onPressIn={handlePressIn}
+                        onPressOut={handlePressOut}
+                        onPress={handlePress}
+                        style={styles.continueCardPressable}
                     >
-                        <LinearGradient
-                            colors={['transparent', 'rgba(0,0,0,0.8)']}
-                            style={StyleSheet.absoluteFill}
-                        />
-                        <View style={styles.continueCardContent}>
-                            <View style={styles.continueCardHeader}>
-                                <View style={[styles.continueBadge, { backgroundColor: themeColors.primary }]}>
-                                    <MaterialCommunityIcons name="play" size={12} color={themeColors.onPrimary} />
-                                    <AtelierText variant="caption" bold color={themeColors.onPrimary} style={styles.continueBadgeText}>
-                                        RESUME READING
-                                    </AtelierText>
+                        <ImageBackground
+                            source={{ uri: coverUri }}
+                            style={styles.continueCardBg}
+                            imageStyle={styles.continueCardImage}
+                            blurRadius={10}
+                        >
+                            <LinearGradient
+                                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                                style={StyleSheet.absoluteFill}
+                            />
+                            <View style={styles.continueCardContent}>
+                                <View style={styles.continueCardHeader}>
+                                    <View style={[styles.continueBadge, { backgroundColor: themeColors.primary }]}>
+                                        <MaterialCommunityIcons name="play" size={12} color={themeColors.onPrimary} />
+                                        <AtelierText variant="caption" bold color={themeColors.onPrimary} style={styles.continueBadgeText}>
+                                            RESUME READING
+                                        </AtelierText>
+                                    </View>
+                                </View>
+                                
+                                <View style={styles.continueCardFooter}>
+                                    <View style={styles.continueCardInfo}>
+                                        <AtelierText variant="title" bold color="#fff" numberOfLines={1}>
+                                            {item.novelTracker.novel.title}
+                                        </AtelierText>
+                                        <AtelierText variant="body" color="rgba(255,255,255,0.8)" numberOfLines={1}>
+                                            Chapter {item.readingStatus.lastChapterRead}
+                                        </AtelierText>
+                                    </View>
+                                    <View style={[styles.continuePlayButton, { backgroundColor: themeColors.primary }]}>
+                                        <MaterialCommunityIcons name="chevron-right" size={28} color={themeColors.onPrimary} />
+                                    </View>
                                 </View>
                             </View>
-                            
-                            <View style={styles.continueCardFooter}>
-                                <View style={styles.continueCardInfo}>
-                                    <AtelierText variant="title" bold color="#fff" numberOfLines={1}>
-                                        {item.novelTracker.novel.title}
-                                    </AtelierText>
-                                    <AtelierText variant="body" color="rgba(255,255,255,0.8)" numberOfLines={1}>
-                                        Chapter {item.readingStatus.lastChapterRead}
-                                    </AtelierText>
-                                </View>
-                                <View style={[styles.continuePlayButton, { backgroundColor: themeColors.primary }]}>
-                                    <MaterialCommunityIcons name="chevron-right" size={28} color={themeColors.onPrimary} />
-                                </View>
-                            </View>
-                        </View>
-                    </ImageBackground>
-                </Pressable>
-            </Animated.View>
+                        </ImageBackground>
+                    </Pressable>
+                </Animated.View>
+            </View>
         );
     };
 
@@ -304,7 +303,7 @@ const FavoriteScreen = () => {
             <AtelierButton 
                 title="Browse Novels" 
                 onPress={() => router.push('/repos' as any)}
-                icon={<MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />}
+                icon={<MaterialCommunityIcons name="arrow-right" size={20} color={themeColors.onPrimary} />}
             />
         </View>
     );
@@ -729,4 +728,3 @@ function extractTrackers(t: Record<string, NovelTracker>): NovelTracker[] {
     return trackers.filter((tracker) => tracker.favorite)
         .sort((a, b) => b.updated - a.updated);
 }
-

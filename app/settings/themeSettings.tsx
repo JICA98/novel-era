@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ColorSchemeName } from "react-native";
 import { Button, List, MD3DarkTheme, MD3LightTheme, RadioButton, useTheme } from "react-native-paper";
 import { UserPreferences, ThemeOptions } from "../userpref";
+import { Colors } from "@/constants/Colors";
 
 export const ThemeSelectionAccordion = ({ userPref, setUserPref, setSnackbarText }: {
     userPref: UserPreferences, setUserPref: (userPref: UserPreferences) => void,
@@ -68,8 +69,8 @@ export function getTheme({ colorScheme, themeOptions, theme }: {
     colorScheme: ColorSchemeName,
     themeOptions: ThemeOptions, theme: Material3Theme
 }) {
-    const darkTheme = { ...MD3DarkTheme, colors: theme.dark };
-    const lightTheme = { ...MD3LightTheme, colors: theme.light };
+    const darkTheme = { ...MD3DarkTheme, colors: { ...MD3DarkTheme.colors, ...theme.dark, ...Colors.dark } };
+    const lightTheme = { ...MD3LightTheme, colors: { ...MD3LightTheme.colors, ...theme.light, ...Colors.light } };
     if (themeOptions === ThemeOptions.System) {
         const paperTheme =
             colorScheme === 'dark'

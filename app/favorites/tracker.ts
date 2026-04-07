@@ -171,6 +171,48 @@ export interface NovelReadingStatus {
     totalChaptersTracked: number;
 }
 
+export function getNovelReadingStatusFromChapters(
+    novel: Content,
+    chapterTrackers: ChapterTracker[]
+): NovelReadingStatus {
+    if (chapterTrackers.length === 0) {
+        return { status: 'Plan to Read', progress: 0, totalChaptersTracked: 0 };
+    }
+
+    const hasReading = chapterTrackers.some(c => c.status === 'reading');
+
+    // Calculate overall progress: (completed chapters + partial progress of current chapter) / total chapters
+    const completedChapters = chapterTrackers.filter(c => c.chapterProgress >= 1 || c.status === 'read').length;
+    const readingChapter = chapterTrackers.find(c => c.chapterProgress > 0 && c.chapterProgress < 1);
+    const partialProgress = readingChapter ? readingChapter.chapterProgress : 0;
+
+    // Use the novel's latestChapter if available, otherwise fall back to tracked chapters count
+    const totalChapters = novel.latestChapter || chapterTrackers.length;
+    const overallProgress = totalChapters > 0 ? (completedChapters + partialProgress) / totalChapters : 0;
+
+    // Find the last read chapter (most recent lastRead timestamp)
+    const lastReadChapter = chapterTrackers.reduce((latest, current) =>
+        current.lastRead > latest.lastRead ? current : latest
+    , chapterTrackers[0]);
+
+    let status: NovelReadingStatus['status'];
+    if (completedChapters >= totalChapters) {
+        status = 'Completed';
+    } else if (hasReading || completedChapters > 0) {
+        status = 'Reading';
+    } else {
+        status = 'Plan to Read';
+    }
+
+    return {
+        status,
+        progress: overallProgress,
+        lastChapterRead: lastReadChapter.chapterId,
+        lastReadTimestamp: lastReadChapter.lastRead,
+        totalChaptersTracked: chapterTrackers.length,
+    };
+}
+
 export async function getNovelReadingStatus(
     novelTracker: NovelTracker,
     allChapterTrackers?: Record<string, ChapterTracker>
@@ -192,45 +234,7 @@ export async function getNovelReadingStatus(
         chapterTrackers = await getChaptersForNovel(repo.id, novel.bookId);
     }
 
-    if (chapterTrackers.length === 0) {
-        return { status: 'Plan to Read', progress: 0, totalChaptersTracked: 0 };
-    }
-
-    // Aggregate status
-    const hasReading = chapterTrackers.some(c => c.status === 'reading');
-    const allRead = chapterTrackers.every(c => c.status === 'read');
-
-    // Calculate overall progress: (completed chapters + partial progress of current chapter) / total chapters
-    const completedChapters = chapterTrackers.filter(c => c.chapterProgress >= 1 || c.status === 'read').length;
-    const readingChapter = chapterTrackers.find(c => c.chapterProgress > 0 && c.chapterProgress < 1);
-    const partialProgress = readingChapter ? readingChapter.chapterProgress : 0;
-    
-    // Use the novel's latestChapter if available, otherwise fall back to tracked chapters count
-    const totalChapters = novel.latestChapter || chapterTrackers.length;
-    const overallProgress = totalChapters > 0 ? (completedChapters + partialProgress) / totalChapters : 0;
-
-    // Find the last read chapter (most recent lastRead timestamp)
-    const lastReadChapter = chapterTrackers.reduce((latest, current) =>
-        current.lastRead > latest.lastRead ? current : latest
-    , chapterTrackers[0]);
-
-    // Determine status based on overall progress against total chapters
-    let status: NovelReadingStatus['status'];
-    if (completedChapters >= totalChapters) {
-        status = 'Completed';
-    } else if (hasReading || completedChapters > 0) {
-        status = 'Reading';
-    } else {
-        status = 'Plan to Read';
-    }
-
-    return {
-        status,
-        progress: overallProgress,
-        lastChapterRead: lastReadChapter.chapterId,
-        lastReadTimestamp: lastReadChapter.lastRead,
-        totalChaptersTracked: chapterTrackers.length,
-    };
+    return getNovelReadingStatusFromChapters(novel, chapterTrackers);
 }
 
 export async function getChaptersForNovel(repoId: string, novelId: string): Promise<ChapterTracker[]> {
