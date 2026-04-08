@@ -566,15 +566,6 @@ const SynopsisTab = ({ content }: { content: Content }) => {
 
     return (
         <View style={styles.tabContent}>
-            {tags.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.genreRow}>
-                    {tags.map((genre) => (
-                        <View key={genre} style={[styles.genreTag, { backgroundColor: theme.colors.secondaryContainer }]}>
-                            <Text style={[styles.genreText, { color: theme.colors.onSecondaryContainer }]}>{genre}</Text>
-                        </View>
-                    ))}
-                </ScrollView>
-            )}
 
             <View style={styles.synopsisContainer}>
                 <Text style={[styles.synopsisText, { color: theme.colors.onSurfaceVariant }]}>
@@ -935,21 +926,6 @@ const styles = StyleSheet.create({
         paddingVertical: 24,
     },
 
-    // Synopsis Tab Styles
-    genreRow: {
-        paddingLeft: 24,
-        marginBottom: 24,
-    },
-    genreTag: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-        marginRight: 8,
-    },
-    genreText: {
-        fontFamily: 'Manrope-Bold',
-        fontSize: 12,
-    },
     synopsisContainer: {
         paddingHorizontal: 24,
         marginBottom: 32,
