@@ -24,16 +24,13 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
     };
 
     if (isSpeechOrPause(state) && currentSentence === sentence.id) {
+        const currentTheme = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes];
         sentenceStyle = {
             ...sentenceStyle,
-            color: theme.colors.surface,
-            borderBlockColor: theme.colors.primary,
-            borderStyle: 'solid',
-            borderColor: theme.colors.primary,
-            borderCurve: 'circular',
-            borderRadius: 6.0,
-            backgroundColor: theme.colors.primary,
-            borderWidth: 1
+            backgroundColor: currentTheme.highlight,
+            borderRadius: 4,
+            paddingHorizontal: 4,
+            color: readerThemeKey === 'sepia' ? '#532900' : currentTheme.text,
         };
     }
 

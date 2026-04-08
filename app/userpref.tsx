@@ -19,10 +19,10 @@ export interface EditorPreferences {
 }
 
 export const ReaderThemes = {
-    light: { background: '#fcf8fb', text: '#1b1b1e' },
-    sepia: { background: '#F4ECD8', text: '#2f1500' },
-    dark: { background: '#171c3c', text: '#dee1ff' },
-    oled: { background: '#000000', text: '#ffffff' },
+    light: { background: '#fcf8fb', text: '#1b1b1e', highlight: '#dee1ff' },
+    sepia: { background: '#F4ECD8', text: '#2f1500', highlight: '#ffdcc3' },
+    dark: { background: '#171c3c', text: '#dee1ff', highlight: '#2d3252' },
+    oled: { background: '#000000', text: '#ffffff', highlight: '#2c2c2e' },
 };
 
 export interface TTSConfig {

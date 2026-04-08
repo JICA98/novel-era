@@ -1,3 +1,5 @@
+Command finished with exit code 0.
+Command output:
 import { View, StyleSheet, Text, TouchableOpacity, Image } from "react-native";
 import { TTS, ttsStore, SpeechAction, setTTS, isSpeechOrPause } from "./tts";
 import { Button, Icon, IconButton, Title, useTheme } from "react-native-paper";
