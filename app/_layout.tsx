@@ -14,6 +14,7 @@ import { setUpFirebaseUser, firebaseStore } from "./lib/firebaseBackup";
 
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 // Keep splash screen visible until fonts are loaded
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -93,7 +94,7 @@ export default function RootLayout() {
   }
   console.log(userPref);
   return (
-    userPref && (<PaperProvider theme={getTheme({ colorScheme, theme, themeOptions: userPref.theme })}>
+    userPref && (<SafeAreaProvider><PaperProvider theme={getTheme({ colorScheme, theme, themeOptions: userPref.theme })}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="repos" options={{ headerShown: false }} />
@@ -103,7 +104,7 @@ export default function RootLayout() {
         <Stack.Screen name="explore_all" options={{ headerShown: false }} />
         <Stack.Screen name="search" options={{ headerShown: false }} />
       </Stack>
-    </PaperProvider>)
+    </PaperProvider></SafeAreaProvider>)
   );
 }
 

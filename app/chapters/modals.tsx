@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { Text, IconButton, useTheme, Button, Divider, SegmentedButtons } from 'react-native-paper';
+import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Text, IconButton, useTheme, Button, Divider, SegmentedButtons, Portal, Modal } from 'react-native-paper';
 import { UserPreferences, ThemeOptions, userPrefStore, ReaderThemes } from '../userpref';
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import Slider from '@react-native-community/slider';
@@ -26,12 +26,13 @@ export const ReaderNavigationToc = ({
     const [sliderValue, setSliderValue] = useState(currentChapter);
 
     return (
-        <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onDismiss}>
-            <View style={{ flex: 1, flexDirection: 'row' }}>
-                <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                    <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
-                </View>
-                <View style={{ width: '85%', maxWidth: 350, height: '100%', backgroundColor: readerBgColor, flexDirection: 'column', elevation: 16, shadowColor: '#000', shadowOffset: { width: 5, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10 }}>
+        <Portal>
+            <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }} style={{ margin: 0, justifyContent: 'flex-start' }}>
+                <View style={{ flex: 1, flexDirection: 'row' }}>
+                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                        <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
+                    </View>
+                    <View style={{ width: '85%', maxWidth: 350, height: '100%', backgroundColor: readerBgColor, flexDirection: 'column', elevation: 16, shadowColor: '#000', shadowOffset: { width: 5, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10 }}>
                     {/* Drawer Header */}
                     <View style={{ padding: 24, paddingBottom: 16, backgroundColor: readerBgColor, borderBottomWidth: 1, borderBottomColor: theme.colors.outlineVariant }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
@@ -120,8 +121,11 @@ export const ReaderNavigationToc = ({
                 </View>
             </View>
         </Modal>
-    );
-};export const ReaderAppearanceSettings = ({
+    </Portal>
+);
+};
+
+export const ReaderAppearanceSettings = ({
     visible,
     onDismiss,
 }: {
@@ -217,12 +221,13 @@ export const ReaderNavigationToc = ({
     };
 
     return (
-        <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onDismiss}>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
-                <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
-                
-                <View style={{ 
-                    backgroundColor: colors.surface, 
+        <Portal>
+            <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }} style={{ margin: 0, justifyContent: 'flex-end' }}>
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+                    <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
+                    
+                    <View style={{ 
+                        backgroundColor: colors.surface, 
                     borderTopLeftRadius: 40, 
                     borderTopRightRadius: 40, 
                     paddingHorizontal: 32, 
@@ -441,6 +446,7 @@ export const ReaderNavigationToc = ({
                 </View>
             </View>
         </Modal>
+    </Portal>
     );
 };
 
@@ -461,13 +467,15 @@ export const ReaderTTSControlsSettings = ({
     
     if (!visible) return null;
     return (
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, elevation: 10, zIndex: 10 }} pointerEvents="box-none">
-            <View style={{ backgroundColor: readerBgColor, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 32, paddingTop: 16, paddingBottom: 48, shadowColor: '#000', shadowOffset: { width: 0, height: -24 }, shadowOpacity: 0.4, shadowRadius: 64, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }} pointerEvents="auto">
-                <TouchableOpacity onPress={onDismiss} style={{ padding: 12, alignItems: 'center', marginBottom: 24 }}>
-                    <View style={{ width: 40, height: 6, backgroundColor: readerTextColor, opacity: 0.3, borderRadius: 3 }} />
-                </TouchableOpacity>
-                <View style={{ paddingBottom: 16 }}>
-                    <TTSControls />
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
+            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, elevation: 10, zIndex: 10 }} pointerEvents="box-none">
+                <View style={{ backgroundColor: readerBgColor, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 32, paddingTop: 16, paddingBottom: 48, shadowColor: '#000', shadowOffset: { width: 0, height: -24 }, shadowOpacity: 0.4, shadowRadius: 64, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', maxHeight: '85%' }} pointerEvents="auto">
+                    <TouchableOpacity onPress={onDismiss} style={{ padding: 12, alignItems: 'center', marginBottom: 24 }}>
+                        <View style={{ width: 40, height: 6, backgroundColor: readerTextColor, opacity: 0.3, borderRadius: 3 }} />
+                    </TouchableOpacity>
+                    <View style={{ paddingBottom: 16 }}>
+                        <TTSControls />
+                    </View>
                 </View>
             </View>
         </View>

@@ -1,7 +1,8 @@
 import { FetchData } from "@/types";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
+import { Dimensions, View, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
 import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
 import { RenderPagedContent } from "./content";
@@ -104,10 +105,15 @@ const ChapterLayout: React.FC = () => {
         setTTS({ tts: t, setTTS: setTTStore });
     }
 
+    const insets = useSafeAreaInsets();
+
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: readerBgColor }]}>
+        <SafeAreaView 
+            style={[styles.container, { backgroundColor: readerBgColor }]} 
+            edges={focusedMode ? [] : ['top', 'left', 'right']}
+        >
             {!focusedMode && (
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, zIndex: 100 }}>
                     <IconButton icon="arrow-left" iconColor={readerTextColor} onPress={() => router.back()} />
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <IconButton icon="palette" iconColor={readerTextColor} onPress={() => setAppearanceVisible(true)} />
