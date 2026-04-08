@@ -580,9 +580,13 @@ const SynopsisTab = ({ content }: { content: Content }) => {
                         <Text style={[styles.authorNoteTitle, { color: theme.colors.onPrimary }]}>Tags</Text>
                         <View style={styles.detailTagWrap}>
                             {tags.map((tag) => (
-                                <View key={tag} style={[styles.detailTagChip, { backgroundColor: theme.colors.onPrimary + '1f' }]}>
+                                <TouchableOpacity 
+                                    key={tag} 
+                                    style={[styles.detailTagChip, { backgroundColor: theme.colors.onPrimary + '1f' }]}
+                                    onPress={() => router.push({ pathname: '/search', params: { query: tag } })}
+                                >
                                     <Text style={[styles.detailTagText, { color: theme.colors.onPrimary }]}>{tag}</Text>
-                                </View>
+                                </TouchableOpacity>
                             ))}
                         </View>
                     </View>

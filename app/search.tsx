@@ -6,7 +6,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
 import { BlurView } from 'expo-blur';
 import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import BookItem from './repos/bookItem';
 import { BookListItem } from '@/components/BookListItem';
 import { useSearchStore } from './store/searchStore';
@@ -46,6 +46,8 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     const [discoveryData, setDiscoveryData] = useState<FetchData<Content[]>>({ isLoading: true });
     const [discoveryEnriched, setDiscoveryEnriched] = useState<EnrichedContent[]>([]);
     const router = useRouter();
+    const params = useLocalSearchParams();
+    const incomingQuery = params.query as string | undefined;
 
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
@@ -81,6 +83,13 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
         };
         loadHistory();
     }, []);
+
+    // Handle incoming search query from navigation params
+    useEffect(() => {
+        if (incomingQuery && incomingQuery !== searchQuery) {
+            handleSearchSubmit(incomingQuery);
+        }
+    }, [incomingQuery]);
 
     const fetchDiscovery = async () => {
         setDiscoveryData({ isLoading: true });

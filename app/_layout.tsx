@@ -98,6 +98,7 @@ export default function RootLayout() {
         <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="browser" options={{ headerShown: false }} />
         <Stack.Screen name="explore_all" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
       </Stack>
     </PaperProvider>)
   );
