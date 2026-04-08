@@ -6,6 +6,7 @@ import { AtelierText } from "@/components/AtelierText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface BookItemProps {
     repo: Repo;
@@ -54,8 +55,12 @@ export default function BookItem({ repo, item, status, progress = 0, totalChapte
                     style={styles.cover} 
                     resizeMode="cover"
                 />
+                <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.4)']}
+                    style={styles.imageOverlay}
+                />
                 {status ? (
-                    <View style={[styles.badge, { backgroundColor: getStatusColor(status) }]}>
+                    <View style={[styles.badge, { backgroundColor: getStatusColor(status) + 'cc' }]}>
                         <AtelierText variant="caption" bold color="#fff" style={styles.badgeText}>
                             {status.toUpperCase()}
                         </AtelierText>
@@ -99,32 +104,40 @@ const styles = StyleSheet.create({
     },
     coverWrapper: {
         width: '100%',
-        aspectRatio: 3 / 4,
-        borderRadius: 16,
+        aspectRatio: 2 / 3,
+        borderRadius: 20,
         overflow: 'hidden',
-        backgroundColor: '#e0e0e0',
+        backgroundColor: '#1a1a1a',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 12,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        elevation: 8,
     },
     cover: {
         width: '100%',
         height: '100%',
     },
+    imageOverlay: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '40%',
+    },
     badge: {
         position: 'absolute',
-        top: 12,
-        left: 12,
-        paddingHorizontal: 10,
+        top: 10,
+        left: 10,
+        paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
-        opacity: 0.9,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.2)',
     },
     badgeText: {
-        letterSpacing: 1.5,
-        fontSize: 10,
+        letterSpacing: 1,
+        fontSize: 9,
     },
     info: {
         marginTop: 12,

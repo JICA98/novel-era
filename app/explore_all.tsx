@@ -43,9 +43,9 @@ function ExploreAllScreen({ repos }: { repos: Repo[] }) {
         <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <MaterialCommunityIcons name="arrow-left" size={28} color={themeColors.primary} />
+                    <MaterialCommunityIcons name="chevron-left" size={32} color={themeColors.primary} />
                 </TouchableOpacity>
-                <AtelierText variant="title" bold style={styles.headerTitle}>All Novels</AtelierText>
+                <AtelierText variant="headline" bold style={styles.headerTitle}>All Novels</AtelierText>
                 <View style={{ width: 48 }} /> 
             </View>
 
@@ -54,6 +54,7 @@ function ExploreAllScreen({ repos }: { repos: Repo[] }) {
                 searchQuery=""
                 showFilters={showFilters}
                 setShowFilters={setShowFilters}
+                onReset={() => router.back()}
                 repos={repos}
                 setSelectedRepository={setSelectedRepository}
                 setPreferredRepository={setPreferredRepository}
@@ -84,14 +85,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingHorizontal: 12,
+        paddingTop: 16,
+        paddingBottom: 8,
     },
     backButton: {
-        padding: 8,
+        padding: 12,
     },
     headerTitle: {
-        fontSize: 20,
+        fontSize: 24,
+        letterSpacing: -0.5,
     },
     centered: {
         flex: 1,

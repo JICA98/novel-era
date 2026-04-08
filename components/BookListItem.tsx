@@ -126,7 +126,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                     </View>
 
                     <AtelierText variant="caption" color={themeColors.onSurfaceVariant} style={styles.authorText}>
-                        {item.author || repo.name} • {item.latestChapter ? `Vol. ${item.latestChapter}` : 'Vol. 01'}
+                        {item.author || repo.name} • {item.latestChapter ? `Volume ${item.latestChapter}` : 'Latest Release'}
                     </AtelierText>
 
                     {status === 'Reading' ? (
@@ -186,14 +186,15 @@ const styles = StyleSheet.create({
     },
     coverContainer: {
         width: 80,
-        height: 120,
+        aspectRatio: 2 / 3,
         borderRadius: 12,
         overflow: 'hidden',
+        backgroundColor: '#1a1a1a',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        elevation: 4,
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        elevation: 6,
     },
     coverImage: {
         width: '100%',
@@ -224,12 +225,14 @@ const styles = StyleSheet.create({
     },
     statusBadge: {
         paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 99,
+        paddingVertical: 3,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.1)',
     },
     statusText: {
         fontSize: 8,
-        letterSpacing: 1,
+        letterSpacing: 0.5,
     },
     authorText: {
         marginTop: 4,

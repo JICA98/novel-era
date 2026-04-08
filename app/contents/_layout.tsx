@@ -2,7 +2,7 @@ import { Content, FetchData, processData, processDataList, Repo, SnackBarData } 
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { Animated, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl, Image, TouchableOpacity, Dimensions, Platform } from "react-native";
+import { Animated as RNAnimated, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl, Image, TouchableOpacity, Dimensions, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ActivityIndicator, Snackbar, useTheme, MD3Theme, FAB, IconButton } from "react-native-paper";
 import { BlurView } from "expo-blur";
@@ -15,7 +15,8 @@ import Reanimated, {
     runOnJS,
     FadeInDown,
     FadeOutUp,
-    SharedValue
+    SharedValue,
+    withTiming
 } from "react-native-reanimated";
 import IDOMParser from "advanced-html-parser";
 import { create } from "zustand";
@@ -57,7 +58,17 @@ export async function fetchContentChapters(repo: Repo, content: Content, cached:
         const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
         return await httpGet<Content>(url, {
             cached,
-            onCache: (data) => !!data.latestChapter,
+            onCache: (data) => {
+                if (!data.latestChapter) {
+                    return false;
+                }
+
+                if (repo.homeSelector.tagsSelector) {
+                    return Array.isArray(data.tags);
+                }
+
+                return true;
+            },
             onResponse: async (response) => {
                 const html = await response.text();
                 const dom = IDOMParser.parse(html).documentElement;
@@ -83,7 +94,7 @@ const useContentStore = create((set) => ({
 export default function ContentLayout() {
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
     const _content = JSON.parse(useLocalSearchParams().content as string) as Content;
-    const scrollY = useRef(new Animated.Value(0)).current;
+    const scrollY = useRef(new RNAnimated.Value(0)).current;
     const setContent = useContentStore((state: any) => state.setContent);
     const contentData: FetchData<Content> = useContentStore((state: any) => state.content);
     const setLoading = useContentStore((state: any) => state.setLoading);
@@ -187,7 +198,17 @@ export default function ContentLayout() {
             return;
         }
 
-        if (novelTracker.novel.latestChapter === content.latestChapter) {
+        const existingTags = novelTracker.novel.tags ?? [];
+        const nextTags = content.tags ?? [];
+        const tagsChanged = existingTags.length !== nextTags.length ||
+            existingTags.some((tag, index) => tag !== nextTags[index]);
+        const metadataChanged =
+            novelTracker.novel.latestChapter !== content.latestChapter ||
+            novelTracker.novel.summary !== content.summary ||
+            novelTracker.novel.author !== content.author ||
+            tagsChanged;
+
+        if (!metadataChanged) {
             return;
         }
 
@@ -215,7 +236,7 @@ export default function ContentLayout() {
     const handleTabChange = (tab: 'synopsis' | 'chapters') => {
         if (tab === activeTab) return;
         
-        tabProgress.value = withSpring(tab === 'chapters' ? 1 : 0, { damping: 20, stiffness: 90 });
+        tabProgress.value = withTiming(tab === 'chapters' ? 1 : 0, { duration: 250 });
         
         if (tab === 'chapters') {
             setIsTabTransitioning(true);
@@ -262,11 +283,11 @@ export default function ContentLayout() {
             {/* Custom Frosted Header */}
             <Header scrollY={scrollY} title={_content.title} onExport={() => setExportsVisible(true)} />
 
-            <Animated.ScrollView
+            <RNAnimated.ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={{ paddingBottom: 100 }}
                 scrollEventThrottle={16}
-                onScroll={Animated.event(
+                onScroll={RNAnimated.event(
                     [{ nativeEvent: { contentOffset: { y: scrollY } } }],
                     { useNativeDriver: false }
                 )}
@@ -292,16 +313,16 @@ export default function ContentLayout() {
                 </View>
 
                 {activeTab === 'synopsis' ? (
-                    <Reanimated.View key="synopsis" entering={FadeInDown.duration(400)} exiting={FadeOutUp.duration(400)}>
+                    <View key="synopsis">
                         <SynopsisTab content={content!} />
-                    </Reanimated.View>
+                    </View>
                 ) : (
                     isTabTransitioning ? (
-                        <Reanimated.View key="loading" entering={FadeInDown.duration(400)} exiting={FadeOutUp.duration(400)}>
+                        <View key="loading">
                             <ChaptersLoadingView />
-                        </Reanimated.View>
+                        </View>
                     ) : (
-                        <Reanimated.View key="chapters" entering={FadeInDown.duration(400)}>
+                        <View key="chapters">
                             <ChaptersTab
                                 repo={repo}
                                 content={content!}
@@ -309,10 +330,10 @@ export default function ContentLayout() {
                                 selectedIndex={selectedVolumeIndex}
                                 onVolumePress={setSelectedVolumeIndex}
                             />
-                        </Reanimated.View>
+                        </View>
                     )
                 )}
-            </Animated.ScrollView>
+            </RNAnimated.ScrollView>
 
             {/* Sticky Action Bar */}
             <BottomActionBar
@@ -377,7 +398,7 @@ export default function ContentLayout() {
 
 // Sub-components
 
-const Header = ({ scrollY, title, onExport }: { scrollY: Animated.Value, title: string, onExport: () => void }) => {
+const Header = ({ scrollY, title, onExport }: { scrollY: RNAnimated.Value, title: string, onExport: () => void }) => {
     const theme = useTheme();
     const bgColor = scrollY.interpolate({
         inputRange: [0, 100],
@@ -392,19 +413,19 @@ const Header = ({ scrollY, title, onExport }: { scrollY: Animated.Value, title: 
     });
 
     return (
-        <Animated.View style={[styles.headerFixed, { backgroundColor: bgColor }]}>
+        <RNAnimated.View style={[styles.headerFixed, { backgroundColor: bgColor }]}>
             <BlurView intensity={Platform.OS === 'ios' ? 20 : 0} style={StyleSheet.absoluteFill} tint={theme.dark ? "dark" : "light"} />
             <View style={styles.headerContent}>
                 <IconButton icon="arrow-left" iconColor={theme.colors.onSurface} onPress={() => router.back()} />
-                <Animated.Text style={[styles.headerTitle, { opacity: titleOpacity, color: theme.colors.onSurface }]} numberOfLines={1}>
+                <RNAnimated.Text style={[styles.headerTitle, { opacity: titleOpacity, color: theme.colors.onSurface }]} numberOfLines={1}>
                     {title}
-                </Animated.Text>
+                </RNAnimated.Text>
                 <View style={styles.headerActions}>
                     <IconButton icon="share-variant-outline" iconColor={theme.colors.onSurface} onPress={() => { }} />
                     <IconButton icon="export-variant" iconColor={theme.colors.onSurface} onPress={onExport} />
                 </View>
             </View>
-        </Animated.View>
+        </RNAnimated.View>
     );
 };
 

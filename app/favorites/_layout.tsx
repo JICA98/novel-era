@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl, Image, TouchableOpacity, Dimensions, ScrollView, Modal, Pressable, LayoutAnimation, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeOut, LinearTransition, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { getFavoriteTrackersAsync, NovelTracker, NovelReadingStatus, getNovelReadingStatus, getAllTrackersAsync, ChapterTracker } from './tracker';
 import { fetchContentChapters } from '../contents/_layout';
 import BookItem from '../repos/bookItem';
@@ -130,7 +130,7 @@ const FavoriteScreen = () => {
 
         return (
             <Animated.View
-                layout={LinearTransition.springify()}
+                layout={LinearTransition.duration(300)}
                 entering={FadeInDown.delay(index * 50)}
                 exiting={FadeOut}
                 style={viewType === 'grid' ? { width: '50%' } : { width: '100%' }}
@@ -183,11 +183,11 @@ const FavoriteScreen = () => {
         }));
 
         const handlePressIn = () => {
-            scale.value = withSpring(0.97);
+            scale.value = withTiming(0.97, { duration: 150 });
         };
 
         const handlePressOut = () => {
-            scale.value = withSpring(1);
+            scale.value = withTiming(1, { duration: 250 });
         };
 
         const handlePress = () => {

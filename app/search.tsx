@@ -137,7 +137,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     const tagRotation = useSharedValue(0);
 
     useEffect(() => {
-        tagRotation.value = withSpring(isTagsExpanded ? 180 : 0, { damping: 15, stiffness: 200 });
+        tagRotation.value = withTiming(isTagsExpanded ? 180 : 0, { duration: 250 });
     }, [isTagsExpanded]);
 
     const chevronAnimatedStyle = useAnimatedStyle(() => ({
@@ -169,9 +169,6 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
 
     const handleSearchPress = () => {
         setViewState('focus');
-        searchScale.value = withSpring(0.96, { damping: 15, stiffness: 200 }, () => {
-            searchScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-        });
     };
 
     const renderTagRail = (title: string) => {
@@ -187,7 +184,6 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                     <AtelierText variant="subtitle" bold color={themeColors.primary}>{title}</AtelierText>
                     <TouchableOpacity 
                         onPress={() => {
-                            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                             setIsTagsExpanded(!isExpanded);
                         }}
                         style={styles.expandButton}
@@ -211,8 +207,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                             {suggestedTags.map((tag, index) => (
                                 <Animated.View
                                     key={tag.value}
-                                    entering={FadeInDown.delay(index * 30).springify().damping(12)}
-                                    layout={LinearTransition.springify().damping(12)}
+                                    entering={FadeIn.duration(200)}
                                 >
                                     <TouchableOpacity
                                         style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer, marginBottom: 10 }]}
@@ -232,9 +227,8 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                             contentContainerStyle={styles.tagRailContent}
                         >
                             {suggestedTags.map((tag) => (
-                                <Animated.View 
+                                <View 
                                     key={tag.value}
-                                    layout={LinearTransition.springify().damping(12)}
                                 >
                                     <TouchableOpacity
                                         style={[styles.tagRailChip, { backgroundColor: themeColors.secondaryContainer }]}
@@ -244,7 +238,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                                             {tag.label}
                                         </AtelierText>
                                     </TouchableOpacity>
-                                </Animated.View>
+                                </View>
                             ))}
                         </ScrollView>
                     )}
@@ -478,7 +472,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
             </Animated.View>
 
             <Animated.View 
-                entering={FadeInDown.delay(200).duration(400)}
+                entering={FadeIn.duration(300)}
                 style={{ flex: 1 }}
             >
                 {focusContent}
@@ -632,6 +626,15 @@ function normalizeNovelIdentity(value?: string) {
         .trim();
 }
 
+function resolveLatestChapterCount(...values: Array<number | undefined>) {
+    const chapterCounts = values.filter((value): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0);
+    if (chapterCounts.length === 0) {
+        return undefined;
+    }
+
+    return Math.max(...chapterCounts);
+}
+
 function getBoundStoreContent<T>(store: any): T | undefined {
     if (store && typeof store.getState === 'function') {
         return store.getState().content as T;
@@ -701,7 +704,10 @@ export async function enrichContentsWithTracking({
                 });
 
                 if (storedNovelTracker) {
-                    resolvedTotalChapters = storedNovelTracker.novel.latestChapter || item.latestChapter;
+                    resolvedTotalChapters = resolveLatestChapterCount(
+                        item.latestChapter,
+                        storedNovelTracker.novel.latestChapter
+                    );
                     resolvedContent = {
                         ...storedNovelTracker.novel,
                         ...item,
@@ -829,75 +835,110 @@ export function SearchResultsView({
     };
 
     const renderListElement = ({ item, index }: { item: any; index: number }) => {
-        if (item.type === 'sticky-header') {
+        if (item.type === 'result-header') {
             return (
-                <View style={[styles.stickyHeader, { backgroundColor: themeColors.background }]}>
-                    <View style={styles.headerActions}>
+                <Animated.View 
+                    entering={FadeInDown.duration(400)}
+                    style={[styles.resultsTitleContainer, { backgroundColor: themeColors.background, zIndex: 1 }]}
+                >
+                    <View style={styles.resultsHeaderTopRow}>
+                        <View style={styles.resultsHeaderText}>
+                            <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
+                                Results for '{searchQuery}'
+                            </AtelierText>
+                            <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
+                                {content.data?.length || 0} volume{(content.data?.length || 0) !== 1 ? 's' : ''} found
+                            </AtelierText>
+                        </View>
                         <TouchableOpacity
-                            style={[styles.filterBtn, { backgroundColor: showFilters ? themeColors.secondary : themeColors.primary }]}
-                            onPress={() => setShowFilters(!showFilters)}
+                            onPress={onReset}
+                            style={[styles.resultsResetButton, { backgroundColor: themeColors.surfaceContainerHigh }]}
                         >
-                            <MaterialIcons
-                                name={showFilters ? "close" : "tune"}
-                                size={20}
-                                color={showFilters ? themeColors.onSecondary : themeColors.onPrimary}
-                            />
-                            <AtelierText variant="label" bold color={showFilters ? themeColors.onSecondary : themeColors.onPrimary} style={{ marginLeft: 8 }}>
-                                {showFilters ? "Hide" : "Filter"}
+                            <MaterialCommunityIcons name="arrow-left" size={18} color={themeColors.primary} />
+                            <AtelierText variant="label" bold color={themeColors.primary} style={styles.resultsResetLabel}>
+                                Reset
                             </AtelierText>
                         </TouchableOpacity>
-                        <View style={[styles.viewToggleContainer, { backgroundColor: themeColors.surfaceContainer }]}>
-                            <TouchableOpacity
-                                style={[
-                                    styles.toggleButton,
-                                    viewType === 'list' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
-                                ]}
-                                onPress={() => handleViewToggle('list')}
-                            >
-                                <MaterialIcons
-                                    name="view-list"
-                                    size={20}
-                                    color={viewType === 'list' ? themeColors.primary : themeColors.onSurfaceVariant}
-                                />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[
-                                    styles.toggleButton,
-                                    viewType === 'grid' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
-                                ]}
-                                onPress={() => handleViewToggle('grid')}
-                            >
-                                <MaterialIcons
-                                    name="grid-view"
-                                    size={20}
-                                    color={viewType === 'grid' ? themeColors.primary : themeColors.onSurfaceVariant}
-                                />
-                            </TouchableOpacity>
-                        </View>
                     </View>
+                </Animated.View>
+            );
+        }
 
-                    {showFilters && (
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.repoChips}>
-                            {repos.map((r) => {
-                                const isSelected = repo.id === r.id;
-                                return (
-                                    <TouchableOpacity
-                                        key={r.id}
-                                        onPress={() => {
-                                            setSelectedRepository(r.id);
-                                            setPreferredRepository(r.id);
-                                        }}
-                                        style={[styles.repoChip, { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceContainerHigh }]}
-                                    >
-                                        <AtelierText variant="label" bold color={isSelected ? themeColors.onPrimary : themeColors.onSurfaceVariant}>
-                                            {r.name}
-                                        </AtelierText>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </ScrollView>
-                    )}
-                </View>
+        if (item.type === 'sticky-header') {
+            return (
+                <BlurView 
+                    intensity={Platform.OS === 'ios' ? 80 : 100}
+                    tint={colorScheme === 'dark' ? 'dark' : 'light'}
+                    style={styles.stickyHeaderContainer}
+                >
+                    <View style={[styles.stickyHeader, { backgroundColor: themeColors.background + 'cc' }]}>
+                        <View style={styles.headerActions}>
+                            <TouchableOpacity
+                                style={[styles.filterBtn, { backgroundColor: showFilters ? themeColors.secondary : themeColors.surfaceContainerHigh }]}
+                                onPress={() => setShowFilters(!showFilters)}
+                            >
+                                <MaterialIcons
+                                    name={showFilters ? "close" : "tune"}
+                                    size={20}
+                                    color={showFilters ? themeColors.onSecondary : themeColors.onSurfaceVariant}
+                                />
+                                <AtelierText variant="label" bold color={showFilters ? themeColors.onSecondary : themeColors.onSurfaceVariant} style={{ marginLeft: 8 }}>
+                                    {showFilters ? "Hide" : "Filter"}
+                                </AtelierText>
+                            </TouchableOpacity>
+                            <View style={[styles.viewToggleContainer, { backgroundColor: themeColors.surfaceContainerHigh }]}>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.toggleButton,
+                                        viewType === 'list' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
+                                    ]}
+                                    onPress={() => handleViewToggle('list')}
+                                >
+                                    <MaterialIcons
+                                        name="view-list"
+                                        size={20}
+                                        color={viewType === 'list' ? themeColors.primary : themeColors.onSurfaceVariant}
+                                    />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[
+                                        styles.toggleButton,
+                                        viewType === 'grid' && [styles.toggleActive, { backgroundColor: themeColors.surfaceContainerLowest }]
+                                    ]}
+                                    onPress={() => handleViewToggle('grid')}
+                                >
+                                    <MaterialIcons
+                                        name="grid-view"
+                                        size={20}
+                                        color={viewType === 'grid' ? themeColors.primary : themeColors.onSurfaceVariant}
+                                    />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {showFilters && (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.repoChips}>
+                                {repos.map((r) => {
+                                    const isSelected = repo.id === r.id;
+                                    return (
+                                        <TouchableOpacity
+                                            key={r.id}
+                                            onPress={() => {
+                                                setSelectedRepository(r.id);
+                                                setPreferredRepository(r.id);
+                                            }}
+                                            style={[styles.repoChip, { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceContainerLowest }]}
+                                        >
+                                            <AtelierText variant="label" bold color={isSelected ? themeColors.onPrimary : themeColors.onSurfaceVariant}>
+                                                {r.name}
+                                            </AtelierText>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
+                        )}
+                    </View>
+                </BlurView>
             );
         }
 
@@ -918,8 +959,8 @@ export function SearchResultsView({
                         return (
                             <Animated.View
                                 key={res.resultKey}
-                                layout={LinearTransition.springify()}
-                                entering={FadeInDown.delay((index - 1) * 50 + i * 50)}
+                                layout={LinearTransition.duration(300)}
+                                entering={FadeInDown.delay(index * 80 + i * 40).duration(400)}
                                 exiting={FadeOut}
                                 style={{ width: '50%' }}
                             >
@@ -944,8 +985,8 @@ export function SearchResultsView({
 
         return (
             <Animated.View
-                layout={LinearTransition.springify()}
-                entering={FadeInDown.delay((index - 1) * 50)}
+                layout={LinearTransition.duration(300)}
+                entering={FadeInDown.delay(index * 80).duration(400)}
                 exiting={FadeOut}
                 style={viewType === 'grid' ? { width: '50%' } : { width: '100%' }}
             >
@@ -958,29 +999,7 @@ export function SearchResultsView({
         );
     };
 
-    const ListHeaderComp = hideHeader ? null : (
-        <View style={styles.resultsTitleContainer}>
-            <View style={styles.resultsHeaderTopRow}>
-                <View style={styles.resultsHeaderText}>
-                    <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
-                        Results for '{searchQuery}'
-                    </AtelierText>
-                    <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
-                        {content.data?.length || 0} volume{(content.data?.length || 0) !== 1 ? 's' : ''} found
-                    </AtelierText>
-                </View>
-                <TouchableOpacity
-                    onPress={onReset}
-                    style={[styles.resultsResetButton, { backgroundColor: themeColors.surfaceContainerHigh }]}
-                >
-                    <MaterialCommunityIcons name="arrow-left" size={18} color={themeColors.primary} />
-                    <AtelierText variant="label" bold color={themeColors.primary} style={styles.resultsResetLabel}>
-                        Reset
-                    </AtelierText>
-                </TouchableOpacity>
-            </View>
-        </View>
-    );
+
 
     const data = useMemo(() => {
         if (content.isLoading || content.error || !content.data || content.data.length === 0) {
@@ -989,26 +1008,34 @@ export function SearchResultsView({
         
         const results: SearchResultListItem[] = enrichedResults.map((item, index) => ({
             type: 'result',
-            resultKey: `${item.content.bookId}-${index}`,
+            resultKey: `results-${item.content.bookId}-${index}`,
             data: item,
         }));
         
+        const finalResults: any[] = [];
+        if (!hideHeader) {
+            finalResults.push({ type: 'result-header' });
+        }
+        finalResults.push({ type: 'sticky-header' });
+
         if (viewType === 'grid') {
-            const rows: any[] = [];
             for (let i = 0; i < results.length; i += 2) {
-                rows.push({
+                finalResults.push({
                     type: 'row',
                     items: results.slice(i, i + 2)
                 });
             }
-            return [{ type: 'sticky-header' }, ...rows];
+        } else {
+            finalResults.push(...results);
         }
         
-        return [
-            { type: 'sticky-header' },
-            ...results
-        ];
-    }, [enrichedResults, content.isLoading, content.error, content.data, viewType]);
+        return finalResults;
+    }, [enrichedResults, content.isLoading, content.error, content.data, viewType, hideHeader]);
+ 
+    const stickyIndices = useMemo(() => {
+        if (hideHeader) return [0];
+        return [1];
+    }, [hideHeader]);
 
     if (content.isLoading) {
         return (
@@ -1043,18 +1070,18 @@ export function SearchResultsView({
                 data={data}
                 renderItem={renderListElement}
                 keyExtractor={(item, index) => {
+                    if (item.type === 'result-header') return 'header';
                     if (item.type === 'sticky-header') return 'sticky';
                     if (item.type === 'row') {
                         const rowKey = item.items.map((entry: SearchResultListItem) => entry.resultKey).join('__');
                         return `row-${rowKey || index}`;
                     }
-                    return item.resultKey;
+                    return item.resultKey || `item-${index}`;
                 }}
                 numColumns={1}
                 key={viewType}
-                stickyHeaderIndices={[0]}
+                stickyHeaderIndices={stickyIndices}
                 contentContainerStyle={styles.resultsList}
-                ListHeaderComponent={ListHeaderComp}
                 refreshControl={
                     <RefreshControl
                         refreshing={content.isLoading}
@@ -1337,6 +1364,16 @@ const styles = StyleSheet.create({
         paddingTop: 8,
         paddingBottom: 16,
         zIndex: 10,
+    },
+    stickyHeaderContainer: {
+        overflow: 'hidden',
+        borderBottomWidth: 1,
+        borderBottomColor: 'rgba(255,255,255,0.05)',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
     },
     resultsTitleRow: {
         flexDirection: 'row',
