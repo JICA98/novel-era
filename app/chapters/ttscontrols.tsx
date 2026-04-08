@@ -3,7 +3,7 @@ import { TTS, ttsStore, SpeechAction, setTTS, isSpeechOrPause } from "./tts";
 import { Button, Icon, IconButton, Title, useTheme } from "react-native-paper";
 import React, { useEffect } from "react";
 import Slider from '@react-native-community/slider';
-import { defaultTTSConfig, TTSConfig, UserPreferences, userPrefStore } from "../userpref";
+import { defaultTTSConfig, TTSConfig, UserPreferences, userPrefStore, ReaderThemes } from "../userpref";
 import { MD3Colors } from "react-native-paper/lib/typescript/types";
 import * as Speech from 'expo-speech';
 import SelectDropdown from 'react-native-select-dropdown'
@@ -53,7 +53,12 @@ export function setUpVoices(setVoices: any) {
 
 
 export default function TTSControls() {
-    const ttsConfig = (userPrefStore((state: any) => state.userPref) as UserPreferences).ttsConfig;
+    const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
+    const ttsConfig = userPref.ttsConfig;
+    const editorPref = userPref.editorPreferences;
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
+    const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const setUserPref: SetTTSConfig = (userPrefStore((state: any) => state.setTTSConfig));
     const tts: TTS = ttsStore((state: any) => state.tts);
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
@@ -83,10 +88,10 @@ export default function TTSControls() {
             renderButton={(__, _) => {
                 const voice = voices.find((voice) => voice.identifier === ttsConfig.voice) || voices[0];
                 return (
-                    <Button mode="contained-tonal" style={styles.dropdownButtonStyle}>
-                        <Icon source="microphone" size={20} />
+                    <Button mode="contained-tonal" style={[styles.dropdownButtonStyle, { backgroundColor: colors.surfaceVariant }]} textColor={readerTextColor}>
+                        <Icon source="microphone" size={20} color={readerTextColor} />
                         <View style={{ width: 8 }} />
-                        <Title style={{ fontSize: 16 }} >{voice.speaker}</Title>
+                        <Title style={{ fontSize: 16, color: readerTextColor }} >{voice.speaker}</Title>
                     </Button>
                 );
             }}
@@ -94,25 +99,25 @@ export default function TTSControls() {
                 return (
                     <View style={[
                         styles.dropdownItemStyle,
-                        [{ backgroundColor: colors.background, ...(isSelected && { backgroundColor: colors.primary }) }]
+                        [{ backgroundColor: readerBgColor, ...(isSelected && { backgroundColor: colors.primary }) }]
                     ]}>
                         <Text style={[styles.dropdownItemTxtStyle, {
-                            color: colors.primary,
+                            color: readerTextColor,
                             ...(isSelected && { color: colors.background })
                         }]}>{item.label}</Text>
                     </View>
                 );
             }}
             showsVerticalScrollIndicator={false}
-            dropdownStyle={[styles.dropdownMenuStyle, { backgroundColor: colors.surface }]}
+            dropdownStyle={[styles.dropdownMenuStyle, { backgroundColor: readerBgColor }]}
         />
     </>);
 
     const controlButtons = <>
         <View style={styles.bottomBarStyle}>
-            <IconButton icon="stop" onPress={() => updateTTS('stop')} />
+            <IconButton icon="stop" iconColor={readerTextColor} onPress={() => updateTTS('stop')} />
             <View style={{ width: 16 }} />
-            <IconButton icon={tts.state === 'pause' ? 'play' : 'pause'}
+            <IconButton icon={tts.state === 'pause' ? 'play' : 'pause'} iconColor={readerTextColor}
                 onPress={() => updateTTS(tts.state === 'pause' ? 'speak' : 'pause')} />
             <View style={{ width: 16 }} />
             {voicesSelect}
@@ -130,6 +135,7 @@ export default function TTSControls() {
                 step={0.1}
                 colors={colors}
                 defaultValue={defaultTTSConfig.rate}
+                textColor={readerTextColor}
             />
             <SliderControl
                 label={"Volume"}
@@ -140,6 +146,7 @@ export default function TTSControls() {
                 step={0.1}
                 colors={colors}
                 defaultValue={defaultTTSConfig.volume}
+                textColor={readerTextColor}
             />
             <SliderControl
                 label={"Pitch"}
@@ -150,6 +157,7 @@ export default function TTSControls() {
                 step={0.1}
                 colors={colors}
                 defaultValue={defaultTTSConfig.pitch}
+                textColor={readerTextColor}
             />
         </View>
     </>
@@ -211,17 +219,17 @@ const styles = StyleSheet.create({
     },
 });
 
-function SliderControl({ label, value, onValueChange, min, max, step, colors, defaultValue }:
+function SliderControl({ label, value, onValueChange, min, max, step, colors, defaultValue, textColor }:
     {
         label: string, value: number, onValueChange: (value: number) => void,
-        min: number, max: number, step: number, colors: MD3Colors
-        defaultValue: number
+        min: number, max: number, step: number, colors: MD3Colors,
+        defaultValue: number, textColor: string
     }) {
     return (
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginVertical: 5 }}>
-            <Title style={{ fontSize: 10 }}>{label}</Title>
+            <Title style={{ fontSize: 10, color: textColor }}>{label}</Title>
             <View style={{ width: 10 }}></View>
-            <Title style={{ fontSize: 15 }}>{(value * 10).toFixed(0)}</Title>
+            <Title style={{ fontSize: 15, color: textColor }}>{(value * 10).toFixed(0)}</Title>
             <View style={{ flex: 1 }}>
                 <Slider
                     value={value}
@@ -235,10 +243,10 @@ function SliderControl({ label, value, onValueChange, min, max, step, colors, de
                 />
             </View>
             {defaultValue !== value && <IconButton size={16} style={{ padding: 0, margin: 0 }}
-                icon="refresh" onPress={() => onValueChange(defaultValue)} />}
+                iconColor={textColor} icon="refresh" onPress={() => onValueChange(defaultValue)} />}
             {defaultValue === value && <View style={{ marginHorizontal: 10 }}></View>}
-            <IconButton size={16} style={{ padding: 0, margin: 0 }} icon="minus" onPress={() => onValueChange(value - step)} />
-            <IconButton size={16} style={{ padding: 0, margin: 0 }} icon="plus" onPress={() => onValueChange(value + step)} />
+            <IconButton size={16} style={{ padding: 0, margin: 0 }} iconColor={textColor} icon="minus" onPress={() => onValueChange(value - step)} />
+            <IconButton size={16} style={{ padding: 0, margin: 0 }} iconColor={textColor} icon="plus" onPress={() => onValueChange(value + step)} />
         </View>
     );
 }

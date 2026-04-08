@@ -167,7 +167,7 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
         <PagerView style={{ flex: 1 }} initialPage={0}>
             {pages.map((_, index) => {
                 return (
-                    <View key={index} style={{ flex: 1, marginHorizontal: 10 }}>
+                    <View key={index} style={{ flex: 1, paddingHorizontal: editorPref.padding || 16 }}>
                         <FlatList
                             ref={listRef}
                             onScroll={onScroll}

@@ -15,7 +15,10 @@ import { setUpFirebaseUser, firebaseStore } from "./lib/firebaseBackup";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 
-SplashScreen.preventAutoHideAsync();
+// Keep splash screen visible until fonts are loaded
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // preventAutoHideAsync may fail in some configurations - safe to ignore
+});
 
 export function pLimitLit(concurrency: number) {
   return p.pLimit(concurrency);

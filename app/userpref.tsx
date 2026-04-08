@@ -13,7 +13,17 @@ export interface EditorPreferences {
     letterSpacing: number;
     textAlign: 'left' | 'center' | 'right' | 'justify' | 'auto';
     hasChapterNumber: boolean;
+    lineHeight?: number;
+    padding?: number;
+    theme?: 'light' | 'sepia' | 'dark' | 'oled';
 }
+
+export const ReaderThemes = {
+    light: { background: '#fcf8fb', text: '#1b1b1e' },
+    sepia: { background: '#F4ECD8', text: '#2f1500' },
+    dark: { background: '#171c3c', text: '#dee1ff' },
+    oled: { background: '#000000', text: '#ffffff' },
+};
 
 export interface TTSConfig {
     rate: number;
@@ -40,6 +50,9 @@ export const defaultEditorPreferences: EditorPreferences = {
     letterSpacing: 0,
     textAlign: 'left',
     hasChapterNumber: false,
+    lineHeight: 1.5,
+    padding: 16,
+    theme: 'light',
 };
 
 export interface UserPreferences {

@@ -9,7 +9,7 @@ import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNe
 import { errorPlaceholder } from "../placeholders";
 import { isSpeechOrPause, setTTS, SpeechAction, TTS, ttsStore } from "./tts";
 import TTSControls from "./ttscontrols";
-import { UserPreferences, userPrefStore } from "../userpref";
+import { UserPreferences, userPrefStore, ReaderThemes } from "../userpref";
 import { FAB } from 'react-native-paper';
 import { MenuItem } from "../components/menu";
 import { router } from "expo-router";
@@ -32,6 +32,10 @@ const ChapterLayout: React.FC = () => {
     const tts: TTS = ttsStore((state: any) => state.tts);
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
+    const editorPref = userPref.editorPreferences;
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
+    const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const [focusedMode, setFocusedMode] = useState(props.focusedMode);
     const colors = useTheme().colors;
     const [tocVisible, setTocVisible] = useState(false);
@@ -101,13 +105,13 @@ const ChapterLayout: React.FC = () => {
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <SafeAreaView style={[styles.container, { backgroundColor: readerBgColor }]}>
             {!focusedMode && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16 }}>
-                    <IconButton icon="arrow-left" iconColor={colors.onBackground} onPress={() => router.back()} />
+                    <IconButton icon="arrow-left" iconColor={readerTextColor} onPress={() => router.back()} />
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <IconButton icon="palette" iconColor={colors.onBackground} onPress={() => setAppearanceVisible(true)} />
-                        <IconButton icon="volume-high" iconColor={colors.onBackground} onPress={() => {
+                        <IconButton icon="palette" iconColor={readerTextColor} onPress={() => setAppearanceVisible(true)} />
+                        <IconButton icon="volume-high" iconColor={readerTextColor} onPress={() => {
                             if (!isSpeechOrPause(tts.state)) {
                                 updateTTS('speak');
                             }

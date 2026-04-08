@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { isSpeechOrPause, Sentence, SpeechAction, ttsStore } from './tts';
-import { UserPreferences, userPrefStore } from '../userpref';
+import { UserPreferences, userPrefStore, ReaderThemes } from '../userpref';
 import { useTheme } from 'react-native-paper';
 
 // HTMLRenderer component
@@ -10,12 +10,17 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
     const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
     const setCurrentSentence: (s: string) => void = ttsStore((state: any) => state.setCurrentSentence);
     const theme = useTheme();
+    
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
+    const lhRatio = editorPref.lineHeight || 1.5;
+
     let sentenceStyle: StyleProp<TextStyle> = {
         fontSize: editorPref.fontSize,
-        color: theme.colors.onBackground,
+        color: readerTextColor,
         fontFamily: editorPref.fontFamily,
         letterSpacing: editorPref.letterSpacing,
-        lineHeight: editorPref.fontSize * 1.8,
+        lineHeight: editorPref.fontSize * lhRatio,
     };
 
     if (isSpeechOrPause(state) && currentSentence === sentence.id) {
