@@ -50,6 +50,7 @@ interface BookListItemProps {
     lastChapterRead?: string;
     lastReadTimestamp?: number;
     onPress?: () => void;
+    renderRightAction?: () => React.ReactNode;
 }
 
 export const BookListItem: React.FC<BookListItemProps> = ({
@@ -60,7 +61,8 @@ export const BookListItem: React.FC<BookListItemProps> = ({
     totalChapters,
     lastChapterRead,
     lastReadTimestamp,
-    onPress
+    onPress,
+    renderRightAction
 }) => {
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
@@ -169,6 +171,13 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                         </View>
                     ) : null}
                 </View>
+
+                {/* Right Action (e.g., Delete button) */}
+                {renderRightAction && (
+                    <View style={styles.rightActionContainer}>
+                        {renderRightAction()}
+                    </View>
+                )}
             </View>
         </TouchableOpacity>
     );
@@ -273,5 +282,9 @@ const styles = StyleSheet.create({
     },
     droppedSection: {
         marginTop: 8,
+    },
+    rightActionContainer: {
+        justifyContent: 'center',
+        paddingLeft: 8,
     },
 });

@@ -15,6 +15,7 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
         color: theme.colors.onBackground,
         fontFamily: editorPref.fontFamily,
         letterSpacing: editorPref.letterSpacing,
+        lineHeight: editorPref.fontSize * 1.8,
     };
 
     if (isSpeechOrPause(state) && currentSentence === sentence.id) {
@@ -61,57 +62,53 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
 // Define styles for each HTML tag
 const styles: { [key: string]: TextStyle } = StyleSheet.create({
     p: {
-        fontSize: 16,
-        marginVertical: 8,
+        marginVertical: 16,
     },
     h1: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginVertical: 10,
+        marginVertical: 16,
     },
     h2: {
         fontSize: 22,
         fontWeight: 'bold',
-        marginVertical: 10,
+        marginVertical: 16,
     },
     h3: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginVertical: 10,
+        marginVertical: 16,
     },
     h4: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginVertical: 10,
+        marginVertical: 16,
     },
     h5: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginVertical: 10,
+        marginVertical: 16,
     },
     h6: {
         fontSize: 14,
         fontWeight: 'bold',
-        marginVertical: 10,
+        marginVertical: 16,
     },
     span: {
-        fontSize: 16,
     },
     a: {
         color: 'blue',
         textDecorationLine: 'underline',
     },
     li: {
-        fontSize: 16,
-        marginVertical: 4,
+        marginVertical: 8,
     },
     div: {
-        marginVertical: 8,
+        marginVertical: 16,
     },
     blockquote: {
-        fontSize: 16,
         fontStyle: 'italic',
-        marginVertical: 8,
+        marginVertical: 16,
         paddingLeft: 10,
         borderLeftWidth: 2,
         borderLeftColor: 'gray',

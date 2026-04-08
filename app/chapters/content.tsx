@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, } from 'react';
 import { View, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, FlatList, ViewToken } from 'react-native';
 import PagerView from 'react-native-pager-view';
-import { IconButton } from 'react-native-paper';
+import { IconButton, Button } from 'react-native-paper';
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import { ChapterTracker, chapterTrackerStore, saveTracker, getOrCreateTrackerStore } from '../favorites/tracker';
 import * as Speech from 'expo-speech';
@@ -131,28 +131,38 @@ export const RenderPagedContent: React.FC<RenderChapterProps> = (props: RenderCh
     }
     const ListHeaderComponent = (<View>
         <View style={{ margin: props.focusedMode ? 40 : 20 }} ></View>
-        {(props.id !== `1` && props.continueReading && props.enableNextPrev) && (
-            <View style={{ padding: 16, marginBottom: 30, alignItems: 'center' }}>
-                <IconButton
-                    icon={'arrow-up'}
-                    mode='contained-tonal'
-                    size={40}
-                    onPress={() => navigateToNextChapter(props, -1)} />
+    </View>);
+    const ListFooterComponent = (<View style={{ paddingVertical: 40, alignItems: 'center', borderTopWidth: 1, borderTopColor: 'rgba(150, 150, 150, 0.2)', marginTop: 20, marginBottom: 70 }}>
+        {props.enableNextPrev && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 30 }}>
+                {props.id !== `1` && (
+                    <Button
+                        icon="arrow-left"
+                        mode="text"
+                        textColor="gray"
+                        onPress={() => navigateToNextChapter(props, -1)}>
+                        Previous
+                    </Button>
+                )}
+                {(props.id !== `1` && props.id !== props.content.latestChapter?.toString()) && (
+                    <View style={{ width: 1, height: 20, backgroundColor: 'rgba(150, 150, 150, 0.3)' }} />
+                )}
+                {props.id !== props.content.latestChapter?.toString() && (
+                    <Button
+                        icon="arrow-right"
+                        mode="text"
+                        textColor="gray"
+                        contentStyle={{ flexDirection: 'row-reverse' }}
+                        onPress={() => {
+                            updateChapterProgress(1);
+                            return navigateToNextChapter(props, 1);
+                        }}>
+                        Next
+                    </Button>
+                )}
             </View>
         )}
     </View>);
-    const ListFooterComponent = (<>{(props.id !== props.content.latestChapter?.toString() && props.enableNextPrev) && (
-        <View style={{ padding: 16, marginBottom: 70, alignItems: 'center' }}>
-            <IconButton
-                icon={'arrow-down'}
-                mode='contained-tonal'
-                size={40}
-                onPress={() => {
-                    updateChapterProgress(1);
-                    return navigateToNextChapter(props, 1);
-                }} />
-        </View>
-    )}</>);
     return (
         <PagerView style={{ flex: 1 }} initialPage={0}>
             {pages.map((_, index) => {
