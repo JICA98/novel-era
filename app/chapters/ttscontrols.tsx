@@ -154,7 +154,7 @@ export default function TTSControls() {
         </View>
     </>
 
-    return (controlVisible && <>
+    return (<>
         <View style={{ paddingHorizontal: 5, paddingTop: 5 }}>
             {ttsConfigOptions}
             {controlButtons}

@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { Dimensions, View, SafeAreaView, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
 import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
 import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
-import { AppBar } from "../components/appbar";
 import { RenderPagedContent } from "./content";
 import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNextChapter } from "./common";
 import { errorPlaceholder } from "../placeholders";
@@ -13,6 +12,8 @@ import TTSControls from "./ttscontrols";
 import { UserPreferences, userPrefStore } from "../userpref";
 import { FAB } from 'react-native-paper';
 import { MenuItem } from "../components/menu";
+import { router } from "expo-router";
+import { ReaderNavigationToc, ReaderAppearanceSettings, ReaderTTSControlsSettings } from "./modals";
 
 const ChapterLayout: React.FC = () => {
     const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
@@ -33,6 +34,9 @@ const ChapterLayout: React.FC = () => {
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const [focusedMode, setFocusedMode] = useState(props.focusedMode);
     const colors = useTheme().colors;
+    const [tocVisible, setTocVisible] = useState(false);
+    const [appearanceVisible, setAppearanceVisible] = useState(false);
+    const [ttsVisible, setTtsVisible] = useState(false);
 
     useEffect(() => {
         fetchChapterData();
@@ -99,7 +103,23 @@ const ChapterLayout: React.FC = () => {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
             {!focusedMode && (
-                <AppBar title={`Chapter ${props.id}`} actions={hasDataLoaded ? chapterActions : []}></AppBar>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16 }}>
+                    <IconButton icon="arrow-left" iconColor={colors.onBackground} onPress={() => router.back()} />
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <IconButton icon="palette" iconColor={colors.onBackground} onPress={() => setAppearanceVisible(true)} />
+                        <IconButton icon="volume-high" iconColor={colors.onBackground} onPress={() => {
+                            if (!isSpeechOrPause(tts.state)) {
+                                updateTTS('speak');
+                            }
+                            setTtsVisible(true);
+                        }} />
+                        <Button 
+                            mode="contained-tonal" 
+                            onPress={() => setTocVisible(true)}>
+                            Ch. {props.id}
+                        </Button>
+                    </View>
+                </View>
             )}
             {focusedMode && (<StatusBar hidden />)}
             {child}
@@ -107,7 +127,6 @@ const ChapterLayout: React.FC = () => {
                 style={styles.invisibleButton}
                 onPress={() => setFocusedMode(!focusedMode)}
             />)}
-            {!focusedMode && (renderBottomBar())}
             {
                 focusedMode && (isSpeechOrPause(tts.state)) &&
                 <>
@@ -123,32 +142,12 @@ const ChapterLayout: React.FC = () => {
                         onPress={() => updateTTS(tts.state === 'speak' ? 'pause' : 'speak')} />
                 </>
             }
+            <ReaderNavigationToc visible={tocVisible} onDismiss={() => setTocVisible(false)} props={props} />
+            <ReaderAppearanceSettings visible={appearanceVisible} onDismiss={() => setAppearanceVisible(false)} />
+            <ReaderTTSControlsSettings visible={ttsVisible} onDismiss={() => setTtsVisible(false)} />
         </SafeAreaView >
     );
 
-    function renderBottomBar(): React.ReactNode {
-
-        const renderButtonGroup = <>
-            <View style={styles.bottomBarStyle}>
-                <IconButton icon="crop-free" onPress={() => setFocusedMode(!focusedMode)} />
-                <View style={{ width: 16 }} />
-                <IconButton icon="minus" onPress={() => updateFontSize(-1)} />
-                <View style={{ width: 16 }} />
-                <IconButton icon="plus" onPress={() => updateFontSize(1)} />
-                <View style={{ width: 16 }} />
-                <IconButton icon="volume-high" onPress={() => updateTTS(tts.state === 'speak' ? 'stop' : 'speak')} />
-            </View>
-        </>;
-        return (
-            <View style={{
-                backgroundColor: colors.surfaceVariant,
-                position: 'absolute' as 'absolute', bottom: 0, left: 0, right: 0,
-            }}>
-                {<TTSControls />}
-                {renderButtonGroup}
-            </View>
-        );
-    }
 }
 
 

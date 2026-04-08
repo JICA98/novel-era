@@ -1,5 +1,5 @@
 import JSZip from "jszip";
-import { ChapterData } from "../chapters/_layout";
+import { ChapterData } from "../chapters/common";
 import * as FS from "expo-file-system";
 import { saveFile } from "../downloads/utils";
 
