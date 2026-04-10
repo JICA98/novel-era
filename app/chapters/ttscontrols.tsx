@@ -93,6 +93,23 @@ export default function TTSControls() {
         setTTS({ tts: t, setTTS: setTTStore });
     }
 
+    function jumpSentence(offset: number) {
+        if (!tts.ttsQueue || tts.ttsQueue.length === 0) return;
+        const newIndex = Math.max(0, Math.min(tts.ttsQueue.length - 1, tts.index + offset));
+        let t: TTS = { ...tts, index: newIndex };
+        if (t.ttsQueue[newIndex]) {
+            t.currentSentence = t.ttsQueue[newIndex].id;
+        }
+        
+        Speech.stop().then(() => {
+            if (t.state === 'speak') {
+                setTTS({ tts: t, setTTS: setTTStore });
+            } else {
+                setTTStore(t);
+            }
+        });
+    }
+
     function updateTTSConfigBoth(ttsConfig: TTSConfig) {
         setUserPref(ttsConfig);
         updateTTSConfig(ttsConfig);
@@ -169,31 +186,85 @@ export default function TTSControls() {
         </View>
     );
 
+    const currentSentenceText = tts.ttsQueue?.[tts.index]?.text || "No sentence selected.";
+    const lhRatio = editorPref.lineHeight || 1.5;
+
     const centerAction = (
         <View style={{ alignItems: 'center', marginBottom: 32, paddingTop: 0 }}>
-            <View style={{ position: 'relative', width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
-                {tts.state === 'speak' && (
-                    <View style={{ position: 'absolute', width: 140, height: 140, backgroundColor: theme.colors.primary, opacity: 0.2, borderRadius: 70 }} />
-                )}
-                <TouchableOpacity
-                    onPress={() => updateTTS(tts.state === 'pause' ? 'speak' : (tts.state === 'speak' ? 'pause' : 'speak'))}
+            {/* CURRENT SENTENCE CARD */}
+            <View style={{
+                backgroundColor: theme.colors.elevation?.level2 || theme.colors.surfaceVariant,
+                padding: 16,
+                marginTop: 32,
+                borderRadius: 16,
+                marginBottom: 24,
+                width: '100%',
+                height: 200,
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <Text 
+                    adjustsFontSizeToFit
+                    numberOfLines={5}
                     style={{
-                        width: 96,
-                        height: 96,
-                        borderRadius: 48,
-                        backgroundColor: theme.colors.primaryContainer,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        elevation: 10,
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 10 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 20,
-                    }}
-                >
-                    <Icon source={tts.state === 'speak' ? 'pause' : 'play'} size={48} color={theme.colors.onPrimaryContainer} />
+                        fontSize: editorPref.fontSize,
+                        color: readerTextColor,
+                        fontFamily: editorPref.fontFamily,
+                        letterSpacing: editorPref.letterSpacing,
+                        lineHeight: editorPref.fontSize * lhRatio,
+                        textAlign: 'center',
+                    }}>
+                    {currentSentenceText}
+                </Text>
+            </View>
+
+            {/* CONTROLS ROW */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+                <TouchableOpacity 
+                    onPress={() => jumpSentence(-1)}
+                    style={{
+                        width: 56, height: 56, borderRadius: 28, 
+                        backgroundColor: 'rgba(128,128,128,0.1)', 
+                        alignItems: 'center', justifyContent: 'center'
+                    }}>
+                    <Icon source="skip-previous" size={32} color={readerTextColor} />
+                </TouchableOpacity>
+
+                <View style={{ position: 'relative', width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
+                    {tts.state === 'speak' && (
+                        <View style={{ position: 'absolute', width: 140, height: 140, backgroundColor: theme.colors.primary, opacity: 0.2, borderRadius: 70 }} />
+                    )}
+                    <TouchableOpacity
+                        onPress={() => updateTTS(tts.state === 'pause' ? 'speak' : (tts.state === 'speak' ? 'pause' : 'speak'))}
+                        style={{
+                            width: 96,
+                            height: 96,
+                            borderRadius: 48,
+                            backgroundColor: theme.colors.primaryContainer,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            elevation: 10,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 10 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 20,
+                        }}
+                    >
+                        <Icon source={tts.state === 'speak' ? 'pause' : 'play'} size={48} color={theme.colors.onPrimaryContainer} />
+                    </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity 
+                    onPress={() => jumpSentence(1)}
+                    style={{
+                        width: 56, height: 56, borderRadius: 28, 
+                        backgroundColor: 'rgba(128,128,128,0.1)', 
+                        alignItems: 'center', justifyContent: 'center'
+                    }}>
+                    <Icon source="skip-next" size={32} color={readerTextColor} />
                 </TouchableOpacity>
             </View>
+
             <Text style={{ marginTop: 16, fontSize: 12, fontWeight: 'bold', color: readerTextColor, opacity: 0.5, textTransform: 'uppercase', letterSpacing: 2 }}>
                 {tts.state === 'speak' ? 'Narration Active' : 'Narration Paused'}
             </Text>

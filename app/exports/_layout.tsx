@@ -154,6 +154,7 @@ function ExportDialog({
                                         values={range}
                                         min={1}
                                         max={Math.max(1, maxChapters)}
+                                        maxMarkerOverlapDistance={(49 * (width - 96)) / Math.max(1, maxChapters - 1)}
                                         onValuesChange={(value) => {
                                             let [start, end] = value;
                                             if (end - start >= 50) {

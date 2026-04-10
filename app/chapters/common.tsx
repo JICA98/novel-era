@@ -21,6 +21,7 @@ export interface RenderChapterProps {
     data: string;
     repo: Repo,
     returnToContent?: boolean;
+    returnToContentBehavior?: 'back' | 'replace';
     continueReading?: boolean;
     fromPrevious?: boolean;
     enableNextPrev: boolean;

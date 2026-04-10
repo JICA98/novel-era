@@ -89,6 +89,10 @@ export function useAccountSettings(setSnackbarText: (text: string) => void) {
     }, [showRestore, authUser.authId]);
 
     const handleBackup = async () => {
+        if (!authUser.authId) {
+            setSnackbarText('Sign in to enable cloud backup');
+            return;
+        }
         const chapterPreferences = await getAllTrackersAsync();
         const favPreferences = await getFavoriteTrackersAsync();
         const result = await backupPreferences({
@@ -107,6 +111,10 @@ export function useAccountSettings(setSnackbarText: (text: string) => void) {
     };
 
     const handleRestore = async () => {
+        if (!authUser.authId) {
+            setSnackbarText('Sign in to restore from cloud backup');
+            return;
+        }
         if (restorePreviewLoading) {
             setSnackbarText('Still loading cloud backup preview. Please wait a moment.');
             return;
@@ -218,6 +226,9 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     
     const actions = useAccountSettings(setSnackbarText);
     const { authUser } = actions;
+    const isSignedIn = authUser.state === AuthState.SIGNED_IN;
+    const authStatusLabel = isSignedIn ? `Signed in with ${authUser.provider ?? 'account'}` : 'Signed out';
+    const backupActionsDisabled = !isSignedIn;
 
     function prevalidation(): boolean {
         if (!email || !password) {
@@ -275,9 +286,9 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
         }
     }
 
-    function signInSignUpPage() {
+    function signInOptions() {
         return (
-            <View style={styles.container}>
+            <>
                 <View style={[styles.verticallySpaced, styles.mt20]}>
                     <TextInput
                         label="Email"
@@ -318,52 +329,42 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                         Sign in with Google
                     </Button>
                 </View>
-            </View>
+            </>
         );
     }
 
-    function accountInfoPage() {
+    function cloudBackupActions() {
         return (
-            <View style={styles.container}>
-                <View style={[styles.verticallySpaced]}>
-                    <Title style={{ color: colors.primary }}>Signed in with</Title>
-                    <View style={{ marginTop: 10 }}></View>
-                    <TextInput
-                        label="Email"
-                        mode="outlined"
-                        value={authUser.email ?? '?'}
-                        editable={false}
-                    />
-                    <View style={styles.mt20}></View>
+            <>
+                <Divider style={styles.sectionDivider} />
+                <Title style={{ color: colors.primary }}>Cloud Backup</Title>
+                <Text style={styles.helperText}>
+                    {isSignedIn
+                        ? 'Cloud backup and restore are enabled for your signed-in account.'
+                        : 'Sign in with Google or email to enable cloud backup and restore.'}
+                </Text>
+                <View style={styles.mt20}></View>
+                <View style={styles.actionRow}>
                     <Button
-                        mode="contained"
+                        mode="contained-tonal"
+                        disabled={backupActionsDisabled}
                         onPress={() => {
-                            actions.setSignOut(true);
+                            actions.setBackup(true);
                         }}
                     >
-                        Sign out
+                        Backup Preferences
                     </Button>
-                    <View style={styles.mt20}></View>
-                    <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Button
-                            mode="contained-tonal"
-                            onPress={() => {
-                                actions.setBackup(true);
-                            }}
-                        >
-                            Backup Preferences
-                        </Button>
-                        <Button
-                            mode="contained-tonal"
-                            onPress={() => {
-                                actions.setRestore(true);
-                            }}
-                        >
-                            Restore Preferences
-                        </Button>
-                    </View>
+                    <Button
+                        mode="contained-tonal"
+                        disabled={backupActionsDisabled}
+                        onPress={() => {
+                            actions.setRestore(true);
+                        }}
+                    >
+                        Restore Preferences
+                    </Button>
                 </View>
-            </View>
+            </>
         );
     }
 
@@ -377,8 +378,39 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
                 onPress={handlePress}
                 titleStyle={{ color: colors.primary }}
             >
-                {authUser.state === AuthState.SIGNED_OUT && signInSignUpPage()}
-                {authUser.state === AuthState.SIGNED_IN && accountInfoPage()}
+                <View style={styles.container}>
+                    <Title style={{ color: colors.primary }}>Account Status</Title>
+                    <View style={styles.mt20}></View>
+                    <TextInput
+                        label="Status"
+                        mode="outlined"
+                        value={authStatusLabel}
+                        editable={false}
+                    />
+                    <View style={styles.verticallySpaced}>
+                        <TextInput
+                            label="Email"
+                            mode="outlined"
+                            value={authUser.email || 'Not signed in'}
+                            editable={false}
+                        />
+                    </View>
+                    {isSignedIn ? (
+                        <View style={styles.verticallySpaced}>
+                            <Button
+                                mode="contained"
+                                onPress={() => {
+                                    actions.setSignOut(true);
+                                }}
+                            >
+                                Sign out
+                            </Button>
+                        </View>
+                    ) : (
+                        signInOptions()
+                    )}
+                    {cloudBackupActions()}
+                </View>
             </List.Accordion>
         </>
     )
@@ -576,6 +608,18 @@ function collectTrackerContent(storeCollection: Map<string, any> | Record<string
 const styles = StyleSheet.create({
     container: {
         paddingHorizontal: 12,
+    },
+    actionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    helperText: {
+        marginTop: 6,
+    },
+    sectionDivider: {
+        marginTop: 20,
+        marginBottom: 20,
     },
     verticallySpaced: {
         paddingTop: 4,

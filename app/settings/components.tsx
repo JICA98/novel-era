@@ -46,6 +46,7 @@ interface SettingsItemProps {
   rightElement?: React.ReactNode;
   onPress?: () => void;
   showChevron?: boolean;
+  disabled?: boolean;
 }
 
 export const SettingsItem: React.FC<SettingsItemProps> = ({ 
@@ -54,7 +55,8 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
   icon, 
   rightElement, 
   onPress,
-  showChevron = false
+  showChevron = false,
+  disabled = false,
 }) => {
   const systemColorScheme = useColorScheme();
   const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
@@ -76,7 +78,10 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
             {title}
           </AtelierText>
           {description && (
-            <AtelierText variant="caption" style={{ color: themeColors.onSurfaceVariant }}>
+            <AtelierText
+              variant="caption"
+              style={{ color: disabled ? themeColors.outline : themeColors.onSurfaceVariant }}
+            >
               {description}
             </AtelierText>
           )}
@@ -85,7 +90,7 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
       
       <View style={styles.itemRight}>
         {rightElement}
-        {showChevron && (
+        {showChevron && !disabled && (
           <MaterialCommunityIcons 
             name="chevron-right" 
             size={20} 
@@ -96,10 +101,10 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
     </View>
   );
 
-  if (onPress) {
+  if (onPress && !disabled) {
     return (
       <TouchableOpacity 
-        style={styles.itemContainer} 
+        style={[styles.itemContainer, disabled && styles.itemDisabled]} 
         onPress={onPress}
         activeOpacity={0.6}
       >
@@ -109,7 +114,7 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
   }
 
   return (
-    <View style={styles.itemContainer}>
+    <View style={[styles.itemContainer, disabled && styles.itemDisabled]}>
       {content}
     </View>
   );
@@ -180,6 +185,9 @@ const styles = StyleSheet.create({
   itemContainer: {
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  itemDisabled: {
+    opacity: 0.5,
   },
   itemWrapper: {
     flexDirection: 'row',

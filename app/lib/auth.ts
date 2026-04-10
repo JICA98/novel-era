@@ -38,6 +38,7 @@ export enum AuthState {
 export interface AuthUser {
   authId?: string;
   email: string;
+  provider?: string;
   state: AuthState;
 }
 
@@ -54,11 +55,13 @@ let googleNativeConfigured = false;
 
 export const authStateStore = createStore({
   email: "",
+  provider: undefined,
   state: AuthState.SIGNED_OUT,
 } as AuthUser);
 
 authStateStore.getState().setContent({
   email: "",
+  provider: undefined,
   state: AuthState.SIGNED_OUT,
 } as AuthUser);
 
@@ -76,7 +79,7 @@ export function setUpAuthUser(setAuthState: SetAuthState): Promise<AuthUser> {
       onAuthStateChanged(auth, (user: User | null) => {
         const authUser = user
           ? mapFirebaseUser(user)
-          : ({ email: "", state: AuthState.SIGNED_OUT } as AuthUser);
+          : ({ email: "", provider: undefined, state: AuthState.SIGNED_OUT } as AuthUser);
 
         setAuthState(authUser);
 
@@ -126,6 +129,7 @@ export async function signInWithGoogle(): Promise<void> {
         await GoogleSigninNative.hasPlayServices({ showPlayServicesUpdateDialog: true });
       }
       const { idToken } = await GoogleSigninNative.signIn();
+      console.log("Google Sign-In result received", { hasIdToken: Boolean(idToken), platform: Platform.OS });
       if (!idToken) {
         throw new Error("Google sign-in did not return an ID token.");
       }
@@ -136,6 +140,11 @@ export async function signInWithGoogle(): Promise<void> {
 
     await signInWithPopup(auth, googleProvider);
   } catch (error) {
+    console.error("Google sign-in failed", {
+      message: error instanceof Error ? error.message : String(error),
+      code: typeof error === "object" && error && "code" in error ? (error as { code?: string | number }).code : undefined,
+      error,
+    });
     const message =
       resolveGoogleNativeError(error) ?? extractFirebaseMessage(error, "Google sign-in failed.");
     throw new Error(message);
@@ -158,9 +167,18 @@ export async function signOutUser(): Promise<void> {
 }
 
 function mapFirebaseUser(user: User): AuthUser {
+  const providerId = user.providerData.find((provider) => provider?.providerId)?.providerId;
+  const provider =
+    providerId === "google.com"
+      ? "Google"
+      : providerId === "password"
+        ? "Email"
+        : providerId ?? "Authenticated";
+
   return {
     authId: user.uid,
     email: user.email ?? "",
+    provider,
     state: AuthState.SIGNED_IN,
   };
 }
@@ -200,15 +218,18 @@ function ensureNativeGoogleConfigured(): void {
     throw new Error("Google Sign-In native module is unavailable.");
   }
 
-  const webClientId = googleExtraConfig.googleWebClientId;
-  if (!webClientId) {
+  const configuredWebClientId =
+    googleExtraConfig.googleWebClientId?.trim() ||
+    (Platform.OS === "android" ? "autoDetect" : undefined);
+
+  if (!configuredWebClientId) {
     throw new Error(
-      "Missing googleWebClientId in Expo config. Update app.json extra.googleWebClientId with your Web Client ID."
+      "Missing googleWebClientId in Expo config. Add your Firebase Web Client ID to app.json extra.googleWebClientId."
     );
   }
 
   GoogleSigninNative.configure({
-    webClientId,
+    webClientId: configuredWebClientId,
     iosClientId: googleExtraConfig.googleIosClientId,
     offlineAccess: false,
   });
@@ -222,8 +243,8 @@ function resolveGoogleNativeError(error: unknown): string | undefined {
   }
 
   if (typeof error === "object" && "code" in error) {
-    const code = (error as { code?: string }).code;
-    if (typeof code === "string" && googleStatusCodes) {
+    const code = String((error as { code?: string | number }).code ?? "");
+    if (googleStatusCodes) {
       if (code === googleStatusCodes.SIGN_IN_CANCELLED || code === String(googleStatusCodes.SIGN_IN_CANCELLED)) {
         return "Google sign-in was cancelled.";
       }
@@ -236,6 +257,10 @@ function resolveGoogleNativeError(error: unknown): string | undefined {
       ) {
         return "Google Play Services is unavailable or needs to be updated.";
       }
+    }
+
+    if (code === "DEVELOPER_ERROR" || code === "10") {
+      return "Google Sign-In is not fully configured for this Android app yet. Add the app SHA-1 in Firebase, enable Google sign-in, then download a fresh google-services.json.";
     }
   }
 

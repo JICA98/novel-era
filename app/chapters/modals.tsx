@@ -476,6 +476,23 @@ export const ReaderTTSControlsSettings = ({
             >
                 <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
                     <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
+                    <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                        <IconButton
+                            icon="chevron-down"
+                            iconColor="#ffffff"
+                            size={32}
+                            onPress={onDismiss}
+                            style={{
+                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                borderWidth: 1,
+                                borderColor: 'rgba(255, 255, 255, 0.2)',
+                                width: 48,
+                                height: 48,
+                                borderRadius: 24,
+                                margin: 0,
+                            }}
+                        />
+                    </View>
                     <View
                         style={{
                             backgroundColor: readerBgColor,

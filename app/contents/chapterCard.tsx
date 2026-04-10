@@ -28,6 +28,7 @@ export function ChapterCard({ props }: { props: ChapterCardProps }) {
     const chapterProps: RenderChapterProps = {
         focusedMode: false, id, content, repo,
         returnToContent: true,
+        returnToContentBehavior: 'back',
         enableNextPrev: props.enableNextPrev,
         data: storeContent.data?.chapterContent ?? '',
         speachState: 'unknown',

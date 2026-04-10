@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "386929543777",
+    "project_id": "atelier-novels",
+    "storage_bucket": "atelier-novels.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:386929543777:android:057b841e31d87b00107820",
+        "android_client_info": {
+          "package_name": "com.zenithblue.ateliernovels"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "386929543777-p9db4aqo4qcvr2ioo8bvkpv6i91n3v0o.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zenithblue.ateliernovels",
+            "certificate_hash": "1c69c80594939d8839ca038d556baff3271a6a62"
+          }
+        },
+        {
+          "client_id": "386929543777-he78an2ouhug8d3a7icuh4spdlj5o719.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRmx7rsj34-D2IZ2iJzicc8mHwU1LNE_I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "386929543777-he78an2ouhug8d3a7icuh4spdlj5o719.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

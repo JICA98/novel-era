@@ -43,8 +43,40 @@ const ChapterLayout: React.FC = () => {
     const [appearanceVisible, setAppearanceVisible] = useState(false);
     const [ttsVisible, setTtsVisible] = useState(false);
 
+    const speakerScale = React.useRef(new Animated.Value(1)).current;
+    const speakerAnim = React.useRef<Animated.CompositeAnimation | null>(null);
+
+    useEffect(() => {
+        if (tts.state === 'speak') {
+            speakerAnim.current = Animated.loop(
+                Animated.sequence([
+                    Animated.timing(speakerScale, {
+                        toValue: 1.25,
+                        duration: 600,
+                        useNativeDriver: true,
+                    }),
+                    Animated.timing(speakerScale, {
+                        toValue: 1,
+                        duration: 600,
+                        useNativeDriver: true,
+                    })
+                ])
+            );
+            speakerAnim.current.start();
+        } else {
+            if (speakerAnim.current) {
+                speakerAnim.current.stop();
+            }
+            speakerScale.setValue(1);
+        }
+    }, [tts.state]);
+
     function navigateBackToContent() {
         if (props.returnToContent) {
+            if (props.returnToContentBehavior === 'back') {
+                router.back();
+                return true;
+            }
             router.replace({
                 pathname: '/contents' as any,
                 params: {
@@ -140,12 +172,14 @@ const ChapterLayout: React.FC = () => {
                         />
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <IconButton icon="palette" iconColor={readerTextColor} onPress={() => setAppearanceVisible(true)} />
-                            <IconButton icon="volume-high" iconColor={readerTextColor} onPress={() => {
-                                setTtsVisible(true);
-                                if (!isSpeechOrPause(tts.state)) {
-                                    updateTTS('speak');
-                                }
-                            }} />
+                            <Animated.View style={{ transform: [{ scale: speakerScale }] }}>
+                                <IconButton icon="volume-high" iconColor={readerTextColor} onPress={() => {
+                                    setTtsVisible(true);
+                                    if (!isSpeechOrPause(tts.state)) {
+                                        updateTTS('speak');
+                                    }
+                                }} />
+                            </Animated.View>
                             <Button 
                                 mode="contained-tonal" 
                                 onPress={() => setTocVisible(true)}>

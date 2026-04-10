@@ -359,6 +359,7 @@ export default function ContentLayout() {
                                 content,
                                 repo,
                                 returnToContent: true,
+                                returnToContentBehavior: 'back',
                                 enableNextPrev: true,
                                 continueReading: shouldContinueReading,
                                 data: ''

@@ -12,16 +12,14 @@ import {
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDqug99SsA5fdOlUi6sfNdwkUGU6rCoZos",
-  authDomain: "novel-era.firebaseapp.com",
-  projectId: "novel-era",
-  storageBucket: "novel-era.firebasestorage.app",
-  messagingSenderId: "592249265367",
-  appId: "1:592249265367:web:3a4c784a3fda6650822492",
-  measurementId: "G-KXWS9BTQ9K",
-  databaseURL:
-    process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL ??
-    "https://novel-era-default-rtdb.firebaseio.com",
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? "AIzaSyAOBzLCyVllH5XBkqbBgu0qQru-Z3C2HsE",
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "atelier-novels.firebaseapp.com",
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? "atelier-novels",
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? "atelier-novels.firebasestorage.app",
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? "386929543777",
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? "1:386929543777:web:7777d0a567579782107820",
+  measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID ?? "G-6NLTRB03RT",
+  databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
 const app: FirebaseApp = getApps().length ? getApp() : initializeApp(firebaseConfig);

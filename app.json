@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/images/icon.png",
-    "scheme": "com.jica98.novelera",
+    "scheme": "com.zenithblue.ateliernovels",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -14,14 +14,15 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jica98.novelera"
+      "bundleIdentifier": "com.zenithblue.ateliernovels"
     },
     "android": {
+      "googleServicesFile": "./assets/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.jica98.novelera"
+      "package": "com.zenithblue.ateliernovels"
     },
     "web": {
       "bundler": "metro",
@@ -33,12 +34,7 @@
       "expo-font",
       "expo-web-browser",
       "expo-updates",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.YOUR_IOS_CLIENT_ID"
-        }
-      ]
+      "@react-native-google-signin/google-signin"
     ],
     "experiments": {
       "typedRoutes": true
@@ -47,9 +43,7 @@
       "eas": {
         "projectId": "2a08ae4e-e0a0-496e-96ad-c0b3578a4537"
       },
-      "googleWebClientId": "592249265367-c4q262q4h84pvqco9q7rv6bkhec6an3g.apps.googleusercontent.com",
-      "googleIosClientId": "YOUR_IOS_CLIENT_ID",
-      "googleAndroidClientId": "592249265367-c4q262q4h84pvqco9q7rv6bkhec6an3g.apps.googleusercontent.com"
+      "googleWebClientId": "386929543777-he78an2ouhug8d3a7icuh4spdlj5o719.apps.googleusercontent.com"
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -61,4 +55,3 @@
   }
   
 }
-

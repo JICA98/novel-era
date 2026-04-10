@@ -1,20 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity, Platform, Share, useColorScheme } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, useColorScheme } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Button, Dialog, Portal, Snackbar, Switch, TextInput } from "react-native-paper";
+import { Snackbar, Switch } from "react-native-paper";
 
 import { Colors } from "@/constants/Colors";
 import { AtelierText } from "@/components/AtelierText";
-import { userPrefStore, getUserPreference, ThemeOptions, UserProfilePreferences } from "../userpref";
+import { userPrefStore, getUserPreference, ThemeOptions } from "../userpref";
 import { useAccountSettings, AuthDialogs } from "./accountSettings";
 import { SettingsSection, SettingsItem, StatBox } from "./components";
 import UseRepositoryLayout from "../_repos";
 import { Repo } from "@/types";
 import { ChapterTracker, NovelTracker, chapterTrackerStore, noveFavoriteStore } from "../favorites/tracker";
-
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.jica98.novelera';
-const DEFAULT_PROFILE_TAGLINE = 'Librarian of the Nocturne Realm';
+import { AuthState, signInWithGoogle } from "../lib/auth";
 
 function getBoundStoreContent<T>(store: any): T | undefined {
     if (!store) {
@@ -76,18 +74,24 @@ export default function Settings() {
     const userPref = userPrefStore((state: any) => state.userPref);
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
     const [snackbarText, setSnackbarText] = useState('');
-    const [showEditProfile, setShowEditProfile] = useState(false);
-    const [draftDisplayName, setDraftDisplayName] = useState('');
-    const [draftTagline, setDraftTagline] = useState('');
+    const [authActionLoading, setAuthActionLoading] = useState(false);
 
     const actions = useAccountSettings(setSnackbarText);
     const { authUser } = actions;
+    const isSignedIn = authUser.state === AuthState.SIGNED_IN;
+    const authStatusDescription = isSignedIn
+        ? `Signed in with ${authUser.provider ?? 'account'}`
+        : 'Not signed in';
+    const accountActionTitle = isSignedIn ? 'Google Account' : 'Google Sign-In';
+    const accountActionDescription = isSignedIn
+        ? authUser.email || 'Signed in'
+        : authActionLoading
+            ? 'Connecting to Google...'
+            : 'Tap to sign in with Google';
 
     // Stats data
     const allTrackers = chapterTrackerStore((state: any) => state.content);
     const favoriteTrackers = noveFavoriteStore((state: any) => state.content);
-    const profile = userPref?.profile;
-
     const profileStats = useMemo(() => {
         const chapterTrackers = allTrackers instanceof Map
             ? Array.from(allTrackers.values())
@@ -131,9 +135,6 @@ export default function Settings() {
         };
     }, [allTrackers, favoriteTrackers]);
 
-    const resolvedDisplayName = profile?.displayName?.trim() || authUser.email?.split('@')[0] || "Elias Thorne";
-    const resolvedTagline = profile?.tagline?.trim() || DEFAULT_PROFILE_TAGLINE;
-
     useEffect(() => {
         async function fetchUserPreferences() {
             const preferences = await getUserPreference();
@@ -142,50 +143,20 @@ export default function Settings() {
         fetchUserPreferences();
     }, [setUserPref]);
 
-    function openEditProfile() {
-        setDraftDisplayName(profile?.displayName || resolvedDisplayName);
-        setDraftTagline(profile?.tagline || resolvedTagline);
-        setShowEditProfile(true);
-    }
-
-    function saveProfile() {
-        if (!userPref) {
-            setShowEditProfile(false);
+    async function handleAccountPress() {
+        if (isSignedIn) {
+            actions.setSignOut(true);
             return;
         }
-        const nextProfile: UserProfilePreferences = {
-            displayName: draftDisplayName.trim(),
-            tagline: draftTagline.trim(),
-        };
-        setUserPref({
-            ...userPref,
-            profile: nextProfile,
-        });
-        setShowEditProfile(false);
-        setSnackbarText('Profile updated');
-    }
 
-    async function handleShareProfile() {
-        const streakSuffix = profileStats.streakDays === 1 ? 'day' : 'days';
-        const message = [
-            `Check out ${resolvedDisplayName}'s Nocturne Reader stats:`,
-            '',
-            `Books started: ${profileStats.booksStarted}`,
-            `Chapters read: ${formatStatNumber(profileStats.chaptersRead)}`,
-            `Library saved: ${profileStats.libraryCount}`,
-            `Reading streak: ${profileStats.streakDays} ${streakSuffix}`,
-            '',
-            `Read with Nocturne Reader: ${PLAY_STORE_URL}`,
-        ].join('\n');
-
+        setAuthActionLoading(true);
         try {
-            await Share.share({
-                message,
-                title: `${resolvedDisplayName}'s reading stats`,
-            });
-        } catch (error) {
-            console.error('Failed to share profile stats:', error);
-            setSnackbarText('Unable to open share sheet');
+            await signInWithGoogle();
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unable to sign in with Google';
+            setSnackbarText(message);
+        } finally {
+            setAuthActionLoading(false);
         }
     }
 
@@ -203,43 +174,14 @@ export default function Settings() {
                         end={{ x: 1, y: 1 }}
                         style={styles.profileCard}
                     >
-                        <View style={styles.profileContent}>
-                            <View style={styles.profileImageContainer}>
-                                <Image 
-                                    source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB2ko2D-ttQqT9AIKONgZHA9tiCiTr7svsc9wcZlOaq5gfFPmd-djJdjhgC7eWyVhCzQl3qAczgCKKGKuPJor2ga399wm6KZMpJL1YfUCx341-7axDyl6T6s0hDvqL-lfkwcPKpDnnapeH06fQwZ75GqziALBtsE4fYuJO0kam4R0V2203E8_8XqpXzggnntAHAu6aESgb-lZsmMl-K8FbXzQ9rENYgL7_fIKqFRjPAV4nl6WEiJgl1U4dfKIayCtbGTr5hZ4mEKo9h' }} 
-                                    style={styles.profileImage}
-                                />
-                                <View style={[styles.premiumBadge, { backgroundColor: '#ffdcc3' }]}>
-                                    <AtelierText variant="caption" bold style={{ color: '#2f1500', fontSize: 10 }}>PREMIUM</AtelierText>
-                                </View>
-                            </View>
-                            
-                            <View style={styles.profileInfo}>
-                                <AtelierText variant="headline" bold style={{ color: '#ffffff' }}>
-                                    {resolvedDisplayName}
-                                </AtelierText>
-                                <AtelierText variant="body" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                                    {resolvedTagline}
-                                </AtelierText>
-                                
-                                <View style={styles.profileActions}>
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, { backgroundColor: '#ffffff' }]}
-                                        onPress={openEditProfile}
-                                    >
-                                        <AtelierText variant="label" bold style={{ color: themeColors.primary }}>Edit Profile</AtelierText>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.actionButton, { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.2)' }]}
-                                        onPress={handleShareProfile}
-                                    >
-                                        <AtelierText variant="label" bold style={{ color: '#ffffff' }}>Share</AtelierText>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
+                        <View style={styles.statsHeader}>
+                            <AtelierText variant="title" bold style={{ color: '#ffffff' }}>
+                                Reading Statistics
+                            </AtelierText>
+                            <AtelierText variant="body" style={{ color: 'rgba(255, 255, 255, 0.72)' }}>
+                                A quick snapshot of your reading journey.
+                            </AtelierText>
                         </View>
-
-                        {/* Bento Stats Row */}
                         <View style={styles.statsRow}>
                             <StatBox value={profileStats.booksStarted} label="Books Started" />
                             <StatBox value={formatStatNumber(profileStats.chaptersRead)} label="Chapters Read" />
@@ -253,21 +195,34 @@ export default function Settings() {
                     {/* Account Section */}
                     <SettingsSection title="Account" icon="account-circle">
                         <SettingsItem 
-                            title="Email" 
-                            description={authUser.email || "Sign in to see email"} 
+                            title="Auth Status" 
+                            description={authStatusDescription}
+                            rightElement={
+                                <MaterialCommunityIcons
+                                    name={isSignedIn ? "check-decagram" : "account-off-outline"}
+                                    size={20}
+                                    color={isSignedIn ? themeColors.primary : themeColors.outline}
+                                />
+                            }
+                        />
+                        <SettingsItem
+                            title={accountActionTitle}
+                            description={accountActionDescription}
                             showChevron 
-                            onPress={() => {}}
+                            onPress={handleAccountPress}
                         />
                         <SettingsItem 
                             title="Cloud Backup" 
-                            description="Backup or restore preferences" 
+                            description={isSignedIn ? "Backup or restore preferences" : "Sign in required"} 
                             showChevron 
+                            disabled={!isSignedIn}
                             onPress={() => actions.setBackup(true)}
                         />
                         <SettingsItem 
                             title="Restore Data" 
-                            description="Fetch from cloud" 
+                            description={isSignedIn ? "Fetch from cloud" : "Sign in required"} 
                             showChevron 
+                            disabled={!isSignedIn}
                             onPress={() => actions.setRestore(true)}
                         />
                     </SettingsSection>
@@ -362,34 +317,6 @@ export default function Settings() {
 
             {/* Auth Dialogs */}
             <AuthDialogs actions={actions} setSnackbarText={setSnackbarText} />
-
-            <Portal>
-                <Dialog visible={showEditProfile} onDismiss={() => setShowEditProfile(false)}>
-                    <Dialog.Title>Edit Profile</Dialog.Title>
-                    <Dialog.Content>
-                        <TextInput
-                            mode="outlined"
-                            label="Display Name"
-                            value={draftDisplayName}
-                            onChangeText={setDraftDisplayName}
-                            autoCapitalize="words"
-                            style={styles.dialogInput}
-                        />
-                        <TextInput
-                            mode="outlined"
-                            label="Tagline"
-                            value={draftTagline}
-                            onChangeText={setDraftTagline}
-                            autoCapitalize="sentences"
-                            style={styles.dialogInput}
-                        />
-                    </Dialog.Content>
-                    <Dialog.Actions>
-                        <Button onPress={() => setShowEditProfile(false)}>Cancel</Button>
-                        <Button onPress={saveProfile}>Save</Button>
-                    </Dialog.Actions>
-                </Dialog>
-            </Portal>
 
             <Snackbar
                 visible={!!snackbarText.length}
@@ -489,52 +416,12 @@ const styles = StyleSheet.create({
             },
         }),
     },
-    profileContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 20,
-    },
-    profileImageContainer: {
-        position: 'relative',
-    },
-    profileImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 24,
-        borderWidth: 3,
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    premiumBadge: {
-        position: 'absolute',
-        bottom: -8,
-        right: -8,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    profileInfo: {
-        flex: 1,
-    },
-    profileActions: {
-        flexDirection: 'row',
-        gap: 8,
-        marginTop: 16,
-    },
-    actionButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
+    statsHeader: {
+        marginBottom: 20,
+        gap: 6,
     },
     statsRow: {
         flexDirection: 'row',
-        marginTop: 32,
         gap: 12,
     },
     settingsGroups: {
@@ -565,9 +452,6 @@ const styles = StyleSheet.create({
     sliderFill: {
         height: '100%',
         borderRadius: 3,
-    },
-    dialogInput: {
-        marginBottom: 12,
     },
     logoutButton: {
         flexDirection: 'row',
