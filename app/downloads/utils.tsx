@@ -1,6 +1,6 @@
 import { FetchData } from "@/types";
 import { create, StoreApi, UseBoundStore } from "zustand";
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export const allDownloadsStore = create((set) => ({
     downloads: new Map<string, UseBoundStore<StoreApi<FetchData<any>>>>(),
@@ -135,11 +135,11 @@ export async function moveToAlbum(fileName: string, mimeType: string): Promise<s
             .then(async (uri) => {
                 await FileSystem.writeAsStringAsync(uri, base64String, { encoding: FileSystem.EncodingType.Base64 });
             })
-            .catch((e) => {
+            .catch((e: unknown) => {
                 console.log(e);
             });
         return uri + '/' + fileName;
-    } catch (e) {
+    } catch (e: unknown) {
         console.error(e);
         throw e;
     }

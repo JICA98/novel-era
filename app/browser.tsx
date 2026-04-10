@@ -3,7 +3,7 @@ import { Linking, SafeAreaView, StyleSheet, View } from "react-native";
 import { Appbar, ActivityIndicator, Text, useTheme } from "react-native-paper";
 import { router, useLocalSearchParams } from "expo-router";
 import { WebView } from "react-native-webview";
-import type { WebViewErrorEvent, WebViewNavigation } from "react-native-webview";
+import type { WebViewErrorEvent, WebViewNavigation } from "react-native-webview/lib/WebViewTypes";
 
 type BrowserParams = {
     url?: string | string[];

@@ -43,6 +43,20 @@ const ChapterLayout: React.FC = () => {
     const [appearanceVisible, setAppearanceVisible] = useState(false);
     const [ttsVisible, setTtsVisible] = useState(false);
 
+    function navigateBackToContent() {
+        if (props.returnToContent) {
+            router.replace({
+                pathname: '/contents' as any,
+                params: {
+                    content: JSON.stringify(props.content),
+                    repo: JSON.stringify(props.repo),
+                }
+            });
+            return true;
+        }
+        return false;
+    }
+
     useEffect(() => {
         fetchChapterData();
     }, []);
@@ -89,7 +103,7 @@ const ChapterLayout: React.FC = () => {
                 setFocusedMode(false);
                 return true;
             }
-            return false;
+            return navigateBackToContent();
         };
 
         const backHandler = BackHandler.addEventListener(
@@ -108,54 +122,64 @@ const ChapterLayout: React.FC = () => {
     const insets = useSafeAreaInsets();
 
     return (
-        <SafeAreaView 
-            style={[styles.container, { backgroundColor: readerBgColor }]} 
-            edges={focusedMode ? [] : ['top', 'left', 'right']}
-        >
-            {!focusedMode && (
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, zIndex: 100 }}>
-                    <IconButton icon="arrow-left" iconColor={readerTextColor} onPress={() => router.back()} />
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <IconButton icon="palette" iconColor={readerTextColor} onPress={() => setAppearanceVisible(true)} />
-                        <IconButton icon="volume-high" iconColor={readerTextColor} onPress={() => {
-                            if (!isSpeechOrPause(tts.state)) {
-                                updateTTS('speak');
-                            }
-                            setTtsVisible(true);
-                        }} />
-                        <Button 
-                            mode="contained-tonal" 
-                            onPress={() => setTocVisible(true)}>
-                            Ch. {props.id}
-                        </Button>
+        <View style={{ flex: 1, backgroundColor: readerBgColor }}>
+            <SafeAreaView 
+                style={[styles.container, { backgroundColor: 'transparent' }]} 
+                edges={['bottom', 'left', 'right', 'top']}
+            >
+                {!focusedMode && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 8, zIndex: 100 }}>
+                        <IconButton
+                            icon="arrow-left"
+                            iconColor={readerTextColor}
+                            onPress={() => {
+                                if (!navigateBackToContent()) {
+                                    router.back();
+                                }
+                            }}
+                        />
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <IconButton icon="palette" iconColor={readerTextColor} onPress={() => setAppearanceVisible(true)} />
+                            <IconButton icon="volume-high" iconColor={readerTextColor} onPress={() => {
+                                setTtsVisible(true);
+                                if (!isSpeechOrPause(tts.state)) {
+                                    updateTTS('speak');
+                                }
+                            }} />
+                            <Button 
+                                mode="contained-tonal" 
+                                onPress={() => setTocVisible(true)}>
+                                Ch. {props.id}
+                            </Button>
+                        </View>
                     </View>
-                </View>
-            )}
-            {focusedMode && (<StatusBar hidden />)}
-            {child}
-            {hasDataLoaded && (<TouchableOpacity
-                style={styles.invisibleButton}
-                onPress={() => setFocusedMode(!focusedMode)}
-            />)}
-            {
-                focusedMode && (isSpeechOrPause(tts.state)) &&
-                <>
-                    <FAB
-                        style={{
-                            position: 'absolute',
-                            margin: 16,
-                            right: 0,
-                            bottom: 0,
-                        }}
-                        size="small"
-                        icon={tts.state === 'pause' ? 'play' : 'pause'}
-                        onPress={() => updateTTS(tts.state === 'speak' ? 'pause' : 'speak')} />
-                </>
-            }
-            <ReaderNavigationToc visible={tocVisible} onDismiss={() => setTocVisible(false)} props={props} />
-            <ReaderAppearanceSettings visible={appearanceVisible} onDismiss={() => setAppearanceVisible(false)} />
+                )}
+                {focusedMode && (<StatusBar hidden />)}
+                {child}
+                {hasDataLoaded && (<TouchableOpacity
+                    style={styles.invisibleButton}
+                    onPress={() => setFocusedMode(!focusedMode)}
+                />)}
+                {
+                    focusedMode && (isSpeechOrPause(tts.state)) &&
+                    <>
+                        <FAB
+                            style={{
+                                position: 'absolute',
+                                margin: 16,
+                                right: 0,
+                                bottom: 0,
+                            }}
+                            size="small"
+                            icon={tts.state === 'pause' ? 'play' : 'pause'}
+                            onPress={() => updateTTS(tts.state === 'speak' ? 'pause' : 'speak')} />
+                    </>
+                }
+                <ReaderNavigationToc visible={tocVisible} onDismiss={() => setTocVisible(false)} props={props} />
+                <ReaderAppearanceSettings visible={appearanceVisible} onDismiss={() => setAppearanceVisible(false)} />
+            </SafeAreaView>
             <ReaderTTSControlsSettings visible={ttsVisible} onDismiss={() => setTtsVisible(false)} />
-        </SafeAreaView >
+        </View>
     );
 
 }

@@ -27,6 +27,7 @@ export function ChapterCard({ props }: { props: ChapterCardProps }) {
     const setContent = downloadStore((state: any) => state.setContent);
     const chapterProps: RenderChapterProps = {
         focusedMode: false, id, content, repo,
+        returnToContent: true,
         enableNextPrev: props.enableNextPrev,
         data: storeContent.data?.chapterContent ?? '',
         speachState: 'unknown',

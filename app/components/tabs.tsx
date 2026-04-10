@@ -7,7 +7,7 @@ const { width } = Dimensions.get('window');
 // Define the type for a single tab
 export interface Tab {
   title: string;
-  content: JSX.Element;
+  content: React.ReactNode;
 }
 
 // Define the props for the TabBar component

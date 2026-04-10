@@ -20,6 +20,7 @@ export interface RenderChapterProps {
     content: Content;
     data: string;
     repo: Repo,
+    returnToContent?: boolean;
     continueReading?: boolean;
     fromPrevious?: boolean;
     enableNextPrev: boolean;
@@ -62,14 +63,14 @@ export function navigateToNextChapter(props: RenderChapterProps, add = 1, speach
         speachState: speachState,
     };
     router.replace({
-        pathname: '/chapters',
+        pathname: '/chapters' as any,
         params: {
             props: JSON.stringify(props),
         }
     });
 }
 
-export const timeAgo = (timeInMillis: number): JSX.Element => {
+export const timeAgo = (timeInMillis: number): React.JSX.Element => {
     if (!timeInMillis) return <View />;
     return <TimeAgo dateTo={new Date(timeInMillis)} />;;
 };

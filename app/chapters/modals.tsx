@@ -467,17 +467,36 @@ export const ReaderTTSControlsSettings = ({
     
     if (!visible) return null;
     return (
-        <View style={StyleSheet.absoluteFillObject} pointerEvents="box-none">
-            <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, elevation: 10, zIndex: 10 }} pointerEvents="box-none">
-                <View style={{ backgroundColor: readerBgColor, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 32, paddingTop: 16, paddingBottom: 48, shadowColor: '#000', shadowOffset: { width: 0, height: -24 }, shadowOpacity: 0.4, shadowRadius: 64, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', maxHeight: '85%' }} pointerEvents="auto">
-                    <TouchableOpacity onPress={onDismiss} style={{ padding: 12, alignItems: 'center', marginBottom: 24 }}>
-                        <View style={{ width: 40, height: 6, backgroundColor: readerTextColor, opacity: 0.3, borderRadius: 3 }} />
-                    </TouchableOpacity>
-                    <View style={{ paddingBottom: 16 }}>
+        <Portal>
+            <Modal
+                visible={visible}
+                onDismiss={onDismiss}
+                contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }}
+                style={{ margin: 0, justifyContent: 'flex-end' }}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
+                    <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
+                    <View
+                        style={{
+                            backgroundColor: readerBgColor,
+                            borderTopLeftRadius: 32,
+                            borderTopRightRadius: 32,
+                            paddingHorizontal: 32,
+                            paddingTop: 0,
+                            paddingBottom: 0,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: -24 },
+                            shadowOpacity: 0.4,
+                            shadowRadius: 64,
+                            borderTopWidth: 1,
+                            borderTopColor: 'rgba(255,255,255,0.05)',
+                            maxHeight: '85%',
+                        }}
+                    >
                         <TTSControls />
                     </View>
                 </View>
-            </View>
-        </View>
+            </Modal>
+        </Portal>
     );
 };

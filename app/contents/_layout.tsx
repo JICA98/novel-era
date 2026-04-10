@@ -358,6 +358,7 @@ export default function ContentLayout() {
                                 id: resumeChapterId,
                                 content,
                                 repo,
+                                returnToContent: true,
                                 enableNextPrev: true,
                                 continueReading: shouldContinueReading,
                                 data: ''
@@ -379,6 +380,8 @@ export default function ContentLayout() {
                 isExporting={exportState.isExporting}
                 progress={exportState.isExporting ? exportState : undefined}
                 onExport={handleExportRequest}
+                novelTitle={contentData.data?.title}
+                novelCover={contentData.data?.bookImage}
             />
             <ShowSnackbar />
         </SafeAreaView>
@@ -575,22 +578,23 @@ const SynopsisTab = ({ content }: { content: Content }) => {
             </View>
 
             {tags.length > 0 && (
-                <LinearGradient colors={[theme.colors.primary, theme.colors.primaryContainer]} style={styles.authorCard}>
-                    <View style={styles.authorInfo}>
-                        <Text style={[styles.authorNoteTitle, { color: theme.colors.onPrimary }]}>Tags</Text>
-                        <View style={styles.detailTagWrap}>
-                            {tags.map((tag) => (
-                                <TouchableOpacity 
-                                    key={tag} 
-                                    style={[styles.detailTagChip, { backgroundColor: theme.colors.onPrimary + '1f' }]}
-                                    onPress={() => router.push({ pathname: '/search', params: { query: tag } })}
-                                >
-                                    <Text style={[styles.detailTagText, { color: theme.colors.onPrimary }]}>{tag}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                <View style={styles.tagsSection}>
+                    <Text style={[styles.tagsTitle, { color: theme.colors.onSurface }]}>Tags</Text>
+                    <View style={styles.detailTagWrap}>
+                        {tags.map((tag) => (
+                            <TouchableOpacity
+                                key={tag}
+                                style={[
+                                    styles.detailTagChip,
+                                    { backgroundColor: (theme.colors as any).surfaceContainerHighest },
+                                ]}
+                                onPress={() => router.push({ pathname: '/search', params: { query: tag } })}
+                            >
+                                <Text style={[styles.detailTagText, { color: theme.colors.primary }]}>{tag}</Text>
+                            </TouchableOpacity>
+                        ))}
                     </View>
-                </LinearGradient>
+                </View>
             )}
 
             <View style={styles.reviewsSection}>
@@ -932,7 +936,7 @@ const styles = StyleSheet.create({
 
     synopsisContainer: {
         paddingHorizontal: 24,
-        marginBottom: 32,
+        marginBottom: 20,
     },
     synopsisHeadline: {
         fontFamily: 'NotoSerif-Bold',
@@ -943,35 +947,18 @@ const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 26,
     },
-    authorCard: {
-        marginHorizontal: 24,
-        padding: 24,
-        borderRadius: 20,
+    tagsSection: {
+        paddingHorizontal: 24,
         marginBottom: 32,
-        elevation: 5,
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.2,
-        shadowRadius: 10,
     },
-    authorInfo: {
-        flex: 1,
-    },
-    authorNoteTitle: {
+    tagsTitle: {
         fontFamily: 'NotoSerif-Bold',
-        fontStyle: 'italic',
         fontSize: 18,
-        marginBottom: 4,
-    },
-    authorNoteText: {
-        fontFamily: 'Manrope-Medium',
-        fontSize: 13,
-        color: 'rgba(255,255,255,0.7)',
-        lineHeight: 20,
+        marginBottom: 12,
     },
     detailTagWrap: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginTop: 8,
     },
     detailTagChip: {
         paddingHorizontal: 12,

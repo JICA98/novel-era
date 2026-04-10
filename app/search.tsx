@@ -33,13 +33,17 @@ const RECENT_SEARCHES_KEY = 'explore-recent-searches';
 
 type ViewState = 'discovery' | 'focus' | 'results' | 'empty';
 
-export default function ExploreLayout() {
+export function ExploreLayout({ embedded = false }: { embedded?: boolean }) {
     return (
-        <UseRepositoryLayout props={{ renderRepositories: (repos) => <ExploreScreen repos={repos} /> }} />
+        <UseRepositoryLayout props={{ renderRepositories: (repos) => <ExploreScreen repos={repos} embedded={embedded} /> }} />
     );
 }
 
-function ExploreScreen({ repos }: { repos: Repo[] }) {
+export default function SearchRoute() {
+    return <ExploreLayout embedded={false} />;
+}
+
+function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }) {
     const [viewState, setViewState] = useState<ViewState>('discovery');
     const [searchQuery, setSearchQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -144,6 +148,17 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
     const [showFilters, setShowFilters] = useState(false);
     const [isTagsExpanded, setIsTagsExpanded] = useState(false);
     const tagRotation = useSharedValue(0);
+
+    const handleResetResults = () => {
+        if (!embedded) {
+            router.back();
+            return;
+        }
+
+        setSearchQuery('');
+        setShowFilters(false);
+        setViewState('discovery');
+    };
 
     useEffect(() => {
         tagRotation.value = withTiming(isTagsExpanded ? 180 : 0, { duration: 250 });
@@ -599,11 +614,7 @@ function ExploreScreen({ repos }: { repos: Repo[] }) {
                         searchQuery={searchQuery}
                         showFilters={showFilters}
                         setShowFilters={setShowFilters}
-                        onReset={() => {
-                            setSearchQuery('');
-                            setShowFilters(false);
-                            setViewState('discovery');
-                        }}
+                        onReset={handleResetResults}
                         repos={repos}
                         setSelectedRepository={setSelectedRepository}
                         setPreferredRepository={setPreferredRepository}

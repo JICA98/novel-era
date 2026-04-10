@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e5e1e4",
+                        "on-error": "#ffffff",
+                        "background": "#fcf8fb",
+                        "tertiary-container": "#532900",
+                        "on-surface-variant": "#46464d",
+                        "on-tertiary-fixed-variant": "#6a3b0e",
+                        "error": "#ba1a1a",
+                        "on-primary-fixed": "#141938",
+                        "primary-fixed-dim": "#c0c4ed",
+                        "surface-bright": "#fcf8fb",
+                        "secondary-fixed": "#dee1ff",
+                        "surface": "#fcf8fb",
+                        "surface-container-high": "#eae7ea",
+                        "tertiary-fixed-dim": "#feb880",
+                        "on-surface": "#1b1b1e",
+                        "on-error-container": "#93000a",
+                        "inverse-on-surface": "#f3f0f3",
+                        "on-primary-container": "#959ac1",
+                        "outline-variant": "#c7c5ce",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#dcd9dc",
+                        "surface-tint": "#575c7f",
+                        "inverse-surface": "#303032",
+                        "surface-variant": "#e5e1e4",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#dee0ff",
+                        "primary": "#171c3c",
+                        "on-secondary-fixed-variant": "#3d446b",
+                        "on-primary-fixed-variant": "#404566",
+                        "on-background": "#1b1b1e",
+                        "surface-container-low": "#f6f3f6",
+                        "tertiary-fixed": "#ffdcc3",
+                        "inverse-primary": "#c0c4ed",
+                        "on-secondary-fixed": "#11183d",
+                        "on-tertiary-container": "#ce8f5b",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#f0edf0",
+                        "secondary-container": "#c8cffe",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#bdc4f2",
+                        "secondary": "#555c84",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#50577f",
+                        "primary-container": "#2d3252",
+                        "tertiary": "#341800",
+                        "outline": "#77767e",
+                        "on-tertiary-fixed": "#2f1500"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .serif {
+            font-family: 'Noto Serif', serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .bg-velvet {
+            background: linear-gradient(135deg, #171c3c 0%, #2d3252 100%);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-surface min-h-screen">
+    <!-- TopAppBar -->
+    <header
+        class="fixed top-0 w-full z-50 bg-[#171c3c]/70 backdrop-blur-xl flex items-center justify-between px-6 h-16 w-full">
+        <div class="flex items-center gap-4">
+            <span class="material-symbols-outlined text-[#dee1ff] active:scale-95 duration-200 cursor-pointer"
+                data-icon="close">close</span>
+            <h1 class="font-['Noto_Serif'] text-xl tracking-tight text-[#dee1ff]">Export Library</h1>
+        </div>
+        <span class="material-symbols-outlined text-[#dee1ff] active:scale-95 duration-200 cursor-pointer"
+            data-icon="more_vert">more_vert</span>
+    </header>
+    <main class="pt-24 pb-32 px-6 max-w-2xl mx-auto">
+        <!-- Hero Section / Context -->
+        <section class="mb-10 text-center">
+            <div class="inline-block relative mb-6">
+                <div class="absolute -inset-4 bg-primary-container/10 blur-2xl rounded-full"></div>
+                <img alt="Ethereal book cover art" class="relative w-32 h-48 object-cover rounded-xl shadow-2xl mx-auto"
+                    data-alt="high-end novel cover art with mystical celestial motifs, deep indigo and silver foil textures, soft glowing ambient lighting"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ-3Ok_y5NBypa-gbqGSgIulHtSsJD4Y_rYOfmAHzIvilz5ip_rKS_ECZvXfPNat00Fa7g9bofP-XkVC1yvrDHW5vrVsFXbVe_s4tQWIDxoWN5Vmo9jzX9jRMtRioGp7EM2wSqQFCyDBYwT7dpSi_UsUdlVe0NnVfRdU7-wcNuZ6EkuIXY_KZ3vC4z0JWnU3rOBIkOhlE44L_4lUrVJJYKg2HXgGSbHNorQ8lWP2mTQSzbO7LZnnhdxOVRCcKhfTudATPj3ISIDnrL" />
+            </div>
+            <h2 class="serif text-3xl font-bold text-primary mb-2">The Archive of Echoes</h2>
+            <p class="text-on-surface-variant font-medium">Digital Collection Export</p>
+        </section>
+        <!-- Configuration Grid -->
+        <div class="grid grid-cols-1 gap-6">
+            <!-- Range Selection Area -->
+            <div class="bg-surface-container-low rounded-[1.5rem] p-8 space-y-8">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span
+                            class="text-[10px] font-bold uppercase tracking-widest text-on-secondary-fixed-variant block mb-1">Range
+                            Selection</span>
+                        <h3 class="serif text-xl font-bold text-primary">Chapter Span</h3>
+                    </div>
+                    <div class="flex gap-2">
+                        <!-- Quick Select Chips -->
+                        <button
+                            class="bg-secondary-container text-on-secondary-container px-4 py-1.5 rounded-md text-xs font-bold transition-all hover:brightness-95 active:scale-95">Everything</button>
+                        <button
+                            class="bg-surface-container-highest text-on-surface-variant px-4 py-1.5 rounded-md text-xs font-bold transition-all hover:brightness-95 active:scale-95">Latest
+                            50</button>
+                    </div>
+                </div>
+                <!-- Custom Slider Implementation -->
+                <div class="relative py-6">
+                    <div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                        <div class="absolute h-1.5 bg-primary-container left-[10%] right-[30%] rounded-full"></div>
+                    </div>
+                    <!-- Start Handle -->
+                    <div class="absolute top-1/2 -translate-y-1/2 left-[10%] group">
+                        <div
+                            class="w-5 h-5 bg-primary rounded-full border-2 border-surface cursor-grab active:scale-110 transition-transform">
+                        </div>
+                        <div
+                            class="absolute -top-10 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                            Ch. 1
+                        </div>
+                    </div>
+                    <!-- End Handle -->
+                    <div class="absolute top-1/2 -translate-y-1/2 right-[30%] group">
+                        <div
+                            class="w-5 h-5 bg-primary rounded-full border-2 border-surface cursor-grab active:scale-110 transition-transform">
+                        </div>
+                        <div
+                            class="absolute -top-10 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Ch. 2932
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center bg-surface-container-highest/50 p-4 rounded-xl">
+                    <div class="text-center flex-1">
+                        <p class="text-[10px] uppercase tracking-tighter text-on-surface-variant font-bold">From</p>
+                        <p class="serif text-lg font-bold text-primary">Chapter 1</p>
+                    </div>
+                    <div class="w-px h-8 bg-outline-variant/30"></div>
+                    <div class="text-center flex-1">
+                        <p class="text-[10px] uppercase tracking-tighter text-on-surface-variant font-bold">To</p>
+                        <p class="serif text-lg font-bold text-primary">Chapter 2932</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Format Selection -->
+            <div class="bg-surface-container-low rounded-[1.5rem] p-8">
+                <span
+                    class="text-[10px] font-bold uppercase tracking-widest text-on-secondary-fixed-variant block mb-4">Export
+                    Format</span>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Format Option: EPUB -->
+                    <label
+                        class="relative flex flex-col items-center p-6 rounded-xl cursor-pointer group border-2 border-transparent hover:border-primary-container/20 transition-all bg-surface-container-lowest">
+                        <input checked="" class="hidden peer" name="format" type="radio" value="epub" />
+                        <div
+                            class="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-outline-variant flex items-center justify-center peer-checked:bg-primary-container peer-checked:border-primary-container">
+                            <span class="material-symbols-outlined text-[14px] text-white hidden peer-checked:block"
+                                data-icon="check">check</span>
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary-container mb-2"
+                            data-icon="menu_book">menu_book</span>
+                        <span class="font-bold text-on-surface">EPUB</span>
+                        <span class="text-[10px] text-on-surface-variant uppercase">E-Reader optimized</span>
+                    </label>
+                    <!-- Format Option: PDF -->
+                    <label
+                        class="relative flex flex-col items-center p-6 rounded-xl cursor-pointer group border-2 border-transparent hover:border-primary-container/20 transition-all bg-surface-container-lowest">
+                        <input class="hidden peer" name="format" type="radio" value="pdf" />
+                        <div
+                            class="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-outline-variant flex items-center justify-center peer-checked:bg-primary-container peer-checked:border-primary-container">
+                            <span class="material-symbols-outlined text-[14px] text-white hidden peer-checked:block"
+                                data-icon="check">check</span>
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-2"
+                            data-icon="picture_as_pdf">picture_as_pdf</span>
+                        <span class="font-bold text-on-surface">PDF</span>
+                        <span class="text-[10px] text-on-surface-variant uppercase">Fixed layout</span>
+                    </label>
+                </div>
+            </div>
+            <!-- Additional Options -->
+            <div class="bg-surface-container-low rounded-[1.5rem] p-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-on-surface">Include Illustrations</h4>
+                        <p class="text-xs text-on-surface-variant">Export embedded light novel artwork</p>
+                    </div>
+                    <button class="w-12 h-6 bg-primary rounded-full relative p-1 flex items-center transition-colors">
+                        <div class="w-4 h-4 bg-white rounded-full ml-auto"></div>
+                    </button>
+                </div>
+            </div>
+            <!-- Primary CTA -->
+            <button
+                class="bg-velvet text-on-primary-fixed w-full py-5 rounded-full shadow-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all group overflow-hidden relative">
+                <span class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></span>
+                <span class="material-symbols-outlined" data-icon="download">download</span>
+                <span class="text-sm font-extrabold uppercase tracking-[0.2em] text-white">Generate Export</span>
+            </button>
+        </div>
+    </main>
+    <!-- BottomNavBar -->
+    <nav
+        class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-[#171c3c]/70 backdrop-blur-xl z-50 rounded-t-[1.5rem] shadow-[0px_-12px_32px_rgba(27,27,30,0.08)]">
+        <div
+            class="flex flex-col items-center justify-center bg-[#2d3252] text-[#dee1ff] rounded-full px-5 py-1.5 active:scale-90 duration-300">
+            <span class="material-symbols-outlined" data-icon="auto_stories"
+                style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+            <span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase">Library</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-[#dee1ff]/50 hover:text-[#dee1ff] transition-all active:scale-90 duration-300">
+            <span class="material-symbols-outlined" data-icon="explore">explore</span>
+            <span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase">Discover</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-[#dee1ff]/50 hover:text-[#dee1ff] transition-all active:scale-90 duration-300">
+            <span class="material-symbols-outlined" data-icon="collections_bookmark">collections_bookmark</span>
+            <span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase">Shelf</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-[#dee1ff]/50 hover:text-[#dee1ff] transition-all active:scale-90 duration-300">
+            <span class="material-symbols-outlined" data-icon="person">person</span>
+            <span class="font-['Manrope'] text-[10px] font-medium tracking-wide uppercase">Account</span>
+        </div>
+    </nav>
+</body>
+
+</html>

@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { normalizeUrl } from '@/types';
 import { RenderChapterProps } from '../chapters/common';
+import { indexes, useBottomIndexStore } from '../bottom';
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +34,7 @@ const FavoriteScreen = () => {
     const [isSortModalVisible, setIsSortModalVisible] = useState(false);
     const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
     const themeColors = Colors[colorScheme];
+    const setBottomIndex = useBottomIndexStore((state: any) => state.setIndex);
 
     useEffect(() => {
         fetchFavoriteTrackers();
@@ -302,7 +304,7 @@ const FavoriteScreen = () => {
 
             <AtelierButton 
                 title="Browse Novels" 
-                onPress={() => router.push('/repos' as any)}
+                onPress={() => setBottomIndex(indexes.explore)}
                 icon={<MaterialCommunityIcons name="arrow-right" size={20} color={themeColors.onPrimary} />}
             />
         </View>

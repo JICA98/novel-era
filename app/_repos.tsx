@@ -36,7 +36,7 @@ const useRepositoryStore = create(persist(
 ));
 
 interface UseRepositoryLayoutProps {
-    renderRepositories: (repositories: Repo[]) => JSX.Element;
+    renderRepositories: (repositories: Repo[]) => React.ReactElement;
 }
 
 export default function UseRepositoryLayout({ props }: { props: UseRepositoryLayoutProps }) {

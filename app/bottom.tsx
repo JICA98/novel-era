@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
 import { create } from 'zustand'
-import SearchLayout from './search';
+import { ExploreLayout } from './search';
 import Recents from './recents';
 import FavoriteScreen from './favorites/_layout';
 import Settings from './settings/_layout';
@@ -29,6 +29,7 @@ const MyBottom = () => {
     const systemColorScheme = useColorScheme();
     const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
     const themeColors = Colors[colorScheme];
+    const [mountedRoutes, setMountedRoutes] = React.useState<Record<number, boolean>>({ 0: true });
 
     const routes = [
         { key: 'favorites', title: 'Library', icon: 'library-shelves' },
@@ -37,20 +38,39 @@ const MyBottom = () => {
         { key: 'settings', title: 'Settings', icon: 'cog-outline' },
     ];
 
-    const renderScene = () => {
-        switch (index) {
-            case 0: return <FavoriteScreen />;
-            case 1: return <SearchLayout />;
-            case 2: return <Recents />;
-            case 3: return <Settings />;
-            default: return <FavoriteScreen />;
-        }
-    };
+    React.useEffect(() => {
+        setMountedRoutes((prev) => (prev[index] ? prev : { ...prev, [index]: true }));
+    }, [index]);
+
+    const scenes = [
+        <FavoriteScreen key="favorites" />,
+        <ExploreLayout key="explore" embedded={true} />,
+        <Recents key="recents" />,
+        <Settings key="settings" />,
+    ];
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: themeColors.background }]}>
             <View style={styles.sceneContainer}>
-                {renderScene()}
+                {scenes.map((scene, i) => {
+                    if (!mountedRoutes[i]) {
+                        return null;
+                    }
+
+                    const isActive = index === i;
+                    return (
+                        <View
+                            key={routes[i].key}
+                            style={[
+                                styles.scene,
+                                !isActive && styles.inactiveScene,
+                            ]}
+                            pointerEvents={isActive ? 'auto' : 'none'}
+                        >
+                            {scene}
+                        </View>
+                    );
+                })}
             </View>
 
             {/* Custom Floating Bottom Bar */}
@@ -103,6 +123,13 @@ const styles = StyleSheet.create({
     },
     sceneContainer: {
         flex: 1,
+        backgroundColor: 'transparent',
+    },
+    scene: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    inactiveScene: {
+        opacity: 0,
     },
     navWrapper: {
         position: 'absolute',

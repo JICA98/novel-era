@@ -1,5 +1,5 @@
 import * as Print from "expo-print";
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import { ChapterData } from "../chapters/common";
 import { saveFile } from "../downloads/utils";
 

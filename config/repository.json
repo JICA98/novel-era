@@ -111,7 +111,7 @@
                 },
                 "tagsSelector": {
                     "type": "text",
-                    "selector": ".tags .content .tag"
+                    "selector": ".categories .property-item"
                 },
                 "summarySelector": {
                     "type": "text",

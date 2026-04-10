@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text, TouchableOpacity, Image } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity, Image, ScrollView } from "react-native";
 import { TTS, ttsStore, SpeechAction, setTTS, isSpeechOrPause } from "./tts";
 import { Button, Icon, IconButton, Title, useTheme } from "react-native-paper";
 import React, { useEffect } from "react";
@@ -47,6 +47,18 @@ const avatarImages = [
     require('../../assets/avatar_3.png'),
     require('../../assets/avatar_4.png'),
     require('../../assets/avatar_5.png'),
+    require('../../assets/avatar_6.png'),
+    require('../../assets/avatar_7.png'),
+    require('../../assets/avatar_8.png'),
+    require('../../assets/avatar_9.png'),
+    require('../../assets/avatar_10.png'),
+    require('../../assets/avatar_11.png'),
+    require('../../assets/avatar_12.png'),
+    require('../../assets/avatar_13.png'),
+    require('../../assets/avatar_14.png'),
+    require('../../assets/avatar_15.png'),
+    require('../../assets/avatar_16.png'),
+    require('../../assets/avatar_17.png'),
 ];
 
 export function setUpVoices(setVoices: any) {
@@ -158,8 +170,8 @@ export default function TTSControls() {
     );
 
     const centerAction = (
-        <View style={{ alignItems: 'center', marginBottom: 32 }}>
-            <View style={{ position: 'relative', width: 96, height: 96, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ alignItems: 'center', marginBottom: 32, paddingTop: 0 }}>
+            <View style={{ position: 'relative', width: 140, height: 140, alignItems: 'center', justifyContent: 'center' }}>
                 {tts.state === 'speak' && (
                     <View style={{ position: 'absolute', width: 140, height: 140, backgroundColor: theme.colors.primary, opacity: 0.2, borderRadius: 70 }} />
                 )}
@@ -242,11 +254,11 @@ export default function TTSControls() {
     );
 
     return (
-        <View style={{ paddingHorizontal: 0 }}>
+        <ScrollView style={{ paddingHorizontal: 0 }} showsVerticalScrollIndicator={false}>
             {centerAction}
             {sliderControls}
             {speedControls}
             {voicesSelect}
-        </View>
+        </ScrollView>
     );
 }
