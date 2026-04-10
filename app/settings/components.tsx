@@ -4,22 +4,56 @@ import { useColorScheme } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { AtelierText } from '@/components/AtelierText';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { 
+  FadeIn, 
+  FadeOut, 
+  LinearTransition, 
+  useAnimatedStyle, 
+  withTiming 
+} from 'react-native-reanimated';
 
 interface SettingsSectionProps {
   title: string;
   icon?: string;
   children: React.ReactNode;
   style?: ViewStyle;
+  initialCollapsed?: boolean;
 }
 
-export const SettingsSection: React.FC<SettingsSectionProps> = ({ title, icon, children, style }) => {
+export const SettingsSection: React.FC<SettingsSectionProps> = ({ 
+  title, 
+  icon, 
+  children, 
+  style,
+  initialCollapsed = false 
+}) => {
   const systemColorScheme = useColorScheme();
   const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
   const themeColors = Colors[colorScheme];
+  const [isCollapsed, setIsCollapsed] = React.useState(initialCollapsed);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const animatedChevronStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ 
+        rotate: withTiming(isCollapsed ? '0deg' : '180deg', { duration: 300 }) 
+      }],
+    };
+  });
 
   return (
-    <View style={[styles.sectionContainer, { backgroundColor: themeColors.surfaceContainerLow }, style]}>
-      <View style={styles.sectionHeader}>
+    <Animated.View 
+      layout={LinearTransition.duration(300)}
+      style={[styles.sectionContainer, { backgroundColor: themeColors.surfaceContainerLow }, style]}
+    >
+      <TouchableOpacity 
+        style={[styles.sectionHeader, isCollapsed && { marginBottom: 0 }]} 
+        onPress={toggleCollapse}
+        activeOpacity={0.7}
+      >
         {icon && (
           <MaterialCommunityIcons 
             name={icon as any} 
@@ -31,11 +65,25 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({ title, icon, c
         <AtelierText variant="title" bold style={styles.sectionTitle}>
           {title}
         </AtelierText>
-      </View>
-      <View style={styles.sectionContent}>
-        {children}
-      </View>
-    </View>
+        <View style={{ flex: 1 }} />
+        <Animated.View style={animatedChevronStyle}>
+          <MaterialCommunityIcons 
+            name="chevron-down" 
+            size={24} 
+            color={themeColors.outline} 
+          />
+        </Animated.View>
+      </TouchableOpacity>
+      {!isCollapsed && (
+        <Animated.View 
+          entering={FadeIn.duration(300)} 
+          exiting={FadeOut.duration(200)}
+          style={styles.sectionContent}
+        >
+          {children}
+        </Animated.View>
+      )}
+    </Animated.View>
   );
 };
 

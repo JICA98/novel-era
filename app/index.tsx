@@ -3,7 +3,7 @@ import { Platform, SafeAreaView, ScrollView, Text, View } from "react-native";
 import { AnimatedFAB, Appbar, Avatar, FAB, Icon, Title } from "react-native-paper";
 import { StyleSheet } from 'react-native';
 import { Stack } from "expo-router";
-import MyBottom, { indexes, useBottomIndexStore } from "./bottom";
+import MyBottom from "./bottom";
 
 export default function Index() {
     return (

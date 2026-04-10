@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { normalizeUrl } from '@/types';
 import { RenderChapterProps } from '../chapters/common';
-import { indexes, useBottomIndexStore } from '../bottom';
+import { indexes, useBottomIndexStore } from '../store/bottomIndexStore';
 
 const { width } = Dimensions.get('window');
 

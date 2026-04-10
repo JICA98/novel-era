@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Atelier Novels - Welcome</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#40465e",
+                        "surface-container-lowest": "#0c0e14",
+                        "secondary": "#c0c5e2",
+                        "on-primary-fixed-variant": "#3e4567",
+                        "surface-variant": "#33343b",
+                        "tertiary": "#bcc6e0",
+                        "on-surface-variant": "#c5c6d1",
+                        "secondary-container": "#424860",
+                        "inverse-primary": "#565c80",
+                        "surface-bright": "#373940",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed": "#d8e2fd",
+                        "primary-fixed": "#dde1ff",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#8b92b8",
+                        "surface-container-highest": "#33343b",
+                        "surface-tint": "#bec4ed",
+                        "surface-dim": "#111319",
+                        "tertiary-fixed-dim": "#bcc6e0",
+                        "on-primary-fixed": "#121939",
+                        "on-primary-container": "#242a4b",
+                        "on-surface": "#e2e2eb",
+                        "on-primary": "#282e4f",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#8a94ac",
+                        "primary-fixed-dim": "#bec4ed",
+                        "on-tertiary-fixed-variant": "#3d475c",
+                        "on-secondary": "#292f46",
+                        "on-secondary-container": "#b2b7d4",
+                        "on-secondary-fixed": "#141a30",
+                        "outline": "#8f909b",
+                        "primary": "#bec4ed",
+                        "on-error": "#690005",
+                        "background": "#111319",
+                        "outline-variant": "#454650",
+                        "on-tertiary": "#263044",
+                        "secondary-fixed": "#dce1ff",
+                        "secondary-fixed-dim": "#c0c5e2",
+                        "surface-container-high": "#282a30",
+                        "inverse-surface": "#e2e2eb",
+                        "on-tertiary-fixed": "#111b2e",
+                        "surface-container-low": "#191b22",
+                        "on-tertiary-container": "#232d40",
+                        "surface-container": "#1e1f26",
+                        "surface": "#111319",
+                        "on-background": "#e2e2eb",
+                        "inverse-on-surface": "#2e3037"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(190, 196, 237, 0.3);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background font-body min-h-screen overflow-hidden">
+    <!-- Background Layer -->
+    <div class="fixed inset-0 z-0">
+        <img class="w-full h-full object-cover opacity-40 brightness-50 contrast-125"
+            data-alt="Interior of a gothic library at night with tall bookshelves, dust motes dancing in moonlight beams, and dark mahogany wood textures"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbckp6uD8xUgDxdy6yOk1xjbXryxZxKCjACgZlDFXMh9Wnv2NGREPDmDgf8qx2pVbZhxBFiOMnZbDefKW7j_IEFoHIQJJ4JwtFFkeE5Mei8rmrHpIsyZ4s_JbqFNG0MAnZxTwUoyqYYldE0DqjqVok-1LZL50S92NbTsN01IrE1WEzl3f4LjcTV7728eNbiydwMctnKgq3Kwp1BmaHisEDPumPBQtn8FeJVZUxAmZ-PiXvYLIu60UIbGjObaP8Bp1nmSJhnvrZYHTC" />
+        <div class="absolute inset-0 bg-gradient-to-b from-surface-dim via-transparent to-surface-dim opacity-90"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent">
+        </div>
+    </div>
+    <!-- Top Navigation Anchor -->
+    <header
+        class="fixed top-0 w-full z-50 bg-slate-900/60 backdrop-blur-xl flex justify-between items-center px-6 h-16">
+        <div class="font-serif italic text-2xl text-indigo-100">Atelier Novels</div>
+        <div class="flex items-center gap-4">
+            <button class="text-slate-400 hover:text-indigo-300 transition-colors scale-95 active:duration-150">
+                <span class="material-symbols-outlined" data-icon="menu">menu</span>
+            </button>
+        </div>
+    </header>
+    <!-- Main Content Canvas -->
+    <main
+        class="relative z-10 flex flex-col justify-end min-h-screen px-8 pb-32 md:pb-20 md:items-center md:justify-center text-left md:text-center max-w-4xl mx-auto">
+        <!-- Asymmetrical Decorative Element -->
+        <div
+            class="hidden md:block absolute -top-12 -right-12 w-64 h-80 rounded-2xl overflow-hidden rotate-6 border border-outline-variant/20 shadow-2xl">
+            <img class="w-full h-full object-cover"
+                data-alt="Close up of an old book with elegant gold filigree on the cover under a warm candle light"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgQo3nbkUgm_Lp3U9rzhRGkCHQez5Iud8-VoGfFcUeoJnusskbkFx-_ton0eDYvwLZwSLf42s-Z29LkXCq-EjJn_OHO--MBIZ6JNuqp25KbiTISIIM1owpVpKn6THgq00cLRp0T5bIVxYunAX4ux-lqQLji0XCOsfiU9Pgj7s0vVywWrMbrWPyWE30FIi4XZXiZ8PCd_GORsPkt6IY8tGaztpzqMHN18HcgzrGMHZkxnrnVnHvsFeV_CpT1CGFOiQq_yPele9kr-5t" />
+        </div>
+        <div class="space-y-6 max-w-2xl">
+            <!-- Typographic Authority -->
+            <div class="space-y-2">
+                <span
+                    class="text-primary font-label text-xs uppercase tracking-[0.3em] font-semibold block mb-4">Welcome
+                    to the Atelier</span>
+                <h1 class="font-headline text-5xl md:text-7xl leading-[1.1] text-on-surface tracking-tight text-glow">
+                    Your Digital <br />
+                    <span class="italic font-light text-primary">Sanctuary</span> for Stories
+                </h1>
+            </div>
+            <p class="text-secondary text-lg md:text-xl font-light leading-relaxed max-w-lg md:mx-auto opacity-80">
+                Experience light novels like never before in a space designed for deep immersion.
+            </p>
+            <!-- Action Cluster -->
+            <div class="flex flex-col sm:flex-row gap-4 pt-8 md:justify-center">
+                <button
+                    class="px-10 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary font-label font-bold rounded-full shadow-lg hover:shadow-primary/20 transition-all active:scale-95 text-center">
+                    Get Started
+                </button>
+                <button
+                    class="px-10 py-4 border border-outline-variant/30 text-primary font-label font-semibold rounded-full hover:bg-surface-container/50 transition-all active:scale-95 text-center">
+                    Skip
+                </button>
+            </div>
+        </div>
+        <!-- Editorial Feature Indicators -->
+        <div class="mt-20 grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-16 border-t border-outline-variant/10 pt-12">
+            <div class="space-y-2">
+                <span class="material-symbols-outlined text-primary-fixed-dim"
+                    data-icon="auto_stories">auto_stories</span>
+                <h3 class="font-headline text-lg text-on-surface">Curated Collections</h3>
+                <p class="text-xs text-slate-400 font-label tracking-wide uppercase">Hand-picked Excellence</p>
+            </div>
+            <div class="space-y-2">
+                <span class="material-symbols-outlined text-primary-fixed-dim"
+                    data-icon="visibility_off">visibility_off</span>
+                <h3 class="font-headline text-lg text-on-surface">Zero Distractions</h3>
+                <p class="text-xs text-slate-400 font-label tracking-wide uppercase">Pure Reading Mode</p>
+            </div>
+            <div class="hidden md:block space-y-2">
+                <span class="material-symbols-outlined text-primary-fixed-dim"
+                    data-icon="ink_highlighter">ink_highlighter</span>
+                <h3 class="font-headline text-lg text-on-surface">Editorial Notes</h3>
+                <p class="text-xs text-slate-400 font-label tracking-wide uppercase">Insightful Commentary</p>
+            </div>
+        </div>
+    </main>
+    <!-- Navigation Shell (BottomNavBar for Mobile) -->
+    <nav
+        class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md rounded-3xl bg-slate-800/85 backdrop-blur-lg z-50 flex justify-around items-center px-4 py-2 shadow-[0_12px_32px_0_rgba(226,226,235,0.06)]">
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-all">
+            <span class="material-symbols-outlined" data-icon="explore">explore</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Explore</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-all">
+            <span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Library</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-all">
+            <span class="material-symbols-outlined" data-icon="download_for_offline">download_for_offline</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Downloads</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-all">
+            <span class="material-symbols-outlined" data-icon="settings">settings</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Settings</span>
+        </div>
+    </nav>
+</body>
+
+</html>

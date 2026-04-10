@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Atelier Novels - Immersion</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#40465e",
+                        "surface-container-lowest": "#0c0e14",
+                        "secondary": "#c0c5e2",
+                        "on-primary-fixed-variant": "#3e4567",
+                        "surface-variant": "#33343b",
+                        "tertiary": "#bcc6e0",
+                        "on-surface-variant": "#c5c6d1",
+                        "secondary-container": "#424860",
+                        "inverse-primary": "#565c80",
+                        "surface-bright": "#373940",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed": "#d8e2fd",
+                        "primary-fixed": "#dde1ff",
+                        "on-error-container": "#ffdad6",
+                        "primary-container": "#8b92b8",
+                        "surface-container-highest": "#33343b",
+                        "surface-tint": "#bec4ed",
+                        "surface-dim": "#111319",
+                        "tertiary-fixed-dim": "#bcc6e0",
+                        "on-primary-fixed": "#121939",
+                        "on-primary-container": "#242a4b",
+                        "on-surface": "#e2e2eb",
+                        "on-primary": "#282e4f",
+                        "error-container": "#93000a",
+                        "tertiary-container": "#8a94ac",
+                        "primary-fixed-dim": "#bec4ed",
+                        "on-tertiary-fixed-variant": "#3d475c",
+                        "on-secondary": "#292f46",
+                        "on-secondary-container": "#b2b7d4",
+                        "on-secondary-fixed": "#141a30",
+                        "outline": "#8f909b",
+                        "primary": "#bec4ed",
+                        "on-error": "#690005",
+                        "background": "#111319",
+                        "outline-variant": "#454650",
+                        "on-tertiary": "#263044",
+                        "secondary-fixed": "#dce1ff",
+                        "secondary-fixed-dim": "#c0c5e2",
+                        "surface-container-high": "#282a30",
+                        "inverse-surface": "#e2e2eb",
+                        "on-tertiary-fixed": "#111b2e",
+                        "surface-container-low": "#191b22",
+                        "on-tertiary-container": "#232d40",
+                        "surface-container": "#1e1f26",
+                        "surface": "#111319",
+                        "on-background": "#e2e2eb",
+                        "inverse-on-surface": "#2e3037"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Newsreader", "serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "label": ["Manrope", "sans-serif"]
+                    }
+                },
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .serif-text {
+            font-family: 'Newsreader', serif;
+        }
+
+        .glass-panel {
+            background: rgba(55, 57, 64, 0.6);
+            backdrop-filter: blur(20px);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 12px rgba(190, 196, 237, 0.4);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background text-on-background min-h-screen selection:bg-primary/30">
+    <!-- Top Navigation Anchor -->
+    <header
+        class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-slate-900/60 backdrop-blur-xl">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-indigo-200">menu</span>
+            <span class="font-serif italic text-2xl text-indigo-100">Atelier Novels</span>
+        </div>
+        <div class="h-8 w-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/30">
+            <img alt="User Profile" class="w-full h-full object-cover"
+                data-alt="Close up portrait of a creative individual with soft cinematic lighting and a neutral background"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1g4f4xeSWTIUDNyFCE2WRRD5CAQfq-u-HwT4zbqSH3yCYJqvZvwmi0izxs09669THhmWoSLWrXhBgojVEWWbgBgORFsx7hYlpz9RCMQSLnxyuQt4IIn52JkNBHWP0V1yemllu1b_ZY5nHVDlIov9APgzIpfbLOOEGv9FNRr-JxuY89u599eddcpycmQUC7s-pxCihlK0C3Skte4WbHTJyY2cpgiUaGGEghOVtgpvUNh5-mDIfz_lTbNpV1_i3tavH-5_AeTDJkRxn" />
+        </div>
+    </header>
+    <main class="pt-24 pb-32 px-6 max-w-5xl mx-auto flex flex-col gap-12">
+        <!-- Hero Section -->
+        <section class="flex flex-col gap-4 text-center items-center">
+            <h1 class="font-headline text-5xl md:text-7xl font-bold tracking-tight text-on-surface leading-tight">
+                Read, Listen, <span class="italic text-primary-fixed-dim">Immerse.</span>
+            </h1>
+            <p class="font-body text-secondary text-lg max-w-xl leading-relaxed opacity-80">
+                Customize your experience with premium typography and human-like AI narration. Step into a world where
+                every word resonates.
+            </p>
+        </section>
+        <!-- Bento Layout for Immersion View -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            <!-- Main Reader Canvas -->
+            <div
+                class="md:col-span-8 bg-surface-container rounded-[2rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-outline-variant/10">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32">
+                </div>
+                <div class="flex flex-col gap-8 relative z-10">
+                    <div class="flex justify-between items-center border-b border-outline-variant/10 pb-6">
+                        <div class="flex flex-col">
+                            <span class="font-label text-[10px] uppercase tracking-widest text-primary/60">Chapter
+                                IV</span>
+                            <h2 class="font-headline text-2xl text-on-surface font-semibold">The Midnight Library</h2>
+                        </div>
+                        <div class="flex gap-4">
+                            <span
+                                class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">format_size</span>
+                            <span
+                                class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">bookmark</span>
+                        </div>
+                    </div>
+                    <div
+                        class="serif-text text-xl md:text-2xl leading-[1.8] text-on-surface opacity-90 first-letter:text-5xl first-letter:font-bold first-letter:mr-3 first-letter:float-left first-letter:text-primary-fixed-dim">
+                        The silence of the atelier was not empty; it was a living thing, thick with the scent of old
+                        parchment and cold jasmine tea. Elara traced the spine of the ledger, her fingertips catching on
+                        the rough-hewn leather. Outside, the rain tapped rhythmically against the skylight, a soft
+                        percussion that seemed to sync with the steady pulse of the city below. Every word written here
+                        carried the weight of a thousand secrets, waiting for the right voice to breathe them back into
+                        existence.
+                    </div>
+                    <!-- Reader Controls Floating Overlay -->
+                    <div class="flex justify-center mt-6">
+                        <div class="glass-panel px-6 py-3 rounded-full flex items-center gap-6 shadow-xl">
+                            <span
+                                class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer transition-transform active:scale-90">skip_previous</span>
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                                <span class="material-symbols-outlined text-on-primary"
+                                    style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+                            </div>
+                            <span
+                                class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer transition-transform active:scale-90">skip_next</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Side Interaction Panels -->
+            <div class="md:col-span-4 flex flex-col gap-6">
+                <!-- AI Voice Profile Card -->
+                <div
+                    class="bg-surface-container-high rounded-[2rem] p-6 border border-outline-variant/10 flex flex-col gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary-fixed-dim"
+                                style="font-variation-settings: 'FILL' 1;">graphic_eq</span>
+                        </div>
+                        <div>
+                            <h3 class="font-label text-sm font-bold text-on-surface">Narration Style</h3>
+                            <p class="font-label text-xs text-on-surface-variant">AI Voice: Julian (Warm)</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="h-1.5 w-full bg-surface-container-lowest rounded-full overflow-hidden">
+                            <div class="h-full w-2/3 bg-primary rounded-full"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] font-label text-outline uppercase tracking-widest">
+                            <span>Emotional Resonance</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Visual Setting Card -->
+                <div
+                    class="bg-surface-container-highest rounded-[2rem] p-6 border border-outline-variant/20 flex flex-col gap-6 relative overflow-hidden">
+                    <div class="absolute inset-0 z-0 opacity-20">
+                        <img alt="Atmospheric library" class="w-full h-full object-cover"
+                            data-alt="Abstract atmospheric close-up of old book edges with soft dust motes dancing in a single beam of light"
+                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfkpiBxnfv8MaFDkUPpwNL6-0dmquZtC_pclV_jAy6M-H0mJPN-JvaKOadNrkO00wTtfo8MrJhJMXqvJYDGSqcvn7EwqaFI8LXqt3TcM4HEbVJd5NYvQCcgpuce-RUgzz06-J2UqSudKT4RJveeOhot0KH0YkPoAC0DkYhLQplNgpy7OpIQq8O8lolM4JFANFAOB4AIx20KDg2rekEaCMDeFz5ljNwhl9lVW8qPi9IOs5Cr4txZVrK9WtCDlbjQg6-G9qayeK2obk6" />
+                    </div>
+                    <div class="relative z-10 flex flex-col gap-3">
+                        <h3 class="font-headline text-lg text-primary">Atmosphere</h3>
+                        <p class="font-body text-xs text-secondary leading-relaxed">Dynamic lighting adjusts to the mood
+                            of the text.</p>
+                        <div class="flex gap-2">
+                            <div
+                                class="w-8 h-8 rounded-full bg-[#111319] border-2 border-primary cursor-pointer shadow-inner">
+                            </div>
+                            <div
+                                class="w-8 h-8 rounded-full bg-[#f4f1ea] border border-outline-variant/20 cursor-pointer">
+                            </div>
+                            <div
+                                class="w-8 h-8 rounded-full bg-[#2d1b1b] border border-outline-variant/20 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- CTA Column -->
+                <button
+                    class="w-full py-5 rounded-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg shadow-[0_15px_30px_-5px_rgba(190,196,237,0.3)] hover:shadow-primary/40 transition-all active:scale-95">
+                    Begin Your Journey
+                </button>
+                <p class="text-center text-[10px] uppercase tracking-widest text-outline">7-day premium trial included
+                </p>
+            </div>
+        </div>
+    </main>
+    <!-- Bottom Nav Dock -->
+    <nav
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-slate-800/85 backdrop-blur-lg rounded-3xl z-50 flex justify-around items-center px-4 py-2 shadow-[0_12px_32px_0_rgba(226,226,235,0.06)]">
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-transform duration-300 ease-out scale-90 cursor-pointer">
+            <span class="material-symbols-outlined">explore</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Explore</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center bg-indigo-900/40 text-indigo-100 rounded-2xl px-4 py-2 shadow-[0_0_15px_rgba(190,196,237,0.2)] transition-transform duration-300 ease-out scale-90 cursor-pointer">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">auto_stories</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Library</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-transform duration-300 ease-out scale-90 cursor-pointer">
+            <span class="material-symbols-outlined">download_for_offline</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Downloads</span>
+        </div>
+        <div
+            class="flex flex-col items-center justify-center text-slate-400 px-4 py-2 hover:bg-slate-700/50 rounded-2xl transition-transform duration-300 ease-out scale-90 cursor-pointer">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="font-sans text-[10px] uppercase tracking-widest mt-1">Settings</span>
+        </div>
+    </nav>
+</body>
+
+</html>

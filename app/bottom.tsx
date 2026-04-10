@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Platform } from 'react-native';
-import { create } from 'zustand'
 import { ExploreLayout } from './search';
 import Recents from './recents';
 import FavoriteScreen from './favorites/_layout';
@@ -10,18 +9,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-
-export const indexes = {
-    favorites: 0,
-    explore: 1,
-    recents: 2,
-    settings: 3
-}
-
-export const useBottomIndexStore = create((set) => ({
-    index: 0,
-    setIndex: (index: number) => set({ index: index })
-}))
+import { useBottomIndexStore } from './store/bottomIndexStore';
 
 const MyBottom = () => {
     const index = useBottomIndexStore((state: any) => state.index);
