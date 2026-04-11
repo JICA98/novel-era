@@ -17,7 +17,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { userPrefStore } from './userpref';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import {
     chapterTrackerStore,
     getAllTrackersAsync,
@@ -106,7 +106,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
     const params = useLocalSearchParams();
     const incomingQuery = params.query as string | undefined;
 
-    const theme = useTheme();
+    const theme = useAppTheme();
     const themeColors = theme.colors as any;
     const favoriteTrackerStoreState = noveFavoriteStore((state: any) => state.content);
     const chapterTrackerStoreState = chapterTrackerStore((state: any) => state.content);
@@ -854,7 +854,7 @@ export function SearchResultsView({
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
     const [enrichedResults, setEnrichedResults] = useState<EnrichedContent[]>([]);
     const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
-    const theme = useTheme();
+    const theme = useAppTheme();
     const themeColors = theme.colors as any;
     const favoriteTrackerStoreState = noveFavoriteStore((state: any) => state.content);
     const chapterTrackerStoreState = chapterTrackerStore((state: any) => state.content);

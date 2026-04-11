@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export const ChapterSkeleton = () => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const opacity = useSharedValue(0.3);
 
     useEffect(() => {
@@ -44,7 +44,7 @@ export const ChaptersLoadingView = () => {
 };
 
 export const NovelSkeleton = () => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const opacity = useSharedValue(0.3);
 
     useEffect(() => {

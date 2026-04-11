@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TextProps } from 'react-native';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 interface AtelierTextProps extends TextProps {
   variant?: 'headline' | 'body' | 'label' | 'title' | 'subtitle' | 'caption';
@@ -18,8 +18,9 @@ export const AtelierText: React.FC<AtelierTextProps> = ({
   children,
   ...props
 }) => {
-  const theme = useTheme();
+  const theme = useAppTheme();
   const themeColors = theme.colors as any;
+  const defaultTextColor = themeColors.text ?? themeColors.onSurface;
 
   const getFontFamily = () => {
     if (variant === 'headline' || variant === 'title') {
@@ -52,7 +53,7 @@ export const AtelierText: React.FC<AtelierTextProps> = ({
         {
           fontFamily: getFontFamily(),
           fontSize: getFontSize(),
-          color: color || themeColors.onSurface,
+          color: color || defaultTextColor,
         },
         style,
       ]}

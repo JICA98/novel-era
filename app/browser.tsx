@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Linking, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Appbar, ActivityIndicator, Text, useTheme } from "react-native-paper";
+import { Appbar, ActivityIndicator, Text } from "react-native-paper";
+import { useAppTheme } from "@/hooks/useAppTheme";
 import { router, useLocalSearchParams } from "expo-router";
 import { WebView } from "react-native-webview";
 import type { WebViewErrorEvent, WebViewNavigation } from "react-native-webview/lib/WebViewTypes";
@@ -12,7 +13,7 @@ type BrowserParams = {
 };
 
 export default function BrowserScreen(): React.JSX.Element {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const params = useLocalSearchParams<BrowserParams>();
     const webviewRef = useRef<WebView>(null);
 

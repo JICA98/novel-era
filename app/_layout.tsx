@@ -17,6 +17,7 @@ import { setUpFirebaseUser, firebaseStore } from "./lib/firebaseBackup";
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AppThemeProvider } from "@/hooks/useAppTheme";
 
 // Keep splash screen visible until fonts are loaded
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -98,24 +99,51 @@ export default function RootLayout() {
   if (!userPref) return null;
   
   const currentTheme = getTheme({ colorScheme, theme, themeOptions: userPref.theme });
+  const navigationTheme = currentTheme.dark
+    ? {
+        ...DarkTheme,
+        colors: {
+          ...DarkTheme.colors,
+          primary: currentTheme.colors.primary,
+          background: currentTheme.colors.background,
+          card: currentTheme.colors.surface,
+          text: currentTheme.colors.text ?? currentTheme.colors.onSurface,
+          border: currentTheme.colors.outlineVariant,
+          notification: currentTheme.colors.error,
+        },
+      }
+    : {
+        ...DefaultTheme,
+        colors: {
+          ...DefaultTheme.colors,
+          primary: currentTheme.colors.primary,
+          background: currentTheme.colors.background,
+          card: currentTheme.colors.surface,
+          text: currentTheme.colors.text ?? currentTheme.colors.onSurface,
+          border: currentTheme.colors.outlineVariant,
+          notification: currentTheme.colors.error,
+        },
+      };
 
   return (
     <SafeAreaProvider>
-      <PaperProvider theme={currentTheme}>
-        <ThemeProvider value={currentTheme.dark ? DarkTheme : DefaultTheme}>
-          <StatusBar style={currentTheme.dark ? 'light' : 'dark'} />
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="repos" options={{ headerShown: false }} />
-            <Stack.Screen name="contents" options={{ headerShown: false }} />
-            <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
-            <Stack.Screen name="browser" options={{ headerShown: false }} />
-            <Stack.Screen name="explore_all" options={{ headerShown: false }} />
-            <Stack.Screen name="search" options={{ headerShown: false }} />
-          </Stack>
-        </ThemeProvider>
-      </PaperProvider>
+      <AppThemeProvider theme={currentTheme}>
+        <PaperProvider theme={currentTheme}>
+          <ThemeProvider value={navigationTheme}>
+            <StatusBar style={currentTheme.dark ? 'light' : 'dark'} />
+            <Stack>
+              <Stack.Screen name="index" options={{ headerShown: false }} />
+              <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="repos" options={{ headerShown: false }} />
+              <Stack.Screen name="contents" options={{ headerShown: false }} />
+              <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
+              <Stack.Screen name="browser" options={{ headerShown: false }} />
+              <Stack.Screen name="explore_all" options={{ headerShown: false }} />
+              <Stack.Screen name="search" options={{ headerShown: false }} />
+            </Stack>
+          </ThemeProvider>
+        </PaperProvider>
+      </AppThemeProvider>
     </SafeAreaProvider>
   );
 }

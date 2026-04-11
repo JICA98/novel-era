@@ -1,6 +1,7 @@
 import { View, StyleSheet, Text, TouchableOpacity, Image, ScrollView } from "react-native";
 import { TTS, ttsStore, SpeechAction, setTTS, isSpeechOrPause } from "./tts";
-import { Button, Icon, IconButton, Title, useTheme } from "react-native-paper";
+import { Button, Icon, IconButton, Title } from "react-native-paper";
+import { useAppTheme } from "@/hooks/useAppTheme";
 import React, { useEffect } from "react";
 import Slider from '@react-native-community/slider';
 import { defaultTTSConfig, TTSConfig, UserPreferences, userPrefStore, getReaderTheme } from "../userpref";
@@ -93,7 +94,7 @@ export default function TTSControls() {
     const updateTTSConfig: SetTTSConfig = ttsStore((state: any) => state.updateTTSConfig);
     const controlVisible = isSpeechOrPause(tts.state);
     const voices: Speaker[] = voicesStore((state) => state.content);
-    const theme = useTheme();
+    const theme = useAppTheme();
     const readerTheme = getReaderTheme(editorPref.theme, theme.dark);
     const readerBgColor = readerTheme.background;
     const readerTextColor = readerTheme.text;

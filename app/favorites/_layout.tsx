@@ -8,8 +8,6 @@ import BookItem from '../repos/bookItem';
 import { BookListItem } from '@/components/BookListItem';
 import { AtelierText } from '@/components/AtelierText';
 import { AtelierButton } from '@/components/AtelierButton';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from 'react-native';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,7 +15,7 @@ import { BlurView } from 'expo-blur';
 import { normalizeUrl } from '@/types';
 import { RenderChapterProps } from '../chapters/common';
 import { indexes, useBottomIndexStore } from '../store/bottomIndexStore';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 const { width } = Dimensions.get('window');
 
@@ -33,7 +31,7 @@ const FavoriteScreen = () => {
     const [filterStatus, setFilterStatus] = useState('All');
     const [sortBy, setSortBy] = useState('Updated');
     const [isSortModalVisible, setIsSortModalVisible] = useState(false);
-    const themeColors = useTheme().colors as any;
+    const themeColors = useAppTheme().colors as any;
     const setBottomIndex = useBottomIndexStore((state: any) => state.setIndex);
 
     useEffect(() => {
@@ -323,7 +321,7 @@ const FavoriteScreen = () => {
                 keyExtractor={(item) => item.novelTracker.novel.bookId}
                 ListHeaderComponent={() => enrichedTrackers.length > 0 ? (
                     <View style={styles.listHeader}>
-                        <AtelierText variant="headline" bold style={styles.listTitle}>My Library</AtelierText>
+                        <AtelierText variant="headline" bold color={themeColors.text ?? themeColors.onSurface} style={styles.listTitle}>My Library</AtelierText>
                         <AtelierText variant="body" color={themeColors.onSurfaceVariant} style={styles.listSubtitle}>
                             Curating your personal literary collection.
                         </AtelierText>

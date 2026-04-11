@@ -1,15 +1,16 @@
 import { Material3Theme } from "@pchmn/expo-material3-theme";
 import { useState } from "react";
 import { ColorSchemeName } from "react-native";
-import { Button, List, MD3DarkTheme, MD3LightTheme, RadioButton, useTheme } from "react-native-paper";
+import { Button, List, MD3DarkTheme, MD3LightTheme, RadioButton } from "react-native-paper";
 import { UserPreferences, ThemeOptions } from "../userpref";
 import { Colors } from "@/constants/Colors";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 export const ThemeSelectionAccordion = ({ userPref, setUserPref, setSnackbarText }: {
     userPref: UserPreferences, setUserPref: (userPref: UserPreferences) => void,
     setSnackbarText: (text: string) => void
 }) => {
-    const { colors } = useTheme();
+    const { colors } = useAppTheme();
     const [expanded, setExpanded] = useState(true);
     const [theme, setTheme] = useState(userPref.theme);
     const handlePress = () => setExpanded(!expanded);
@@ -89,4 +90,3 @@ export function getTheme({ colorScheme, themeOptions, theme }: {
 export default function ThemeSettingsRoute() {
     return null;
 }
-

@@ -1,7 +1,8 @@
 import { Content, Repo } from "@/types";
 import { router } from "expo-router";
 import { View, StyleSheet, Text, TouchableOpacity, Platform } from "react-native";
-import { IconButton, ActivityIndicator, useTheme } from "react-native-paper";
+import { IconButton, ActivityIndicator } from "react-native-paper";
+import { useAppTheme } from "@/hooks/useAppTheme";
 import { useDownloadStore, startDownload, removeFromStore, allDownloadsStore } from "../downloads/utils";
 import { chapterKey, RenderChapterProps, fetchChapter } from "../chapters/common";
 import { getOrCreateTrackerStore, chapterTrackerStore, ChapterTracker } from "../favorites/tracker";
@@ -40,7 +41,7 @@ export function ChapterCard({ props }: { props: ChapterCardProps }) {
         allTrackers: chapterTrackerStore((state: any) => state.content),
         setAllTrackers: chapterTrackerStore((state: any) => state.setContent),
     });
-    const theme = useTheme();
+    const theme = useAppTheme();
     const tracker = useTracker((state: any) => state.content) as ChapterTracker;
     const completed = tracker.status === 'read';
 
@@ -135,7 +136,7 @@ export function ChapterCard({ props }: { props: ChapterCardProps }) {
 
             <View style={styles.chapterActions}>
                 {storeContent?.isLoading ? (
-                    <ActivityIndicator size="small" color="#171c3c" />
+                    <ActivityIndicator size="small" color={theme.colors.primary} />
                 ) : (
                     <IconButton
                         icon={storeContent.data ? "check-circle" : "arrow-right"}
@@ -172,7 +173,6 @@ const styles = StyleSheet.create({
     percentageText: {
         fontFamily: 'Manrope-Medium',
         fontSize: 12,
-        color: '#171c3c',
         opacity: 0.6,
     },
     chapterInfo: {
@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
     chapterNumber: {
         fontFamily: 'Manrope-ExtraBold',
         fontSize: 10,
-        color: '#46464d',
         opacity: 0.4,
         letterSpacing: 1,
     },
@@ -205,13 +204,11 @@ const styles = StyleSheet.create({
     chapterTitleText: {
         fontFamily: 'NotoSerif-Bold',
         fontSize: 18,
-        color: '#171c3c',
         marginBottom: 4,
     },
     chapterMeta: {
         fontFamily: 'Manrope-Medium',
         fontSize: 12,
-        color: '#46464d',
         opacity: 0.7,
     },
     chapterActions: {
@@ -222,4 +219,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default function() { return null; }
+export default function ChapterCardRoute() { return null; }

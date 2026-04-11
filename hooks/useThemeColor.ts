@@ -3,15 +3,14 @@
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { useTheme } from 'react-native-paper';
-
 import { Colors } from '@/constants/Colors';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark
 ) {
-  const theme = useTheme();
+  const theme = useAppTheme();
   const colorMode = theme.dark ? 'dark' : 'light';
   const colorFromProps = props[colorMode];
 

@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Animated as RNAnimated, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl, Image, TouchableOpacity, Dimensions, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Snackbar, useTheme, MD3Theme, FAB, IconButton } from "react-native-paper";
+import { ActivityIndicator, Snackbar, FAB, IconButton } from "react-native-paper";
 import { BlurView } from "expo-blur";
 import Reanimated, { 
     useSharedValue, 
@@ -31,6 +31,7 @@ import { errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ChaptersLoadingView, NovelSkeleton } from "./skeletons";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 400;
@@ -133,7 +134,7 @@ export default function ContentLayout() {
     const [exportsVisible, setExportsVisible] = useState(false);
     const [exportState, setExportState] = useState({ isExporting: false, completed: 0, total: 0 });
     const [snackBarData, setSnackBarData] = useState<SnackBarData>({ visible: false });
-    const theme = useTheme();
+    const theme = useAppTheme();
     const tabLength = Math.ceil((content?.latestChapter ?? 1) / PAGE_SIZE);
     const [selectedIndex, setSelectedIndex] = useState(0);
     const allNovelTrackerStore = noveFavoriteStore((state: any) => state.content);
@@ -264,7 +265,17 @@ export default function ContentLayout() {
     const [activeTab, setActiveTab] = useState<'synopsis' | 'chapters'>('synopsis');
     const [isTabTransitioning, setIsTabTransitioning] = useState(false);
     const [selectedVolumeIndex, setSelectedVolumeIndex] = useState(0);
+    const [isVolumeTransitioning, setIsVolumeTransitioning] = useState(false);
     const tabProgress = useSharedValue(0);
+
+    const handleVolumeChange = useCallback((idx: number) => {
+        if (idx === selectedVolumeIndex) return;
+        setIsVolumeTransitioning(true);
+        setTimeout(() => {
+            setSelectedVolumeIndex(idx);
+            setIsVolumeTransitioning(false);
+        }, 50);
+    }, [selectedVolumeIndex]);
 
     const handleTabChange = (tab: 'synopsis' | 'chapters') => {
         if (tab === activeTab) return;
@@ -359,7 +370,8 @@ export default function ContentLayout() {
                                 content={content!}
                                 volumes={volumes}
                                 selectedIndex={selectedVolumeIndex}
-                                onVolumePress={setSelectedVolumeIndex}
+                                onVolumePress={handleVolumeChange}
+                                isLoading={isVolumeTransitioning}
                             />
                         </View>
                     )
@@ -434,7 +446,7 @@ export default function ContentLayout() {
 // Sub-components
 
 const Header = ({ scrollY, title, onExport }: { scrollY: RNAnimated.Value, title: string, onExport: () => void }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const bgColor = scrollY.interpolate({
         inputRange: [0, 100],
         outputRange: ['rgba(0,0,0,0)', theme.colors.surface + 'e6'], // 0.9 opacity
@@ -465,7 +477,7 @@ const Header = ({ scrollY, title, onExport }: { scrollY: RNAnimated.Value, title
 };
 
 const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: SharedValue<number> }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
 
     const heroStyle = useAnimatedStyle(() => {
         // Essential for page layout below, but height 
@@ -615,7 +627,7 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
 };
 
 const SynopsisTab = ({ content }: { content: Content }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const summaryText = content.summary || 'No description available for this novel.';
     const tags = content.tags || [];
     const words = summaryText.trim().split(/\s+/);
@@ -656,14 +668,15 @@ const SynopsisTab = ({ content }: { content: Content }) => {
     );
 };
 
-const ChaptersTab = ({ repo, content, volumes, selectedIndex, onVolumePress }: {
+const ChaptersTab = ({ repo, content, volumes, selectedIndex, onVolumePress, isLoading }: {
     repo: Repo,
     content: Content,
     volumes: { label: string, start: number, end: number }[],
     selectedIndex: number,
-    onVolumePress: (idx: number) => void
+    onVolumePress: (idx: number) => void,
+    isLoading?: boolean
 }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const selectedVolume = volumes[selectedIndex] || volumes[0];
     const chapters = useMemo(() => {
         if (!selectedVolume) return [];
@@ -705,17 +718,21 @@ const ChaptersTab = ({ repo, content, volumes, selectedIndex, onVolumePress }: {
             </ScrollView>
 
             <View style={styles.chapterList}>
-                {chapters.map((id) => (
-                    <ChapterCard
-                        key={id}
-                        props={{
-                            repo,
-                            content,
-                            chapterId: `${id}`,
-                            enableNextPrev: true,
-                        }}
-                    />
-                ))}
+                {isLoading ? (
+                    <ChaptersLoadingView />
+                ) : (
+                    chapters.map((id) => (
+                        <ChapterCard
+                            key={id}
+                            props={{
+                                repo,
+                                content,
+                                chapterId: `${id}`,
+                                enableNextPrev: true,
+                            }}
+                        />
+                    ))
+                )}
             </View>
         </View>
     );
@@ -732,7 +749,7 @@ const BottomActionBar = ({
     onReadPress: () => void,
     readLabel: string,
 }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     return (
         <View style={styles.bottomBar}>
             <BlurView intensity={Platform.OS === 'ios' ? 30 : 0} style={StyleSheet.absoluteFill} tint={theme.dark ? "dark" : "light"} />

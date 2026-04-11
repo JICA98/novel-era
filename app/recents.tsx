@@ -1,18 +1,17 @@
-import { RefreshControl, View, Text, FlatList, TouchableOpacity, useColorScheme, StyleSheet, ScrollView, LayoutAnimation } from "react-native";
+import { RefreshControl, View, FlatList, TouchableOpacity, StyleSheet, ScrollView, LayoutAnimation } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { normalizeUrl } from "@/types";
 import { ChapterTracker, getAllTrackersAsync, saveTracker } from "./favorites/tracker";
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated';
-import { timeAgo, RenderChapterProps } from "./chapters/common";
+import { RenderChapterProps } from "./chapters/common";
 import { router } from "expo-router";
 import Modal from "./components/modal";
 import { AtelierText } from "@/components/AtelierText";
 import { BookListItem } from "@/components/BookListItem";
-import { Colors } from "@/constants/Colors";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 const PAGE_SIZE = 20;
 
@@ -30,7 +29,7 @@ export default function Recents() {
     const [pagination, setPagination] = useState(1);
     const [showDelete, setShowDelete] = useState(false);
     
-    const themeColors = useTheme().colors as any;
+    const themeColors = useAppTheme().colors as any;
 
     async function fetchTrackers() {
         if (!refreshing) setLoading(true);
@@ -183,7 +182,7 @@ export default function Recents() {
                 ListHeaderComponent={() => (
                     <View style={styles.header}>
                         <View style={styles.titleRow}>
-                            <AtelierText variant="headline" bold style={styles.title}>Recents</AtelierText>
+                            <AtelierText variant="headline" bold color={themeColors.text ?? themeColors.onSurface} style={styles.title}>Recents</AtelierText>
                             {(trackers && trackers.length > 0) && (
                                 <TouchableOpacity 
                                     style={[styles.clearAllButton, { backgroundColor: themeColors.surfaceContainerLow }]}

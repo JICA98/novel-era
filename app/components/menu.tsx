@@ -1,7 +1,8 @@
 import { FontAwesome } from "@expo/vector-icons";
 import { useState } from "react";
 import { View } from "react-native";
-import { Button, Menu, useTheme } from "react-native-paper";
+import { Button, Menu } from "react-native-paper";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 export interface MenuItem {
     title: string;
@@ -13,7 +14,7 @@ export function MenuFunction({ items, children }: { items?: MenuItem[]; children
     const [visible, setVisible] = useState(false);
     const openMenu = () => setVisible(true);
     const closeMenu = () => setVisible(false);
-    const color = useTheme().colors.onBackground;
+    const color = useAppTheme().colors.onBackground;
     const menuItems = items ?? children ?? [];
     return (
         <View

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, StyleSheet, Modal, Image, TouchableOpacity, ScrollView, Dimensions, Animated, Platform } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 type ExportFormat = "epub" | "pdf";
 
@@ -144,7 +145,7 @@ function ExportDialog({
     novelTitle = "The Archive of Echoes",
     novelCover = "https://lh3.googleusercontent.com/aida-public/AB6AXuAQ-3Ok_y5NBypa-gbqGSgIulHtSsJD4Y_rYOfmAHzIvilz5ip_rKS_ECZvXfPNat00Fa7g9bofP-XkVC1yvrDHW5vrVsFXbVe_s4tQWIDxoWN5Vmo9jzX9jRMtRioGp7EM2wSqQFCyDBYwT7dpSi_UsUdlVe0NnVfRdU7-wcNuZ6EkuIXY_KZ3vC4z0JWnU3rOBIkOhlE44L_4lUrVJJYKg2HXgGSbHNorQ8lWP2mTQSzbO7LZnnhdxOVRCcKhfTudATPj3ISIDnrL"
 }: ExportDialogProps): React.JSX.Element {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
     const insets = useSafeAreaInsets();
     const [range, setRange] = useState<[number, number]>([1, Math.max(1, maxChapters)]);

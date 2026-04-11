@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { IconButton, Title, useTheme } from 'react-native-paper';
+import { IconButton, Title } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { MenuFunction, MenuItem } from './menu';
 
 
@@ -16,7 +17,7 @@ interface AppBarProps {
 
 // Define the AppBar component
 export const AppBar: React.FC<AppBarProps> = ({ title, actions, transparent }) => {
-    const { colors } = useTheme();
+    const { colors } = useAppTheme();
     const surfaceVariantColor = colors.surfaceVariant;
     return (
         <View style={[styles.appBarContainer, {

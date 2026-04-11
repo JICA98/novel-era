@@ -5,7 +5,7 @@ import { AtelierText } from './AtelierText';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 function formatRelativeDate(timestamp?: number): string {
     if (!timestamp) return '';
@@ -63,7 +63,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
     onPress,
     renderRightAction
 }) => {
-    const themeColors = useTheme().colors as any;
+    const themeColors = useAppTheme().colors as any;
 
     const coverUri = normalizeUrl(item.bookImage, repo.repoUrl) || `https://picsum.photos/seed/${item.bookId}/200/300`;
 

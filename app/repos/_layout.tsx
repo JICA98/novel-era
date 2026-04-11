@@ -1,4 +1,4 @@
-import { ActivityIndicator, Appbar, useTheme } from "react-native-paper";
+import { ActivityIndicator, Appbar } from "react-native-paper";
 import { FlatList, RefreshControl, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet } from 'react-native';
@@ -13,6 +13,7 @@ import { MenuFunction } from "../components/menu";
 import BookItem from "./bookItem";
 import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 const inFlightContentRequests = new Map<string, Promise<Content[]>>();
 
@@ -105,7 +106,7 @@ export function RepoContentLayout({
     errorComponent,
     hideSearchBar = false,
 }: RepoContentLayoutProps) {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
     const [searchQuery, setSearchQuery] = useState('');
     const [searchBarVisible, setSearchBarVisible] = useState(initialSearchBarVisible);

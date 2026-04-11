@@ -2,19 +2,19 @@ import { FetchData } from "@/types";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Dimensions, View, TouchableOpacity, StatusBar, Animated, BackHandler } from "react-native";
-import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
-import { ActivityIndicator, Button, IconButton, Title, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Button, IconButton } from "react-native-paper";
 import { allDownloadsStore, useDownloadStore } from "../downloads/utils";
 import { RenderPagedContent } from "./content";
 import { RenderChapterProps, chapterKey, ChapterData, fetchChapter, navigateToNextChapter } from "./common";
 import { errorPlaceholder } from "../placeholders";
 import { isSpeechOrPause, setTTS, SpeechAction, TTS, ttsStore } from "./tts";
-import TTSControls from "./ttscontrols";
 import { UserPreferences, userPrefStore, getReaderTheme } from "../userpref";
 import { FAB } from 'react-native-paper';
 import { MenuItem } from "../components/menu";
 import { router } from "expo-router";
 import { ReaderNavigationToc, ReaderAppearanceSettings, ReaderTTSControlsSettings } from "./modals";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
 const ChapterLayout: React.FC = () => {
     const _props: RenderChapterProps = JSON.parse(useLocalSearchParams().props as string) as RenderChapterProps;
@@ -35,7 +35,7 @@ const ChapterLayout: React.FC = () => {
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
     const [focusedMode, setFocusedMode] = useState(props.focusedMode);
-    const paperTheme = useTheme();
+    const paperTheme = useAppTheme();
     const colors = paperTheme.colors;
     const readerTheme = getReaderTheme(editorPref.theme, paperTheme.dark);
     const readerBgColor = readerTheme.background;
@@ -106,9 +106,13 @@ const ChapterLayout: React.FC = () => {
     const hasDataLoaded = contentData.data && !contentData.isLoading;
     if (contentData.isLoading || contentData.data === undefined) {
         child = (
-            <View style={styles.listPadding}>
-                <ActivityIndicator animating={true} size="large" />
-            </View>
+            <ChapterReaderSkeleton
+                focusedMode={focusedMode}
+                readerBgColor={readerBgColor}
+                readerTextColor={readerTextColor}
+                mutedColor={colors.outlineVariant}
+                surfaceColor={colors.surfaceContainerHighest}
+            />
         );
     } else if (contentData.error) {
         child = errorPlaceholder({ onRetry: () => fetchChapterData(false) });
@@ -124,11 +128,6 @@ const ChapterLayout: React.FC = () => {
         />;
     }
     const chapterActions: MenuItem[] = buildChapterActionMenu(setFocusedMode, userPref, props, setUserPref);
-    function updateFontSize(add: number) {
-        const editorPref = userPref.editorPreferences;
-        const newFontSize = editorPref.fontSize + add;
-        setUserPref({ ...userPref, editorPreferences: { ...editorPref, fontSize: newFontSize } });
-    }
 
     useEffect(() => {
         const backAction = () => {
@@ -151,8 +150,6 @@ const ChapterLayout: React.FC = () => {
         let t: TTS = { ...tts, state: state }
         setTTS({ tts: t, setTTS: setTTStore });
     }
-
-    const insets = useSafeAreaInsets();
 
     return (
         <View style={{ flex: 1, backgroundColor: readerBgColor }}>
@@ -219,6 +216,63 @@ const ChapterLayout: React.FC = () => {
 
 }
 
+function ChapterReaderSkeleton({
+    focusedMode,
+    readerBgColor,
+    readerTextColor,
+    mutedColor,
+    surfaceColor,
+}: {
+    focusedMode: boolean;
+    readerBgColor: string;
+    readerTextColor: string;
+    mutedColor: string;
+    surfaceColor: string;
+}) {
+    const lineColor = `${readerTextColor}22`;
+    const titleColor = `${readerTextColor}18`;
+    const chipColor = `${surfaceColor}cc`;
+    const paragraphWidths = ['92%', '100%', '96%', '88%', '94%', '98%', '83%', '91%'];
+
+    return (
+        <View style={[styles.readerSkeletonContainer, { backgroundColor: readerBgColor }]}>
+            {!focusedMode && (
+                <View style={styles.readerSkeletonHeader}>
+                    <View style={[styles.readerSkeletonIcon, { backgroundColor: chipColor }]} />
+                    <View style={styles.readerSkeletonHeaderActions}>
+                        <View style={[styles.readerSkeletonIcon, { backgroundColor: chipColor }]} />
+                        <View style={[styles.readerSkeletonIcon, { backgroundColor: chipColor }]} />
+                        <View
+                            style={[
+                                styles.readerSkeletonChip,
+                                { backgroundColor: chipColor, borderColor: `${mutedColor}33` },
+                            ]}
+                        />
+                    </View>
+                </View>
+            )}
+
+            <View style={styles.readerSkeletonBody}>
+                <View style={[styles.readerSkeletonMeta, { backgroundColor: lineColor }]} />
+                <View style={[styles.readerSkeletonTitle, { backgroundColor: titleColor }]} />
+                {paragraphWidths.map((width, index) => (
+                    <View
+                        key={index}
+                        style={[
+                            styles.readerSkeletonLine,
+                            {
+                                width: width as any,
+                                backgroundColor: lineColor,
+                                marginTop: index === 0 ? 0 : 14,
+                            },
+                        ]}
+                    />
+                ))}
+            </View>
+        </View>
+    );
+}
+
 
 const styles = {
     container: {
@@ -230,6 +284,53 @@ const styles = {
     listPadding: {
         marginTop: 80,
         padding: 16,
+    },
+    readerSkeletonContainer: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: 12,
+    },
+    readerSkeletonHeader: {
+        flexDirection: 'row' as 'row',
+        justifyContent: 'space-between' as 'space-between',
+        alignItems: 'center' as 'center',
+        marginBottom: 24,
+    },
+    readerSkeletonHeaderActions: {
+        flexDirection: 'row' as 'row',
+        alignItems: 'center' as 'center',
+        gap: 12,
+    },
+    readerSkeletonIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+    },
+    readerSkeletonChip: {
+        width: 82,
+        height: 36,
+        borderRadius: 18,
+        borderWidth: 1,
+    },
+    readerSkeletonBody: {
+        paddingHorizontal: 4,
+        paddingTop: 12,
+    },
+    readerSkeletonMeta: {
+        width: 104,
+        height: 12,
+        borderRadius: 999,
+        marginBottom: 18,
+    },
+    readerSkeletonTitle: {
+        height: 28,
+        width: '58%' as any,
+        borderRadius: 12,
+        marginBottom: 30,
+    },
+    readerSkeletonLine: {
+        height: 14,
+        borderRadius: 999,
     },
     errorText: {
         textAlign: 'center',

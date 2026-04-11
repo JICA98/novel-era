@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Alert, StyleSheet, View } from 'react-native'
 import { backupPreferences, restorePreferences, fetchBackupPreview, type BackupPreviewData } from '../lib/firebaseBackup'
-import { ActivityIndicator, Button, Divider, List, Text, TextInput, Title, useTheme } from 'react-native-paper'
+import { ActivityIndicator, Button, Divider, List, Text, TextInput, Title } from 'react-native-paper'
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { ChapterTracker, NovelTracker, chapterTrackerStore, getAllTrackersAsync, getFavoriteTrackersAsync, noveFavoriteStore } from '../favorites/tracker'
 import { UserPreferences, userPrefStore } from '../userpref'
 import PaperDialog from '../components/dialog'
@@ -221,7 +222,7 @@ export default function Auth({ setSnackbarText }: { setSnackbarText: (text: stri
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [expanded, setExpanded] = useState(true);
-    const { colors } = useTheme();
+    const { colors } = useAppTheme();
     const handlePress = () => setExpanded(!expanded);
     
     const actions = useAccountSettings(setSnackbarText);

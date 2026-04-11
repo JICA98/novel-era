@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, ScrollView, StyleSheet, Modal as RNModal } from 'react-native';
-import { Text, IconButton, useTheme, Button, Divider, SegmentedButtons } from 'react-native-paper';
+import { Text, IconButton, Button, Divider, SegmentedButtons } from 'react-native-paper';
 import { UserPreferences, ThemeOptions, userPrefStore, getDefaultReaderThemeKey, getReaderTheme, getReaderThemeOptions } from '../userpref';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import Slider from '@react-native-community/slider';
 import TTSControls from './ttscontrols';
@@ -15,7 +16,7 @@ export const ReaderNavigationToc = ({
     onDismiss: () => void;
     props: RenderChapterProps;
 }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
     const readerTheme = getReaderTheme(editorPref.theme, theme.dark);
@@ -134,7 +135,7 @@ export const ReaderAppearanceSettings = ({
     visible: boolean;
     onDismiss: () => void;
 }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
     const selectedTheme = userPref.editorPreferences.theme || getDefaultReaderThemeKey(theme.dark);
@@ -414,7 +415,7 @@ export const ReaderTTSControlsSettings = ({
     visible: boolean;
     onDismiss: () => void;
 }) => {
-    const theme = useTheme();
+    const theme = useAppTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
     const readerTheme = getReaderTheme(editorPref.theme, theme.dark);

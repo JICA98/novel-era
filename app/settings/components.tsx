@@ -1,10 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ViewStyle, Platform } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { Colors } from '@/constants/Colors';
 import { AtelierText } from '@/components/AtelierText';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 import Animated, { 
   FadeIn, 
   FadeOut, 
@@ -28,7 +26,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   style,
   initialCollapsed = false 
 }) => {
-  const themeColors = useTheme().colors as any;
+  const themeColors = useAppTheme().colors as any;
   const [isCollapsed, setIsCollapsed] = React.useState(initialCollapsed);
 
   const toggleCollapse = () => {
@@ -46,7 +44,14 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   return (
     <Animated.View 
       layout={LinearTransition.duration(300)}
-      style={[styles.sectionContainer, { backgroundColor: themeColors.surfaceContainerLow }, style]}
+      style={[
+        styles.sectionContainer,
+        {
+          backgroundColor: themeColors.surfaceContainerLow,
+          borderColor: themeColors.outlineVariant,
+        },
+        style,
+      ]}
     >
       <TouchableOpacity 
         style={[styles.sectionHeader, isCollapsed && { marginBottom: 0 }]} 
@@ -61,7 +66,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
             style={styles.sectionIcon} 
           />
         )}
-        <AtelierText variant="title" bold style={styles.sectionTitle}>
+        <AtelierText variant="title" bold style={[styles.sectionTitle, { color: themeColors.text ?? themeColors.onSurface }]}>
           {title}
         </AtelierText>
         <View style={{ flex: 1 }} />
@@ -105,7 +110,7 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
   showChevron = false,
   disabled = false,
 }) => {
-  const themeColors = useTheme().colors as any;
+  const themeColors = useAppTheme().colors as any;
 
   const content = (
     <View style={styles.itemWrapper}>
@@ -119,7 +124,7 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
           />
         )}
         <View style={styles.itemTextContainer}>
-          <AtelierText variant="body" bold style={{ color: themeColors.onSurface }}>
+          <AtelierText variant="body" bold style={{ color: themeColors.text ?? themeColors.onSurface }}>
             {title}
           </AtelierText>
           {description && (
@@ -171,8 +176,6 @@ interface StatBoxProps {
 }
 
 export const StatBox: React.FC<StatBoxProps> = ({ value, label }) => {
-  const themeColors = useTheme().colors as any;
-
   return (
     <View style={[styles.statBox, { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>
       <AtelierText 
@@ -198,6 +201,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 32,
     marginBottom: 20,
+    borderWidth: 1,
     ...Platform.select({
       ios: {
         shadowColor: '#000',

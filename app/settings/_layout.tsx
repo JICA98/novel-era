@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, useColorScheme, Linking } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Linking } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Snackbar, Switch, List } from "react-native-paper";
+import { Snackbar, Switch } from "react-native-paper";
+import { useAppTheme } from "@/hooks/useAppTheme";
 
-import { Colors } from "@/constants/Colors";
 import { AtelierText } from "@/components/AtelierText";
 import { userPrefStore, getUserPreference, ThemeOptions } from "../userpref";
 import { useAccountSettings, AuthDialogs } from "./accountSettings";
@@ -13,7 +13,6 @@ import UseRepositoryLayout from "../_repos";
 import { Repo } from "@/types";
 import { ChapterTracker, NovelTracker, chapterTrackerStore, noveFavoriteStore } from "../favorites/tracker";
 import { AuthState, signInWithGoogle } from "../lib/auth";
-import { useTheme } from 'react-native-paper';
 
 function getBoundStoreContent<T>(store: any): T | undefined {
     if (!store) {
@@ -68,12 +67,21 @@ function calculateReadingStreak(dayKeys: string[]): number {
 }
 
 export default function Settings() {
-    const themeColors = useTheme().colors as any;
+    const themeColors = useAppTheme().colors as any;
     
     const userPref = userPrefStore((state: any) => state.userPref);
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
     const [snackbarText, setSnackbarText] = useState('');
     const [authActionLoading, setAuthActionLoading] = useState(false);
+    const resolvedThemeMode = useMemo(() => {
+        if (userPref?.theme === ThemeOptions.Dark) {
+            return 'Dark';
+        }
+        if (userPref?.theme === ThemeOptions.Light) {
+            return 'Light';
+        }
+        return 'System';
+    }, [userPref?.theme]);
 
     const actions = useAccountSettings(setSnackbarText);
     const { authUser } = actions;
@@ -266,26 +274,26 @@ export default function Settings() {
                     <SettingsSection title="App Theme" icon="theme-light-dark">
                         <SettingsItem 
                             title="Theme Mode" 
-                            description={userPref?.theme || "system"}
+                            description={resolvedThemeMode}
                             rightElement={
                                 <View style={[styles.toggleContainer, { backgroundColor: themeColors.secondaryContainer }]}>
                                     <TouchableOpacity 
                                        onPress={() => setUserPref({...userPref, theme: ThemeOptions.System})}
                                        style={[styles.toggleOption, userPref?.theme === ThemeOptions.System && { backgroundColor: themeColors.surface }]}
                                     >
-                                        <AtelierText variant="caption" bold>System</AtelierText>
+                                        <AtelierText variant="caption" bold color={userPref?.theme === ThemeOptions.System ? themeColors.text ?? themeColors.onSurface : themeColors.onSecondaryContainer}>System</AtelierText>
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                        onPress={() => setUserPref({...userPref, theme: ThemeOptions.Light})}
                                        style={[styles.toggleOption, userPref?.theme === ThemeOptions.Light && { backgroundColor: themeColors.surface }]}
                                     >
-                                        <AtelierText variant="caption" bold>Light</AtelierText>
+                                        <AtelierText variant="caption" bold color={userPref?.theme === ThemeOptions.Light ? themeColors.text ?? themeColors.onSurface : themeColors.onSecondaryContainer}>Light</AtelierText>
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                        onPress={() => setUserPref({...userPref, theme: ThemeOptions.Dark})}
                                        style={[styles.toggleOption, userPref?.theme === ThemeOptions.Dark && { backgroundColor: themeColors.surface }]}
                                     >
-                                        <AtelierText variant="caption" bold>Dark</AtelierText>
+                                        <AtelierText variant="caption" bold color={userPref?.theme === ThemeOptions.Dark ? themeColors.text ?? themeColors.onSurface : themeColors.onSecondaryContainer}>Dark</AtelierText>
                                     </TouchableOpacity>
                                 </View>
                             }
@@ -338,7 +346,7 @@ export default function Settings() {
 function SearchPreferencesSection({ repos, setSnackbarText }: { repos: Repo[]; setSnackbarText: (text: string) => void; }) {
     const userPref = userPrefStore((state: any) => state.userPref);
     const setDefaultUniversalSearch = userPrefStore((state: any) => state.setDefaultUniversalSearch);
-    const themeColors = useTheme().colors as any;
+    const themeColors = useAppTheme().colors as any;
     
     const defaultUniversalSearch = userPref?.defaultUniversalSearch ?? false;
 

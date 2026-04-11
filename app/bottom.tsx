@@ -10,12 +10,12 @@ import { useColorScheme } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useBottomIndexStore } from './store/bottomIndexStore';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 const MyBottom = () => {
     const index = useBottomIndexStore((state: any) => state.index);
     const setIndex = useBottomIndexStore((state: any) => state.setIndex);
-    const theme = useTheme();
+    const theme = useAppTheme();
     const themeColors = theme.colors as any;
     const [mountedRoutes, setMountedRoutes] = React.useState<Record<number, boolean>>({ 0: true });
 

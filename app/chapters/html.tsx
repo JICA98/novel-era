@@ -2,23 +2,34 @@ import React, { memo } from 'react';
 import { Text, View, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { isSpeechOrPause, Sentence, SpeechAction, ttsStore } from './tts';
 import { UserPreferences, userPrefStore, getReaderTheme } from '../userpref';
-import { useTheme } from 'react-native-paper';
+import { useAppTheme } from '@/hooks/useAppTheme';
 
 // HTMLRenderer component
 const SentenceRenderer = memo(({ sentence, state, currentSentence }:
     { sentence: Sentence, state: SpeechAction, currentSentence: string | undefined }) => {
     const editorPref = (userPrefStore((state: any) => state.userPref) as UserPreferences).editorPreferences;
     const setCurrentSentence: (s: string) => void = ttsStore((state: any) => state.setCurrentSentence);
-    const theme = useTheme();
+    const theme = useAppTheme();
     
     const readerTheme = getReaderTheme(editorPref.theme, theme.dark);
     const readerTextColor = readerTheme.text;
     const lhRatio = editorPref.lineHeight || 1.5;
+    const resolvedFontFamily = (() => {
+        switch (editorPref.fontFamily) {
+            case 'sans-serif':
+                return 'Manrope-Regular';
+            case 'monospace':
+                return 'SpaceMono';
+            case 'serif':
+            default:
+                return 'NotoSerif-Regular';
+        }
+    })();
 
     let sentenceStyle: StyleProp<TextStyle> = {
         fontSize: editorPref.fontSize,
         color: readerTextColor,
-        fontFamily: editorPref.fontFamily,
+        fontFamily: resolvedFontFamily,
         letterSpacing: editorPref.letterSpacing,
         lineHeight: editorPref.fontSize * lhRatio,
     };
@@ -35,7 +46,7 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
 
     const renderSentences = (elements: Sentence[]) => {
         return <>
-            <Text>
+            <Text style={{ color: readerTextColor }}>
                 {elements.map((element, index) => (
                     <React.Fragment key={index}>{
                         <SentenceRenderer
@@ -59,6 +70,7 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
     return prevProps.sentence.html === nextProps.sentence.html
         && prevProps.currentSentence === nextProps.currentSentence && prevProps.state === nextProps.state;
 });
+SentenceRenderer.displayName = 'SentenceRenderer';
 
 // Define styles for each HTML tag
 const styles: { [key: string]: TextStyle } = StyleSheet.create({
@@ -98,7 +110,7 @@ const styles: { [key: string]: TextStyle } = StyleSheet.create({
     span: {
     },
     a: {
-        color: 'blue',
+        color: '#7c8cff',
         textDecorationLine: 'underline',
     },
     li: {
@@ -151,13 +163,13 @@ const styles: { [key: string]: TextStyle } = StyleSheet.create({
     },
     code: {
         fontFamily: 'monospace',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#2c2c2e',
         padding: 4,
         borderRadius: 4,
     },
     pre: {
         fontFamily: 'monospace',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#2c2c2e',
         padding: 10,
         borderRadius: 4,
         overflow: 'scroll',
@@ -183,7 +195,7 @@ const styles: { [key: string]: TextStyle } = StyleSheet.create({
     },
     kbd: {
         fontFamily: 'monospace',
-        backgroundColor: '#f5f5f5',
+        backgroundColor: '#2c2c2e',
         padding: 4,
         borderRadius: 4,
     },
@@ -198,7 +210,7 @@ const styles: { [key: string]: TextStyle } = StyleSheet.create({
     },
     rt: {
         fontSize: 12,
-        color: 'gray',
+        color: '#a1a1aa',
     },
     rp: {
         fontSize: 16,
