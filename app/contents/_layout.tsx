@@ -555,15 +555,31 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
                         <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>
                             {displayMetaValue(content.status, 'UNKNOWN').toUpperCase()}
                         </Text>
-                        <Reanimated.Text style={[styles.heroTitle, { color: theme.colors.primary }, titleStyle]}>{content.title}</Reanimated.Text>
+                        <Reanimated.Text
+                            style={[styles.heroTitle, { color: theme.colors.primary }, titleStyle]}
+                            numberOfLines={5}
+                            ellipsizeMode="tail"
+                        >
+                            {content.title}
+                        </Reanimated.Text>
 
                         {/* Author row only visible in Chapters mode (Compact) */}
                         <Reanimated.View style={[styles.heroAuthorRow, authorRowOpacity]}>
-                            <Text style={[styles.authorNameSmall, { color: theme.colors.onSurfaceVariant }]}>{content.author || 'Unknown Author'}</Text>
+                            <Text
+                                style={[styles.authorNameSmall, { color: theme.colors.onSurfaceVariant }]}
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                            >
+                                {content.author || 'Unknown Author'}
+                            </Text>
                         </Reanimated.View>
 
                         {/* Sub author only visible in Synopsis mode (Expanded) */}
-                        <Reanimated.Text style={[styles.heroAuthorSub, { color: theme.colors.onSurfaceVariant, fontSize: 16 }, statsOpacity]}>
+                        <Reanimated.Text
+                            style={[styles.heroAuthorSub, { color: theme.colors.onSurfaceVariant, fontSize: 16 }, statsOpacity]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                        >
                             {content.author || 'Unknown Author'}
                         </Reanimated.Text>
                     </Reanimated.View>

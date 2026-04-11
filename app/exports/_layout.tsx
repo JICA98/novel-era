@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { View, StyleSheet, Modal, Image, TouchableOpacity, ScrollView, Dimensions, Animated, Platform } from "react-native";
 import { Text, useTheme } from "react-native-paper";
-import MultiSlider from "@ptomasroos/react-native-multi-slider";
 import { MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -23,6 +22,117 @@ interface ExportDialogProps {
 }
 
 const { width } = Dimensions.get("window");
+const MAX_EXPORT_CHAPTERS = 50;
+
+function FixedWindowSlider({
+    styles,
+    range,
+    maxChapters,
+    windowSize,
+    disabled,
+    trackColor,
+    activeTrackColor,
+    markerColor,
+    markerBorderColor,
+    onChange,
+}: {
+    styles: ReturnType<typeof createStyles>;
+    range: [number, number];
+    maxChapters: number;
+    windowSize: number;
+    disabled: boolean;
+    trackColor: string;
+    activeTrackColor: string;
+    markerColor: string;
+    markerBorderColor: string;
+    onChange: (nextRange: [number, number]) => void;
+}) {
+    const sliderLength = width - 96;
+    const stepWidth = maxChapters > 1 ? sliderLength / (maxChapters - 1) : 0;
+    const selectedWidth = windowSize > 1 ? stepWidth * (windowSize - 1) : 0;
+    const maxStart = Math.max(1, maxChapters - windowSize + 1);
+    const dragStartRef = useRef(range[0]);
+    const dragTouchStartXRef = useRef(0);
+
+    const updateFromGesture = (dx: number) => {
+        if (disabled || maxChapters <= windowSize || stepWidth <= 0) {
+            return;
+        }
+
+        const deltaSteps = Math.round(dx / stepWidth);
+        const nextStart = Math.max(1, Math.min(maxStart, dragStartRef.current + deltaSteps));
+        const nextEnd = Math.min(maxChapters, nextStart + windowSize - 1);
+        onChange([nextStart, nextEnd]);
+    };
+
+    const beginDrag = (pageX: number) => {
+        dragStartRef.current = range[0];
+        dragTouchStartXRef.current = pageX;
+    };
+
+    const moveDrag = (pageX: number) => {
+        updateFromGesture(pageX - dragTouchStartXRef.current);
+    };
+
+    const leftPosition = stepWidth > 0 ? (range[0] - 1) * stepWidth : 0;
+    const rightPosition = leftPosition + selectedWidth;
+
+    return (
+        <View style={[styles.fixedSliderRoot, { width: sliderLength }]}>
+            <View style={[styles.fixedSliderTrack, { backgroundColor: trackColor }]} />
+            <View
+                style={[
+                    styles.fixedSliderSelectedTrack,
+                    {
+                        backgroundColor: activeTrackColor,
+                        left: leftPosition,
+                        width: Math.max(0, rightPosition - leftPosition),
+                    },
+                ]}
+            />
+            <View
+                style={[
+                    styles.fixedSliderMarkerTouch,
+                    { left: leftPosition - 18 },
+                ]}
+                onStartShouldSetResponder={() => !disabled}
+                onMoveShouldSetResponder={() => !disabled}
+                onResponderGrant={(event) => beginDrag(event.nativeEvent.pageX)}
+                onResponderMove={(event) => moveDrag(event.nativeEvent.pageX)}
+            >
+                <View
+                    style={[
+                        styles.fixedSliderMarker,
+                        {
+                            backgroundColor: markerColor,
+                            borderColor: markerBorderColor,
+                        },
+                    ]}
+                />
+            </View>
+            <View
+                style={[
+                    styles.fixedSliderMarkerTouch,
+                    { left: rightPosition - 18 },
+                ]}
+                onStartShouldSetResponder={() => !disabled}
+                onMoveShouldSetResponder={() => !disabled}
+                onResponderGrant={(event) => beginDrag(event.nativeEvent.pageX)}
+                onResponderMove={(event) => moveDrag(event.nativeEvent.pageX)}
+            >
+                <View
+                    style={[
+                        styles.fixedSliderMarker,
+                        {
+                            backgroundColor: markerColor,
+                            borderColor: markerBorderColor,
+                        },
+                    ]}
+                />
+            </View>
+        </View>
+    );
+}
 
 function ExportDialog({
     maxChapters,
@@ -40,21 +150,61 @@ function ExportDialog({
     const [range, setRange] = useState<[number, number]>([1, Math.max(1, maxChapters)]);
     const [format, setFormat] = useState<ExportFormat>("epub");
     const [includeIllustrations, setIncludeIllustrations] = useState(true);
+    const chapterWindowSize = Math.min(MAX_EXPORT_CHAPTERS, Math.max(1, maxChapters));
+    const lockedDistance = Math.max(0, chapterWindowSize - 1);
 
     useEffect(() => {
-        const windowSize = Math.min(50, Math.max(1, maxChapters));
-        setRange([1, windowSize]);
-    }, [maxChapters, visible]);
+        setRange([1, chapterWindowSize]);
+    }, [chapterWindowSize, maxChapters, visible]);
 
     const handleQuickSelect = (type: "all" | "recent") => {
-        const windowSize = Math.min(50, Math.max(1, maxChapters));
         if (type === "all") {
-            setRange([1, windowSize]);
+            setRange([1, chapterWindowSize]);
         }
         if (type === "recent") {
-            const start = Math.max(1, maxChapters - windowSize + 1);
+            const start = Math.max(1, maxChapters - chapterWindowSize + 1);
             setRange([start, Math.max(1, maxChapters)]);
         }
+    };
+
+    const updateLockedRange = (nextValues: number[]) => {
+        const nextStart = Math.max(1, Math.round(nextValues[0] ?? range[0]));
+        const nextEnd = Math.max(1, Math.round(nextValues[1] ?? range[1]));
+
+        if (maxChapters <= chapterWindowSize) {
+            setRange([1, Math.max(1, maxChapters)]);
+            return;
+        }
+
+        const startMoved = nextStart !== range[0];
+        const endMoved = nextEnd !== range[1];
+
+        let updatedStart = range[0];
+        let updatedEnd = range[1];
+
+        if (startMoved && !endMoved) {
+            updatedStart = Math.min(nextStart, maxChapters - lockedDistance);
+            updatedEnd = updatedStart + lockedDistance;
+        } else if (endMoved && !startMoved) {
+            updatedEnd = Math.max(nextEnd, 1 + lockedDistance);
+            updatedStart = updatedEnd - lockedDistance;
+        } else {
+            const movedStartBy = Math.abs(nextStart - range[0]);
+            const movedEndBy = Math.abs(nextEnd - range[1]);
+
+            if (movedStartBy >= movedEndBy) {
+                updatedStart = Math.min(nextStart, maxChapters - lockedDistance);
+                updatedEnd = updatedStart + lockedDistance;
+            } else {
+                updatedEnd = Math.max(nextEnd, 1 + lockedDistance);
+                updatedStart = updatedEnd - lockedDistance;
+            }
+        }
+
+        updatedStart = Math.max(1, Math.min(updatedStart, maxChapters - lockedDistance));
+        updatedEnd = Math.min(maxChapters, updatedStart + lockedDistance);
+
+        setRange([updatedStart, updatedEnd]);
     };
 
     const handleExport = async () => {
@@ -150,48 +300,17 @@ function ExportDialog({
 
                             <View style={styles.sliderContainer}>
                                 {hasMultipleChapters ? (
-                                    <MultiSlider
-                                        values={range}
-                                        min={1}
-                                        max={Math.max(1, maxChapters)}
-                                        maxMarkerOverlapDistance={(49 * (width - 96)) / Math.max(1, maxChapters - 1)}
-                                        onValuesChange={(value) => {
-                                            let [start, end] = value;
-                                            if (end - start >= 50) {
-                                                if (start !== range[0]) {
-                                                    end = start + 49;
-                                                } else {
-                                                    start = end - 49;
-                                                }
-                                            }
-                                            setRange([start, end]);
-                                        }}
-                                        step={1}
-                                        allowOverlap={false}
-                                        enabledOne={!isExporting}
-                                        enabledTwo={!isExporting}
-                                        snapped
-                                        sliderLength={width - 96}
-                                        selectedStyle={{ backgroundColor: theme.colors.primary }}
-                                        unselectedStyle={{ backgroundColor: theme.colors.surfaceVariant }}
-                                        trackStyle={{ height: 6, borderRadius: 3 }}
-                                        markerStyle={{
-                                            height: 20,
-                                            width: 20,
-                                            borderRadius: 10,
-                                            backgroundColor: theme.colors.primary,
-                                            borderWidth: 2,
-                                            borderColor: theme.colors.surface,
-                                            shadowColor: "#000",
-                                            shadowOffset: { width: 0, height: 2 },
-                                            shadowOpacity: 0.2,
-                                            shadowRadius: 2,
-                                            elevation: 3,
-                                            marginTop: 2
-                                        }}
-                                        pressedMarkerStyle={{
-                                            transform: [{ scale: 1.1 }]
-                                        }}
+                                    <FixedWindowSlider
+                                        styles={styles}
+                                        range={range}
+                                        maxChapters={Math.max(1, maxChapters)}
+                                        windowSize={chapterWindowSize}
+                                        disabled={isExporting}
+                                        trackColor={theme.colors.surfaceVariant}
+                                        activeTrackColor={theme.colors.primary}
+                                        markerColor={theme.colors.primary}
+                                        markerBorderColor={theme.colors.surface}
+                                        onChange={updateLockedRange}
                                     />
                                 ) : (
                                     <Text style={styles.singleChapterText}>Only one chapter is available to export.</Text>
@@ -414,6 +533,41 @@ const createStyles = (theme: any) => StyleSheet.create({
     sliderContainer: {
         alignItems: "center",
         paddingVertical: 16,
+    },
+    fixedSliderRoot: {
+        height: 40,
+        justifyContent: "center",
+    },
+    fixedSliderTrack: {
+        position: "absolute",
+        left: 0,
+        right: 0,
+        height: 6,
+        borderRadius: 3,
+    },
+    fixedSliderSelectedTrack: {
+        position: "absolute",
+        height: 6,
+        borderRadius: 3,
+    },
+    fixedSliderMarkerTouch: {
+        position: "absolute",
+        top: 0,
+        width: 36,
+        height: 40,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    fixedSliderMarker: {
+        height: 20,
+        width: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 3,
     },
     singleChapterText: {
         color: theme.colors.onSurfaceVariant,
