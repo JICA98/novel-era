@@ -174,7 +174,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
     // Fetch discovery data when repo changes
     useEffect(() => {
         fetchDiscovery();
-    }, [selectedRepo]);
+    }, [selectedRepo?.id]);
 
     const saveRecentSearch = async (query: string) => {
         const trimmed = query.trim();

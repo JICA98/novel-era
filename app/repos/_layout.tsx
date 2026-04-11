@@ -14,6 +14,8 @@ import BookItem from "./bookItem";
 import { emptyPlaceholder, errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 
+const inFlightContentRequests = new Map<string, Promise<Content[]>>();
+
 export async function fetchContentList({ repo, searchQuery, cached }: { repo: Repo; searchQuery?: string; cached?: boolean }): Promise<Content[]> {
     try {
         const matchedTag = resolveRepoTag(repo, searchQuery);
@@ -28,7 +30,13 @@ export async function fetchContentList({ repo, searchQuery, cached }: { repo: Re
             ?.replace('[text]', encodeURIComponent(searchQuery ?? ''))
             .replace('[tag]', encodeURIComponent(matchedTag?.value ?? '')) ?? '';
         const url = `${repo.repoUrl}${safePath}`;
-        return await httpGet<Content[]>(url, {
+        const requestKey = `${repo.id}:${url}`;
+        const existingRequest = inFlightContentRequests.get(requestKey);
+        if (existingRequest) {
+            return await existingRequest;
+        }
+
+        const requestPromise = httpGet<Content[]>(url, {
             cached,
             cachedKey: `content-storage-${repo.id}-${url}`,
             onCache: (data) => !!data.length,
@@ -60,7 +68,12 @@ export async function fetchContentList({ repo, searchQuery, cached }: { repo: Re
                     return { title, bookImage, bookLink, bookId, rating };
                 });
             }
-        }) ?? [];
+        }).finally(() => {
+            inFlightContentRequests.delete(requestKey);
+        });
+
+        inFlightContentRequests.set(requestKey, requestPromise);
+        return (await requestPromise) ?? [];
     } catch (error) {
         console.error(error);
         throw new Error('Failed to fetch content');
