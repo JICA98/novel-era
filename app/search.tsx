@@ -363,7 +363,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                 {trending.length > 0 && (
                     <>
                         <View style={styles.sectionHeader}>
-                            <AtelierText variant="title" bold>Trending Now</AtelierText>
+                            <AtelierText variant="title" bold color={themeColors.primary}>Trending Now</AtelierText>
                             <TouchableOpacity onPress={() => router.push('/explore_all' as any)}><AtelierText variant="label" bold color={themeColors.primary}>VIEW ALL</AtelierText></TouchableOpacity>
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.trendingScroll}>
@@ -378,7 +378,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                                         </View>
                                     ) : null}
                                     <View style={styles.cardInfo}>
-                                        <AtelierText variant="subtitle" bold numberOfLines={1}>{item.content.title}</AtelierText>
+                                        <AtelierText variant="subtitle" bold color={themeColors.onSurface} numberOfLines={1}>{item.content.title}</AtelierText>
                                         <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>{selectedRepo.name}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
@@ -390,7 +390,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                 {/* Curated Collections (Bento Grid) */}
                 {curated.length > 0 && (
                     <>
-                        <AtelierText variant="title" bold style={styles.sectionTitle}>Curated Collections</AtelierText>
+                        <AtelierText variant="title" bold color={themeColors.primary} style={styles.sectionTitle}>Curated Collections</AtelierText>
                         <View style={styles.bentoGrid}>
                             <View style={styles.bentoLeft}>
                                 <TouchableOpacity style={[styles.bentoCardLarge, { backgroundColor: themeColors.primaryContainer }]} onPress={() => curated[0] && navigateToBook(curated[0].content)}>
@@ -402,8 +402,8 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                                             </AtelierText>
                                         </View>
                                     ) : null}
-                                    <View style={styles.bentoOverlay}>
-                                        <AtelierText variant="caption" bold color={themeColors.primary + 'AA'} style={styles.bentoTag}>EDITOR\'S PICK</AtelierText>
+                                    <View style={[styles.bentoOverlay, styles.bentoOverlayScrim]}>
+                                        <AtelierText variant="caption" bold color="rgba(255,255,255,0.82)" style={styles.bentoTag}>{"EDITOR'S PICK"}</AtelierText>
                                         <AtelierText variant="subtitle" bold color="#fff" numberOfLines={2}>{curated[0]?.content.title}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
@@ -418,7 +418,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                                             </AtelierText>
                                         </View>
                                     ) : null}
-                                    <View style={styles.bentoOverlay}>
+                                    <View style={[styles.bentoOverlay, styles.bentoOverlayScrim]}>
                                         <AtelierText variant="label" bold color="#fff" numberOfLines={1}>{curated[1]?.content.title || 'Fantasy Escapes'}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
@@ -431,7 +431,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                                             </AtelierText>
                                         </View>
                                     ) : null}
-                                    <View style={styles.bentoOverlay}>
+                                    <View style={[styles.bentoOverlay, styles.bentoOverlayScrim]}>
                                         <AtelierText variant="label" bold color="#fff" numberOfLines={1}>{curated[2]?.content.title || 'New Frontiers'}</AtelierText>
                                     </View>
                                 </TouchableOpacity>
@@ -443,12 +443,12 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                 {/* Fresh Arrivals */}
                 {fresh.length > 0 && (
                     <>
-                        <AtelierText variant="title" bold style={styles.sectionTitle}>Fresh Arrivals</AtelierText>
+                        <AtelierText variant="title" bold color={themeColors.primary} style={styles.sectionTitle}>Fresh Arrivals</AtelierText>
                         {fresh.map((item, i) => (
                             <TouchableOpacity key={i} style={[styles.arrivalItem, { backgroundColor: themeColors.surfaceContainerLow }]} onPress={() => navigateToBook(item.content)}>
                                 <Image source={{ uri: item.content.bookImage }} style={styles.arrivalImage} />
                                 <View style={styles.arrivalInfo}>
-                                    <AtelierText variant="subtitle" bold numberOfLines={1}>{item.content.title}</AtelierText>
+                                    <AtelierText variant="subtitle" bold color={themeColors.onSurface} numberOfLines={1}>{item.content.title}</AtelierText>
                                     <AtelierText variant="caption" color={themeColors.onSurfaceVariant}>{selectedRepo.name}</AtelierText>
                                     <View style={styles.arrivalMeta}>
                                         <View style={[styles.tag, { backgroundColor: themeColors.surfaceContainerHighest }]}>
@@ -622,10 +622,10 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
                                     <Image source={{ uri: recommendations[0]?.bookImage }} style={styles.bentoImage} />
                                     <View style={styles.bentoGradient}>
                                         <View style={[styles.editorTag, { backgroundColor: themeColors.secondaryContainer }]}>
-                                            <AtelierText variant="caption" bold color={themeColors.onSecondaryContainer}>EDITOR\'S CHOICE</AtelierText>
+                                            <AtelierText variant="caption" bold color={themeColors.onSecondaryContainer}>{"EDITOR'S CHOICE"}</AtelierText>
                                         </View>
                                         <AtelierText variant="title" bold color="#fff" numberOfLines={1}>{recommendations[0]?.title}</AtelierText>
-                                        <AtelierText variant="caption" color="rgba(255,255,255,0.7)" numberOfLines={2}>Discover this hidden gem from the {selectedRepo.name} collection.</AtelierText>
+                                        <AtelierText variant="caption" color="rgba(255,255,255,0.82)" numberOfLines={2}>Discover this hidden gem from the {selectedRepo.name} collection.</AtelierText>
                                     </View>
                                 </TouchableOpacity>
 
@@ -911,7 +911,7 @@ export function SearchResultsView({
                     <View style={styles.resultsHeaderTopRow}>
                         <View style={styles.resultsHeaderText}>
                             <AtelierText variant="headline" bold color={themeColors.primary} style={{ fontSize: 36 }}>
-                                Results for '{searchQuery}'
+                                {`Results for '${searchQuery}'`}
                             </AtelierText>
                             <AtelierText variant="subtitle" color={themeColors.onSurfaceVariant}>
                                 {content.data?.length || 0} volume{(content.data?.length || 0) !== 1 ? 's' : ''} found
@@ -1291,6 +1291,9 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         padding: 12,
+    },
+    bentoOverlayScrim: {
+        backgroundColor: 'rgba(10, 14, 28, 0.58)',
     },
     bentoTag: {
         marginBottom: 2,

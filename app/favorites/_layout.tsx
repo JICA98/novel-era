@@ -227,7 +227,8 @@ const FavoriteScreen = () => {
                             blurRadius={10}
                         >
                             <LinearGradient
-                                colors={['transparent', 'rgba(0,0,0,0.8)']}
+                                colors={['rgba(9,12,24,0.08)', 'rgba(9,12,24,0.88)']}
+                                locations={[0.1, 1]}
                                 style={StyleSheet.absoluteFill}
                             />
                             <View style={styles.continueCardContent}>
@@ -242,10 +243,10 @@ const FavoriteScreen = () => {
                                 
                                 <View style={styles.continueCardFooter}>
                                     <View style={styles.continueCardInfo}>
-                                        <AtelierText variant="title" bold color="#fff" numberOfLines={1}>
+                                        <AtelierText variant="title" bold color={themeColors.onPrimary} numberOfLines={1}>
                                             {item.novelTracker.novel.title}
                                         </AtelierText>
-                                        <AtelierText variant="body" color="rgba(255,255,255,0.8)" numberOfLines={1}>
+                                        <AtelierText variant="body" color="rgba(255,255,255,0.88)" numberOfLines={1}>
                                             Chapter {item.readingStatus.lastChapterRead}
                                         </AtelierText>
                                     </View>

@@ -62,13 +62,24 @@ const avatarImages = [
 ];
 
 export function setUpVoices(setVoices: any) {
-    Speech.getAvailableVoicesAsync().then((voices) => {
-        voices = voices?.filter(x => x.language === 'en-US');
-        if (voices.length) {
-            voices = defaultVoices.filter(x => voices.findIndex(e => e.identifier === x.identifier) !== -1);
-            setVoices([systemVoice, ...voices]);
-        }
-    });
+    setVoices([systemVoice, ...defaultVoices]);
+
+    Speech.getAvailableVoicesAsync()
+        .then((voices) => {
+            const englishVoices = voices?.filter((voice) => voice.language === 'en-US') ?? [];
+            if (!englishVoices.length) {
+                return;
+            }
+
+            const supportedVoices = defaultVoices.filter(
+                (voice) => englishVoices.findIndex((availableVoice) => availableVoice.identifier === voice.identifier) !== -1
+            );
+
+            setVoices([systemVoice, ...(supportedVoices.length ? supportedVoices : defaultVoices)]);
+        })
+        .catch((error) => {
+            console.warn('TTS voices unavailable, using bundled fallback voices.', error);
+        });
 }
 
 

@@ -1,10 +1,7 @@
 import { Content, Repo, normalizeUrl } from "@/types";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, View, Image, Dimensions } from "react-native";
-import { useMemo } from "react";
 import { AtelierText } from "@/components/AtelierText";
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from 'react-native-paper';
@@ -31,12 +28,18 @@ export default function BookItem({ repo, item, status, progress = 0, totalChapte
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'Completed': return '#15803d'; // Green-700
-            case 'Dropped': return themeColors.onSurfaceVariant;
-            case 'Plan to Read': return themeColors.outline;
-            default: return themeColors.primary;
+            case 'Completed':
+                return { backgroundColor: '#15803d', color: '#ffffff' };
+            case 'Dropped':
+                return { backgroundColor: themeColors.errorContainer, color: themeColors.onErrorContainer };
+            case 'Plan to Read':
+                return { backgroundColor: themeColors.surfaceContainerHighest, color: themeColors.onSurfaceVariant };
+            default:
+                return { backgroundColor: themeColors.primaryContainer, color: themeColors.onPrimaryContainer };
         }
     };
+
+    const statusTheme = status ? getStatusColor(status) : undefined;
 
     return (
         <Pressable
@@ -59,8 +62,16 @@ export default function BookItem({ repo, item, status, progress = 0, totalChapte
                     style={styles.imageOverlay}
                 />
                 {status ? (
-                    <View style={[styles.badge, { backgroundColor: getStatusColor(status) + 'cc' }]}>
-                        <AtelierText variant="caption" bold color="#fff" style={styles.badgeText}>
+                    <View
+                        style={[
+                            styles.badge,
+                            {
+                                backgroundColor: statusTheme?.backgroundColor,
+                                borderColor: themeColors.outlineVariant,
+                            },
+                        ]}
+                    >
+                        <AtelierText variant="caption" bold color={statusTheme?.color} style={styles.badgeText}>
                             {status.toUpperCase()}
                         </AtelierText>
                     </View>
@@ -106,7 +117,7 @@ const styles = StyleSheet.create({
         aspectRatio: 2 / 3,
         borderRadius: 20,
         overflow: 'hidden',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#d9dde7',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
@@ -132,7 +143,7 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.2)',
+        borderColor: '#c4cad9',
     },
     badgeText: {
         letterSpacing: 1,

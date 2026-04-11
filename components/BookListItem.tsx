@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Content, Repo, normalizeUrl } from '@/types';
 import { AtelierText } from './AtelierText';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from 'react-native';
-import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from 'react-native-paper';
 
 function formatRelativeDate(timestamp?: number): string {
     if (!timestamp) return '';
@@ -64,9 +63,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
     onPress,
     renderRightAction
 }) => {
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
 
     const coverUri = normalizeUrl(item.bookImage, repo.repoUrl) || `https://picsum.photos/seed/${item.bookId}/200/300`;
 
@@ -104,7 +101,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
         >
             <View style={styles.contentRow}>
                 {/* Cover Image */}
-                <View style={[styles.coverContainer, { backgroundColor: themeColors.surfaceContainer }]}>
+                <View style={[styles.coverContainer, { backgroundColor: themeColors.surfaceContainerHigh }]}>
                     <Image source={{ uri: coverUri }} style={styles.coverImage} resizeMode="cover" />
                     <LinearGradient
                         colors={['transparent', 'rgba(0,0,0,0.3)']}
@@ -119,7 +116,7 @@ export const BookListItem: React.FC<BookListItemProps> = ({
                             {item.title}
                         </AtelierText>
                         {status && statusTheme ? (
-                            <View style={[styles.statusBadge, { backgroundColor: statusTheme.bg }]}>
+                            <View style={[styles.statusBadge, { backgroundColor: statusTheme.bg, borderColor: themeColors.outlineVariant }]}>
                                 <AtelierText variant="caption" bold style={[styles.statusText, { color: statusTheme.text }]}>
                                     {status.toUpperCase()}
                                 </AtelierText>
@@ -198,7 +195,7 @@ const styles = StyleSheet.create({
         aspectRatio: 2 / 3,
         borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: '#1a1a1a',
+        backgroundColor: '#d9dde7',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
@@ -237,7 +234,7 @@ const styles = StyleSheet.create({
         paddingVertical: 3,
         borderRadius: 6,
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.1)',
+        borderColor: '#c4cad9',
     },
     statusText: {
         fontSize: 8,

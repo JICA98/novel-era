@@ -1,8 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle, TextStyle, View } from 'react-native';
 import { AtelierText } from './AtelierText';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from 'react-native';
+import { useTheme } from 'react-native-paper';
 
 interface AtelierButtonProps {
   onPress: () => void;
@@ -19,9 +18,7 @@ export const AtelierButton: React.FC<AtelierButtonProps> = ({
   textStyle,
   icon,
 }) => {
-  const systemColorScheme = useColorScheme();
-  const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-  const themeColors = Colors[colorScheme];
+  const themeColors = useTheme().colors as any;
 
   return (
     <TouchableOpacity
