@@ -19,11 +19,40 @@ export interface EditorPreferences {
 }
 
 export const ReaderThemes = {
-    slate: { background: '#202124', text: '#e8eaed', highlight: '#3c4043' },
-    mocha: { background: '#302621', text: '#e6dfd1', highlight: '#52433a' },
-    dark: { background: '#171c3c', text: '#dee1ff', highlight: '#2d3252' },
-    oled: { background: '#000000', text: '#ffffff', highlight: '#2c2c2e' },
+    light: {
+        slate: { background: '#f3f6fb', text: '#1f2a37', highlight: '#dde5f2' },
+        mocha: { background: '#f5ede3', text: '#3b2f28', highlight: '#e4d7ca' },
+        dark: { background: '#eef2ff', text: '#1d2750', highlight: '#d6defd' },
+        oled: { background: '#ffffff', text: '#121212', highlight: '#ececec' },
+    },
+    dark: {
+        slate: { background: '#202124', text: '#e8eaed', highlight: '#3c4043' },
+        mocha: { background: '#302621', text: '#e6dfd1', highlight: '#52433a' },
+        dark: { background: '#171c3c', text: '#dee1ff', highlight: '#2d3252' },
+        oled: { background: '#000000', text: '#ffffff', highlight: '#2c2c2e' },
+    },
 };
+
+export type ReaderThemeKey = keyof typeof ReaderThemes.dark;
+
+export function getDefaultReaderThemeKey(isDark: boolean): ReaderThemeKey {
+    return isDark ? 'oled' : 'slate';
+}
+
+export function getReaderTheme(themeKey: string | undefined, isDark: boolean) {
+    const palette = isDark ? ReaderThemes.dark : ReaderThemes.light;
+    const fallbackKey = getDefaultReaderThemeKey(isDark);
+    const resolvedKey = themeKey && themeKey in palette ? (themeKey as ReaderThemeKey) : fallbackKey;
+    return palette[resolvedKey];
+}
+
+export function getReaderThemeOptions(isDark: boolean) {
+    const palette = isDark ? ReaderThemes.dark : ReaderThemes.light;
+    return (Object.keys(palette) as ReaderThemeKey[]).map((key) => ({
+        key,
+        color: palette[key].background,
+    }));
+}
 
 export interface TTSConfig {
     rate: number;

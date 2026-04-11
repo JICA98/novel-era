@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, ScrollView, StyleSheet, Modal as RNModal } from 'react-native';
 import { Text, IconButton, useTheme, Button, Divider, SegmentedButtons } from 'react-native-paper';
-import { UserPreferences, ThemeOptions, userPrefStore, ReaderThemes } from '../userpref';
+import { UserPreferences, ThemeOptions, userPrefStore, getDefaultReaderThemeKey, getReaderTheme, getReaderThemeOptions } from '../userpref';
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import Slider from '@react-native-community/slider';
 import TTSControls from './ttscontrols';
@@ -18,9 +18,9 @@ export const ReaderNavigationToc = ({
     const theme = useTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
-    const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
-    const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
+    const readerTheme = getReaderTheme(editorPref.theme, theme.dark);
+    const readerBgColor = readerTheme.background;
+    const readerTextColor = readerTheme.text;
     const currentChapter = parseInt(props.id);
     const maxChapter = props.content.latestChapter || currentChapter;
     const [sliderValue, setSliderValue] = useState(currentChapter);
@@ -134,63 +134,23 @@ export const ReaderAppearanceSettings = ({
     visible: boolean;
     onDismiss: () => void;
 }) => {
+    const theme = useTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
-    const selectedTheme = userPref.editorPreferences.theme || 'oled';
-
-    // Dynamic color mapping based on the selected reader theme
-    const getThemeColors = (themeKey: string) => {
-        const baseColors = {
-            slate: {
-                surface: '#202124',
-                onSurface: '#e8eaed',
-                onSurfaceVariant: '#9aa0a6',
-                primary: '#8ab4f8',
-                onPrimary: '#202124',
-                surfaceHigh: '#292a2d',
-                outline: '#5f6368',
-                primaryContainer: '#3c4043',
-                onPrimaryContainer: '#e8eaed',
-            },
-            mocha: {
-                surface: '#302621',
-                onSurface: '#e6dfd1',
-                onSurfaceVariant: '#a39992',
-                primary: '#d6aa85',
-                onPrimary: '#302621',
-                surfaceHigh: '#3e322b',
-                outline: '#70645c',
-                primaryContainer: '#52433a',
-                onPrimaryContainer: '#e6dfd1',
-            },
-            dark: {
-                surface: '#171c3c',
-                onSurface: '#dee1ff',
-                onSurfaceVariant: '#959ac1',
-                primary: '#c0c4ed',
-                onPrimary: '#171c3c',
-                surfaceHigh: '#2d3252',
-                outline: '#404566',
-                primaryContainer: '#2d3252',
-                onPrimaryContainer: '#dee1ff',
-            },
-            oled: {
-                surface: '#000000',
-                onSurface: '#ffffff',
-                onSurfaceVariant: 'rgba(255, 255, 255, 0.7)',
-                primary: '#ffffff',
-                onPrimary: '#000000',
-                surfaceHigh: '#1c1c1e',
-                outline: '#3a3a3c',
-                primaryContainer: '#2c2c2e',
-                onPrimaryContainer: '#ffffff',
-            }
-        };
-
-        return baseColors[themeKey as keyof typeof baseColors] || baseColors.slate;
+    const selectedTheme = userPref.editorPreferences.theme || getDefaultReaderThemeKey(theme.dark);
+    const readerTheme = getReaderTheme(selectedTheme, theme.dark);
+    const colors = {
+        surface: readerTheme.background,
+        onSurface: readerTheme.text,
+        onSurfaceVariant: theme.dark ? 'rgba(255, 255, 255, 0.7)' : 'rgba(31, 42, 55, 0.68)',
+        primary: theme.dark ? '#ffffff' : '#202a44',
+        onPrimary: theme.dark ? '#000000' : '#ffffff',
+        surfaceHigh: readerTheme.highlight,
+        outline: theme.dark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(32, 42, 68, 0.14)',
+        primaryContainer: theme.dark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(32, 42, 68, 0.1)',
+        onPrimaryContainer: theme.dark ? '#ffffff' : '#202a44',
     };
-
-    const colors = getThemeColors(selectedTheme);
+    const readerThemeOptions = getReaderThemeOptions(theme.dark);
 
     const updateEditorPref = (key: keyof UserPreferences['editorPreferences'], value: any) => {
         setUserPref({
@@ -208,7 +168,7 @@ export const ReaderAppearanceSettings = ({
                 fontSize: 18,
                 lineHeight: 1.5,
                 padding: 16,
-                theme: 'oled'
+                theme: getDefaultReaderThemeKey(theme.dark)
             }
         });
     };
@@ -389,12 +349,7 @@ export const ReaderAppearanceSettings = ({
 
                                 {/* Themes */}
                                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6 }}>
-                                    {[ 
-                                    { key: 'slate', color: '#202124' }, 
-                                    { key: 'mocha', color: '#302621' }, 
-                                    { key: 'dark', color: '#171c3c' }, 
-                                    { key: 'oled', color: '#000000' } 
-                                ].map((t) => (
+                                    {readerThemeOptions.map((t) => (
                                         <TouchableOpacity
                                             key={t.key}
                                             onPress={() => updateEditorPref('theme', t.key)}
@@ -462,9 +417,9 @@ export const ReaderTTSControlsSettings = ({
     const theme = useTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
-    const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
-    const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
+    const readerTheme = getReaderTheme(editorPref.theme, theme.dark);
+    const readerBgColor = readerTheme.background;
+    const readerTextColor = readerTheme.text;
     
     if (!visible) return null;
     return (

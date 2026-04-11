@@ -3,7 +3,7 @@ import { TTS, ttsStore, SpeechAction, setTTS, isSpeechOrPause } from "./tts";
 import { Button, Icon, IconButton, Title, useTheme } from "react-native-paper";
 import React, { useEffect } from "react";
 import Slider from '@react-native-community/slider';
-import { defaultTTSConfig, TTSConfig, UserPreferences, userPrefStore, ReaderThemes } from "../userpref";
+import { defaultTTSConfig, TTSConfig, UserPreferences, userPrefStore, getReaderTheme } from "../userpref";
 import { MD3Colors } from "react-native-paper/lib/typescript/types";
 import * as Speech from 'expo-speech';
 import { create } from "zustand";
@@ -87,9 +87,6 @@ export default function TTSControls() {
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const ttsConfig = userPref.ttsConfig;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
-    const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
-    const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const setUserPref: SetTTSConfig = (userPrefStore((state: any) => state.setTTSConfig));
     const tts: TTS = ttsStore((state: any) => state.tts);
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
@@ -97,8 +94,11 @@ export default function TTSControls() {
     const controlVisible = isSpeechOrPause(tts.state);
     const voices: Speaker[] = voicesStore((state) => state.content);
     const theme = useTheme();
+    const readerTheme = getReaderTheme(editorPref.theme, theme.dark);
+    const readerBgColor = readerTheme.background;
+    const readerTextColor = readerTheme.text;
     const colors = theme.colors;
-    const previewCardBackground = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].highlight;
+    const previewCardBackground = readerTheme.highlight;
     const previewCardTextColor = readerTextColor;
 
     function updateTTS(state: SpeechAction) {
