@@ -90,3 +90,34 @@ eas submit --platform ios --profile production
 
 - Set `expo.version` to next semantic version (for example `1.0.1`).
 - Keep `production.autoIncrement` in `eas.json` enabled to auto-bump native versions on cloud builds.
+
+## Local Play Store app bundle (.aab)
+
+Use this when you want to generate the Play Store artifact locally with Gradle.
+
+1. Create/upload a keystore and create `android/keystore.properties`:
+
+```properties
+storeFile=/absolute/path/to/upload-keystore.jks
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+keyPassword=YOUR_KEY_PASSWORD
+```
+
+You can also use environment variables instead of `keystore.properties`:
+
+- `ANDROID_KEYSTORE_PATH`
+- `ANDROID_KEYSTORE_PASSWORD`
+- `ANDROID_KEY_ALIAS`
+- `ANDROID_KEY_PASSWORD`
+
+2. Build the release app bundle:
+
+```bash
+cd android
+./gradlew clean bundleRelease
+```
+
+3. Find the generated file at:
+
+- `android/app/build/outputs/bundle/release/app-release.aab`
