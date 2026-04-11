@@ -1,0 +1,36 @@
+{
+  "appName": "Atelier",
+  "playStoreTitle": "Atelier: Light Novel Reader",
+  "packageName": "com.zenithblue.ateliernovels",
+  "defaultLanguage": "en-US",
+  "category": "Books & Reference",
+  "tags": [
+    "reader",
+    "light novels",
+    "web novels",
+    "text to speech",
+    "epub export",
+    "reading tracker"
+  ],
+  "shortDescription": "Read novels with immersive themes, TTS narration, tracking, search, and exports.",
+  "fullDescription": "Atelier is a polished reading app built for novel fans who want a calmer, richer reading experience.\n\nSearch across supported sources, open chapters quickly, and settle into a customizable reader with themes, typography controls, and distraction-free layouts. Keep track of favorites, recent reads, and chapter progress, then export supported content for your own library workflows.\n\nWith Atelier, you can:\n- Search and browse supported novel sources\n- Read chapters in a clean, immersive reader\n- Customize font, spacing, alignment, padding, and reading themes\n- Use built-in text-to-speech controls for hands-free listening\n- Track reading progress, favorites, and recent activity\n- Back up preferences and trackers with an optional account\n- Sign in with email or Google\n- Export supported content to EPUB and PDF\n\nNotes:\n- Some features depend on supported sources and network availability.\n- Account-based backup is optional.\n- Export and sync availability may vary by content source and app version.",
+  "contactEmail": "REPLACE_WITH_SUPPORT_EMAIL",
+  "contactWebsite": "REPLACE_WITH_PUBLIC_WEBSITE",
+  "privacyPolicyUrl": "REPLACE_WITH_PUBLIC_PRIVACY_POLICY_URL",
+  "version": "1.0.0",
+  "androidVersionCode": 1,
+  "pricingModel": "free",
+  "containsAds": false,
+  "accountRequired": false,
+  "optionalSignInMethods": [
+    "Email",
+    "Google"
+  ],
+  "cloudBackup": true,
+  "playBillingVerified": false,
+  "reviewWarnings": [
+    "Do not claim trial or premium features until Play Billing is implemented and tested.",
+    "Confirm rights to distribute or facilitate access to all indexed novel sources before publication.",
+    "Publish the privacy policy at a public URL before completing the Play listing."
+  ]
+}
