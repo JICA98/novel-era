@@ -25,6 +25,10 @@ export const ReaderNavigationToc = ({
     const maxChapter = props.content.latestChapter || currentChapter;
     const [sliderValue, setSliderValue] = useState(currentChapter);
 
+    if (!visible) {
+        return null;
+    }
+
     return (
         <Portal>
             <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }} style={{ margin: 0, justifyContent: 'flex-start' }}>
@@ -138,31 +142,28 @@ export const ReaderAppearanceSettings = ({
 
     // Dynamic color mapping based on the selected reader theme
     const getThemeColors = (themeKey: string) => {
-        const isDark = themeKey === 'dark' || themeKey === 'oled';
-        const isSepia = themeKey === 'sepia';
-        
         const baseColors = {
-            light: {
-                surface: '#ffffff',
-                onSurface: '#1b1b1e',
-                onSurfaceVariant: '#46464d',
-                primary: '#171c3c',
-                onPrimary: '#ffffff',
-                surfaceHigh: '#eae7ea',
-                outline: '#c7c5ce',
-                primaryContainer: '#dee1ff',
-                onPrimaryContainer: '#141938',
+            slate: {
+                surface: '#202124',
+                onSurface: '#e8eaed',
+                onSurfaceVariant: '#9aa0a6',
+                primary: '#8ab4f8',
+                onPrimary: '#202124',
+                surfaceHigh: '#292a2d',
+                outline: '#5f6368',
+                primaryContainer: '#3c4043',
+                onPrimaryContainer: '#e8eaed',
             },
-            sepia: {
-                surface: '#F4ECD8',
-                onSurface: '#2f1500',
-                onSurfaceVariant: '#6a3b0e',
-                primary: '#532900',
-                onPrimary: '#ffffff',
-                surfaceHigh: '#e5dec9',
-                outline: '#ce8f5b',
-                primaryContainer: '#ffdcc3',
-                onPrimaryContainer: '#2f1500',
+            mocha: {
+                surface: '#302621',
+                onSurface: '#e6dfd1',
+                onSurfaceVariant: '#a39992',
+                primary: '#d6aa85',
+                onPrimary: '#302621',
+                surfaceHigh: '#3e322b',
+                outline: '#70645c',
+                primaryContainer: '#52433a',
+                onPrimaryContainer: '#e6dfd1',
             },
             dark: {
                 surface: '#171c3c',
@@ -188,7 +189,7 @@ export const ReaderAppearanceSettings = ({
             }
         };
 
-        return baseColors[themeKey as keyof typeof baseColors] || baseColors.light;
+        return baseColors[themeKey as keyof typeof baseColors] || baseColors.slate;
     };
 
     const colors = getThemeColors(selectedTheme);
@@ -219,6 +220,10 @@ export const ReaderAppearanceSettings = ({
         label: 'Manrope-Bold',
         body: 'Manrope-Medium',
     };
+
+    if (!visible) {
+        return null;
+    }
 
     return (
         <Portal>
@@ -388,11 +393,11 @@ export const ReaderAppearanceSettings = ({
                                 {/* Themes */}
                                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 6 }}>
                                     {[ 
-                                        { key: 'light', color: '#fcf8fb' }, 
-                                        { key: 'sepia', color: '#F4ECD8' }, 
-                                        { key: 'dark', color: '#171c3c' }, 
-                                        { key: 'oled', color: '#000000' } 
-                                    ].map((t) => (
+                                    { key: 'slate', color: '#202124' }, 
+                                    { key: 'mocha', color: '#302621' }, 
+                                    { key: 'dark', color: '#171c3c' }, 
+                                    { key: 'oled', color: '#000000' } 
+                                ].map((t) => (
                                         <TouchableOpacity
                                             key={t.key}
                                             onPress={() => updateEditorPref('theme', t.key)}
@@ -467,54 +472,53 @@ export const ReaderTTSControlsSettings = ({
     
     if (!visible) return null;
     return (
-        <Portal>
-            <Modal
-                visible={visible}
-                onDismiss={onDismiss}
-                contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }}
-                style={{ margin: 0, justifyContent: 'flex-end' }}
-            >
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
-                    <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
-                    <View style={{ alignItems: 'center', marginBottom: 16 }}>
-                        <IconButton
-                            icon="chevron-down"
-                            iconColor="#ffffff"
-                            size={32}
-                            onPress={onDismiss}
-                            style={{
-                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                                borderWidth: 1,
-                                borderColor: 'rgba(255, 255, 255, 0.2)',
-                                width: 48,
-                                height: 48,
-                                borderRadius: 24,
-                                margin: 0,
-                            }}
-                        />
-                    </View>
-                    <View
+        <View
+            pointerEvents="box-none"
+            style={{
+                ...StyleSheet.absoluteFillObject,
+                justifyContent: 'flex-end',
+            }}
+        >
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
+                <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
+                <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                    <IconButton
+                        icon="chevron-down"
+                        iconColor="#ffffff"
+                        size={32}
+                        onPress={onDismiss}
                         style={{
-                            backgroundColor: readerBgColor,
-                            borderTopLeftRadius: 32,
-                            borderTopRightRadius: 32,
-                            paddingHorizontal: 32,
-                            paddingTop: 0,
-                            paddingBottom: 0,
-                            shadowColor: '#000',
-                            shadowOffset: { width: 0, height: -24 },
-                            shadowOpacity: 0.4,
-                            shadowRadius: 64,
-                            borderTopWidth: 1,
-                            borderTopColor: 'rgba(255,255,255,0.05)',
-                            maxHeight: '85%',
+                            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                            borderWidth: 1,
+                            borderColor: 'rgba(255, 255, 255, 0.2)',
+                            width: 48,
+                            height: 48,
+                            borderRadius: 24,
+                            margin: 0,
                         }}
-                    >
-                        <TTSControls />
-                    </View>
+                    />
                 </View>
-            </Modal>
-        </Portal>
+                <View
+                    style={{
+                        backgroundColor: readerBgColor,
+                        borderTopLeftRadius: 32,
+                        borderTopRightRadius: 32,
+                        paddingHorizontal: 32,
+                        paddingTop: 0,
+                        paddingBottom: 0,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: -24 },
+                        shadowOpacity: 0.4,
+                        shadowRadius: 64,
+                        borderTopWidth: 1,
+                        borderTopColor: 'rgba(255,255,255,0.05)',
+                        maxHeight: '85%',
+                    }}
+                >
+                    <TTSControls />
+                </View>
+            </View>
+        </View>
     );
 };
 

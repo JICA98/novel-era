@@ -30,7 +30,7 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
             backgroundColor: currentTheme.highlight,
             borderRadius: 4,
             paddingHorizontal: 4,
-            color: readerThemeKey === 'sepia' ? '#532900' : currentTheme.text,
+            color: currentTheme.text,
         };
     }
 

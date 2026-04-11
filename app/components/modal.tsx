@@ -6,6 +6,10 @@ export default function Modal({ title, onResult, content, visible }: {
     content?: React.ReactNode, visible: boolean,
 }) {
     title = title || 'Do you want to continue?';
+    if (!visible) {
+        return null;
+    }
+
     return (
         <Portal>
             <Dialog visible={visible} onDismiss={() => hideModal(false)}>

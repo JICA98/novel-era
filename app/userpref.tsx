@@ -15,12 +15,12 @@ export interface EditorPreferences {
     hasChapterNumber: boolean;
     lineHeight?: number;
     padding?: number;
-    theme?: 'light' | 'sepia' | 'dark' | 'oled';
+    theme?: 'slate' | 'mocha' | 'dark' | 'oled';
 }
 
 export const ReaderThemes = {
-    light: { background: '#fcf8fb', text: '#1b1b1e', highlight: '#dee1ff' },
-    sepia: { background: '#F4ECD8', text: '#2f1500', highlight: '#ffdcc3' },
+    slate: { background: '#202124', text: '#e8eaed', highlight: '#3c4043' },
+    mocha: { background: '#302621', text: '#e6dfd1', highlight: '#52433a' },
     dark: { background: '#171c3c', text: '#dee1ff', highlight: '#2d3252' },
     oled: { background: '#000000', text: '#ffffff', highlight: '#2c2c2e' },
 };

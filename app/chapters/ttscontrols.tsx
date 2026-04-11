@@ -87,6 +87,8 @@ export default function TTSControls() {
     const voices: Speaker[] = voicesStore((state) => state.content);
     const theme = useTheme();
     const colors = theme.colors;
+    const previewCardBackground = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].highlight;
+    const previewCardTextColor = readerThemeKey === 'oled' ? '#111111' : readerTextColor;
 
     function updateTTS(state: SpeechAction) {
         let t: TTS = { ...tts, state: state }
@@ -193,22 +195,24 @@ export default function TTSControls() {
         <View style={{ alignItems: 'center', marginBottom: 32, paddingTop: 0 }}>
             {/* CURRENT SENTENCE CARD */}
             <View style={{
-                backgroundColor: theme.colors.elevation?.level2 || theme.colors.surfaceVariant,
+                backgroundColor: previewCardBackground,
                 padding: 16,
                 marginTop: 32,
                 borderRadius: 16,
                 marginBottom: 24,
                 width: '100%',
-                height: 200,
+                minHeight: 200,
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.08)',
             }}>
                 <Text 
                     adjustsFontSizeToFit
                     numberOfLines={5}
                     style={{
                         fontSize: editorPref.fontSize,
-                        color: readerTextColor,
+                        color: previewCardTextColor,
                         fontFamily: editorPref.fontFamily,
                         letterSpacing: editorPref.letterSpacing,
                         lineHeight: editorPref.fontSize * lhRatio,
