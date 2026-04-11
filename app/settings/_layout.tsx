@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, useColorScheme, Linking } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Snackbar, Switch } from "react-native-paper";
+import { Snackbar, Switch, List } from "react-native-paper";
 
 import { Colors } from "@/constants/Colors";
 import { AtelierText } from "@/components/AtelierText";
@@ -193,37 +193,39 @@ export default function Settings() {
                 <View style={styles.settingsGroups}>
                     {/* Account Section */}
                     <SettingsSection title="Account" icon="account-circle">
-                        <SettingsItem 
-                            title="Auth Status" 
-                            description={authStatusDescription}
-                            rightElement={
-                                <MaterialCommunityIcons
-                                    name={isSignedIn ? "check-decagram" : "account-off-outline"}
-                                    size={20}
-                                    color={isSignedIn ? themeColors.primary : themeColors.outline}
-                                />
-                            }
-                        />
                         <SettingsItem
                             title={accountActionTitle}
                             description={accountActionDescription}
                             showChevron 
                             onPress={handleAccountPress}
                         />
-                        <SettingsItem 
-                            title="Cloud Backup" 
-                            description={isSignedIn ? "Backup or restore preferences" : "Sign in required"} 
-                            showChevron 
-                            disabled={!isSignedIn}
-                            onPress={() => actions.setBackup(true)}
-                        />
-                        <SettingsItem 
-                            title="Restore Data" 
-                            description={isSignedIn ? "Fetch from cloud" : "Sign in required"} 
-                            showChevron 
-                            disabled={!isSignedIn}
-                            onPress={() => actions.setRestore(true)}
-                        />
+                        {isSignedIn && (
+                            <>
+                                <SettingsItem 
+                                    title="Auth Status" 
+                                    description={authStatusDescription}
+                                    rightElement={
+                                        <MaterialCommunityIcons
+                                            name="check-decagram"
+                                            size={20}
+                                            color={themeColors.primary}
+                                        />
+                                    }
+                                />
+                                <SettingsItem 
+                                    title="Cloud Backup" 
+                                    description="Backup or restore preferences" 
+                                    showChevron 
+                                    onPress={() => actions.setBackup(true)}
+                                />
+                                <SettingsItem 
+                                    title="Restore Data" 
+                                    description="Fetch from cloud" 
+                                    showChevron 
+                                    onPress={() => actions.setRestore(true)}
+                                />
+                            </>
+                        )}
                     </SettingsSection>
 
                     {/* Reading Preferences Section */}
@@ -264,7 +266,7 @@ export default function Settings() {
                     <SettingsSection title="App Theme" icon="theme-light-dark">
                         <SettingsItem 
                             title="Theme Mode" 
-                            description={userPref?.theme || "System"}
+                            description={userPref?.theme || "system"}
                             rightElement={
                                 <View style={[styles.toggleContainer, { backgroundColor: themeColors.secondaryContainer }]}>
                                     <TouchableOpacity 
