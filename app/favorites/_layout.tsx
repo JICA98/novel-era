@@ -25,13 +25,14 @@ interface EnrichedTracker {
 }
 
 const FavoriteScreen = () => {
+    const theme = useAppTheme();
     const [enrichedTrackers, setEnrichedTrackers] = useState<EnrichedTracker[]>([]);
     const [refreshing, setRefreshing] = useState(false);
     const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
     const [filterStatus, setFilterStatus] = useState('All');
     const [sortBy, setSortBy] = useState('Updated');
     const [isSortModalVisible, setIsSortModalVisible] = useState(false);
-    const themeColors = useAppTheme().colors as any;
+    const themeColors = theme.colors as any;
     const setBottomIndex = useBottomIndexStore((state: any) => state.setIndex);
 
     useEffect(() => {
@@ -208,6 +209,12 @@ const FavoriteScreen = () => {
 
         const coverUri = normalizeUrl(item.novelTracker.novel.bookImage, item.novelTracker.repo.repoUrl) || 
             `https://picsum.photos/seed/${item.novelTracker.novel.bookId}/200/300`;
+        const resumeTitleColor = theme.dark ? '#f7f7ff' : '#ffffff';
+        const resumeSubtitleColor = theme.dark ? 'rgba(247,247,255,0.92)' : 'rgba(255,255,255,0.94)';
+        const resumeShadowColor = theme.dark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.38)';
+        const resumeGradientColors: [string, string, string] = theme.dark
+            ? ['rgba(7,10,20,0.24)', 'rgba(7,10,20,0.78)', 'rgba(7,10,20,0.94)']
+            : ['rgba(22,26,44,0.14)', 'rgba(22,26,44,0.58)', 'rgba(22,26,44,0.82)'];
 
         return (
             <View>
@@ -225,8 +232,8 @@ const FavoriteScreen = () => {
                             blurRadius={10}
                         >
                             <LinearGradient
-                                colors={['rgba(9,12,24,0.08)', 'rgba(9,12,24,0.88)']}
-                                locations={[0.1, 1]}
+                                colors={resumeGradientColors}
+                                locations={[0.05, 0.55, 1]}
                                 style={StyleSheet.absoluteFill}
                             />
                             <View style={styles.continueCardContent}>
@@ -241,10 +248,21 @@ const FavoriteScreen = () => {
                                 
                                 <View style={styles.continueCardFooter}>
                                     <View style={styles.continueCardInfo}>
-                                        <AtelierText variant="title" bold color={themeColors.onPrimary} numberOfLines={1}>
+                                        <AtelierText
+                                            variant="title"
+                                            bold
+                                            color={resumeTitleColor}
+                                            numberOfLines={1}
+                                            style={[styles.continueCardTitle, { textShadowColor: resumeShadowColor }]}
+                                        >
                                             {item.novelTracker.novel.title}
                                         </AtelierText>
-                                        <AtelierText variant="body" color="rgba(255,255,255,0.88)" numberOfLines={1}>
+                                        <AtelierText
+                                            variant="body"
+                                            color={resumeSubtitleColor}
+                                            numberOfLines={1}
+                                            style={[styles.continueCardSubtitle, { textShadowColor: resumeShadowColor }]}
+                                        >
                                             Chapter {item.readingStatus.lastChapterRead}
                                         </AtelierText>
                                     </View>
@@ -707,6 +725,14 @@ const styles = StyleSheet.create({
     continueCardInfo: {
         flex: 1,
         marginRight: 16,
+    },
+    continueCardTitle: {
+        textShadowOffset: { width: 0, height: 2 },
+        textShadowRadius: 10,
+    },
+    continueCardSubtitle: {
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 8,
     },
     continuePlayButton: {
         width: 48,

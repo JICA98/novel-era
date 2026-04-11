@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Animated as RNAnimated, ScrollView, StyleSheet, View, Text, ImageBackground, RefreshControl, Image, TouchableOpacity, Dimensions, Platform } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { ActivityIndicator, Snackbar, FAB, IconButton } from "react-native-paper";
 import { BlurView } from "expo-blur";
 import Reanimated, { 
@@ -122,6 +122,7 @@ const useContentStore = create((set) => ({
 }));
 
 export default function ContentLayout() {
+    const insets = useSafeAreaInsets();
     const repo = JSON.parse(useLocalSearchParams().repo as string) as Repo;
     const _content = JSON.parse(useLocalSearchParams().content as string) as Content;
     const scrollY = useRef(new RNAnimated.Value(0)).current;
@@ -306,129 +307,140 @@ export default function ContentLayout() {
 
     if (contentData.isLoading) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                <NovelSkeleton />
-            </SafeAreaView>
+            <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+                <SafeAreaView style={styles.container}>
+                    <NovelSkeleton />
+                </SafeAreaView>
+            </View>
         );
     }
 
     if (contentData.error || contentData.data === undefined) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                {errorPlaceholder({ onRetry: handleContentFetch })}
-            </SafeAreaView>
+            <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+                <SafeAreaView style={styles.container}>
+                    {errorPlaceholder({ onRetry: handleContentFetch })}
+                </SafeAreaView>
+            </View>
         );
     }
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.surface }]}>
-            {/* Custom Frosted Header */}
-            <Header scrollY={scrollY} title={_content.title} onExport={() => setExportsVisible(true)} />
+        <View style={[styles.screen, { backgroundColor: theme.colors.surface }]}>
+            <SafeAreaView style={styles.container}>
+                {/* Custom Frosted Header */}
+                <Header
+                    scrollY={scrollY}
+                    title={_content.title}
+                    topInset={insets.top}
+                    onExport={() => setExportsVisible(true)}
+                />
 
-            <RNAnimated.ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={{ paddingBottom: 100 }}
-                scrollEventThrottle={16}
-                onScroll={RNAnimated.event(
-                    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-                    { useNativeDriver: false }
-                )}
-                refreshControl={<RefreshControl refreshing={false} onRefresh={() => handleContentFetch()} />}
-            >
-                {/* Hero Section */}
-                <NovelHero content={content!} tabProgress={tabProgress} />
+                <RNAnimated.ScrollView
+                    style={styles.scrollView}
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                    scrollEventThrottle={16}
+                    onScroll={RNAnimated.event(
+                        [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+                        { useNativeDriver: false }
+                    )}
+                    refreshControl={<RefreshControl refreshing={false} onRefresh={() => handleContentFetch()} />}
+                >
+                    {/* Hero Section */}
+                    <NovelHero content={content!} tabProgress={tabProgress} topInset={insets.top} />
 
-                {/* Tab Navigation */}
-                <View style={styles.tabNav}>
-                    <TouchableOpacity
-                        onPress={() => handleTabChange('synopsis')}
-                        style={[styles.tabButton, activeTab === 'synopsis' && [styles.activeTabButton, { borderBottomColor: theme.colors.primary }]]}
-                    >
-                        <Text style={[styles.tabButtonText, { color: theme.colors.onSurfaceVariant }, activeTab === 'synopsis' && [styles.activeTabButtonText, { color: theme.colors.primary }]]}>SYNOPSIS</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        onPress={() => handleTabChange('chapters')}
-                        style={[styles.tabButton, activeTab === 'chapters' && [styles.activeTabButton, { borderBottomColor: theme.colors.primary }]]}
-                    >
-                        <Text style={[styles.tabButtonText, { color: theme.colors.onSurfaceVariant }, activeTab === 'chapters' && [styles.activeTabButtonText, { color: theme.colors.primary }]]}>CHAPTERS</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {activeTab === 'synopsis' ? (
-                    <View key="synopsis">
-                        <SynopsisTab content={content!} />
+                    {/* Tab Navigation */}
+                    <View style={styles.tabNav}>
+                        <TouchableOpacity
+                            onPress={() => handleTabChange('synopsis')}
+                            style={[styles.tabButton, activeTab === 'synopsis' && [styles.activeTabButton, { borderBottomColor: theme.colors.primary }]]}
+                        >
+                            <Text style={[styles.tabButtonText, { color: theme.colors.onSurfaceVariant }, activeTab === 'synopsis' && [styles.activeTabButtonText, { color: theme.colors.primary }]]}>SYNOPSIS</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => handleTabChange('chapters')}
+                            style={[styles.tabButton, activeTab === 'chapters' && [styles.activeTabButton, { borderBottomColor: theme.colors.primary }]]}
+                        >
+                            <Text style={[styles.tabButtonText, { color: theme.colors.onSurfaceVariant }, activeTab === 'chapters' && [styles.activeTabButtonText, { color: theme.colors.primary }]]}>CHAPTERS</Text>
+                        </TouchableOpacity>
                     </View>
-                ) : (
-                    isTabTransitioning ? (
-                        <View key="loading">
-                            <ChaptersLoadingView />
+
+                    {activeTab === 'synopsis' ? (
+                        <View key="synopsis">
+                            <SynopsisTab content={content!} />
                         </View>
                     ) : (
-                        <View key="chapters">
-                            <ChaptersTab
-                                repo={repo}
-                                content={content!}
-                                volumes={volumes}
-                                selectedIndex={selectedVolumeIndex}
-                                onVolumePress={handleVolumeChange}
-                                isLoading={isVolumeTransitioning}
-                            />
-                        </View>
-                    )
-                )}
-            </RNAnimated.ScrollView>
+                        isTabTransitioning ? (
+                            <View key="loading">
+                                <ChaptersLoadingView />
+                            </View>
+                        ) : (
+                            <View key="chapters">
+                                <ChaptersTab
+                                    repo={repo}
+                                    content={content!}
+                                    volumes={volumes}
+                                    selectedIndex={selectedVolumeIndex}
+                                    onVolumePress={handleVolumeChange}
+                                    isLoading={isVolumeTransitioning}
+                                />
+                            </View>
+                        )
+                    )}
+                </RNAnimated.ScrollView>
 
-            {/* Sticky Action Bar */}
-            <BottomActionBar
-                isFavorite={novelTracker.favorite}
-                onFavoritePress={() => {
-                    if (content === undefined) return;
-                    inverseFavoriteTracker({
-                        repo,
-                        content,
-                        allNovelTrackerStore,
-                        setAllNovelTracker,
-                        novelTracker,
-                        setNovelTracker,
-                    });
-                }}
-                onReadPress={() => {
-                    router.push({
-                        pathname: '/chapters' as any,
-                        params: {
-                            props: JSON.stringify({
-                                focusedMode: false,
-                                id: resumeChapterId,
-                                content,
-                                repo,
-                                returnToContent: true,
-                                returnToContentBehavior: 'back',
-                                enableNextPrev: true,
-                                continueReading: shouldContinueReading,
-                                data: ''
-                            }),
+                {/* Sticky Action Bar */}
+                <BottomActionBar
+                    isFavorite={novelTracker.favorite}
+                    onFavoritePress={() => {
+                        if (content === undefined) return;
+                        inverseFavoriteTracker({
+                            repo,
+                            content,
+                            allNovelTrackerStore,
+                            setAllNovelTracker,
+                            novelTracker,
+                            setNovelTracker,
+                        });
+                    }}
+                    onReadPress={() => {
+                        router.push({
+                            pathname: '/chapters' as any,
+                            params: {
+                                props: JSON.stringify({
+                                    focusedMode: false,
+                                    id: resumeChapterId,
+                                    content,
+                                    repo,
+                                    returnToContent: true,
+                                    returnToContentBehavior: 'back',
+                                    enableNextPrev: true,
+                                    continueReading: shouldContinueReading,
+                                    data: ''
+                                }),
+                            }
+                        });
+                    }}
+                    readLabel={shouldContinueReading ? 'Continue Reading' : 'Start Reading'}
+                />
+
+                <ExportDialog
+                    visible={exportsVisible}
+                    onDismiss={() => {
+                        if (!exportState.isExporting) {
+                            setExportsVisible(false);
                         }
-                    });
-                }}
-                readLabel={shouldContinueReading ? 'Continue Reading' : 'Start Reading'}
-            />
-
-            <ExportDialog
-                visible={exportsVisible}
-                onDismiss={() => {
-                    if (!exportState.isExporting) {
-                        setExportsVisible(false);
-                    }
-                }}
-                maxChapters={contentData.data?.latestChapter ?? 1}
-                isExporting={exportState.isExporting}
-                progress={exportState.isExporting ? exportState : undefined}
-                onExport={handleExportRequest}
-                novelTitle={contentData.data?.title}
-                novelCover={contentData.data?.bookImage}
-            />
-            <ShowSnackbar />
-        </SafeAreaView>
+                    }}
+                    maxChapters={contentData.data?.latestChapter ?? 1}
+                    isExporting={exportState.isExporting}
+                    progress={exportState.isExporting ? exportState : undefined}
+                    onExport={handleExportRequest}
+                    novelTitle={contentData.data?.title}
+                    novelCover={contentData.data?.bookImage}
+                />
+                <ShowSnackbar />
+            </SafeAreaView>
+        </View>
     );
 
     function ShowSnackbar() {
@@ -445,7 +457,17 @@ export default function ContentLayout() {
 
 // Sub-components
 
-const Header = ({ scrollY, title, onExport }: { scrollY: RNAnimated.Value, title: string, onExport: () => void }) => {
+const Header = ({
+    scrollY,
+    title,
+    topInset,
+    onExport,
+}: {
+    scrollY: RNAnimated.Value,
+    title: string,
+    topInset: number,
+    onExport: () => void
+}) => {
     const theme = useAppTheme();
     const bgColor = scrollY.interpolate({
         inputRange: [0, 100],
@@ -460,7 +482,16 @@ const Header = ({ scrollY, title, onExport }: { scrollY: RNAnimated.Value, title
     });
 
     return (
-        <RNAnimated.View style={[styles.headerFixed, { backgroundColor: bgColor }]}>
+        <RNAnimated.View
+            style={[
+                styles.headerFixed,
+                {
+                    backgroundColor: bgColor,
+                    height: topInset + 76,
+                    paddingTop: topInset,
+                }
+            ]}
+        >
             <BlurView intensity={Platform.OS === 'ios' ? 20 : 0} style={StyleSheet.absoluteFill} tint={theme.dark ? "dark" : "light"} />
             <View style={styles.headerContent}>
                 <IconButton icon="arrow-left" iconColor={theme.colors.onSurface} onPress={() => router.back()} />
@@ -476,7 +507,15 @@ const Header = ({ scrollY, title, onExport }: { scrollY: RNAnimated.Value, title
     );
 };
 
-const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: SharedValue<number> }) => {
+const NovelHero = ({
+    content,
+    tabProgress,
+    topInset,
+}: {
+    content: Content,
+    tabProgress: SharedValue<number>,
+    topInset: number
+}) => {
     const theme = useAppTheme();
 
     const heroStyle = useAnimatedStyle(() => {
@@ -555,7 +594,7 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
 
             <Reanimated.View style={[styles.glow, { backgroundColor: theme.colors.secondaryContainer }, statsOpacity]} />
 
-            <Reanimated.View style={[styles.heroFlexLayer, flexLayerStyle]}>
+            <Reanimated.View style={[styles.heroFlexLayer, { paddingTop: topInset + 96 }, flexLayerStyle]}>
                 <Reanimated.View style={[styles.heroMainRow, rowStyle]}>
                     <Reanimated.View style={[styles.heroCoverShadow, coverStyle]}>
                         <View style={styles.heroCoverContainer}>
@@ -778,6 +817,9 @@ const BottomActionBar = ({
 };
 
 const styles = StyleSheet.create({
+    screen: {
+        flex: 1,
+    },
     container: {
         flex: 1,
     },
@@ -793,9 +835,7 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        height: 100,
         zIndex: 100,
-        paddingTop: Platform.OS === 'android' ? 24 : 0,
     },
     headerContent: {
         flex: 1,
@@ -821,7 +861,6 @@ const styles = StyleSheet.create({
     heroFlexLayer: {
         width: '100%',
         padding: 24,
-        paddingTop: 120, // Static base padding
     },
     heroMainRow: {
         width: '100%',
