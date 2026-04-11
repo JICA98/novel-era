@@ -13,6 +13,7 @@ import UseRepositoryLayout from "../_repos";
 import { Repo } from "@/types";
 import { ChapterTracker, NovelTracker, chapterTrackerStore, noveFavoriteStore } from "../favorites/tracker";
 import { AuthState, signInWithGoogle } from "../lib/auth";
+import { useTheme } from 'react-native-paper';
 
 function getBoundStoreContent<T>(store: any): T | undefined {
     if (!store) {
@@ -67,9 +68,7 @@ function calculateReadingStreak(dayKeys: string[]): number {
 }
 
 export default function Settings() {
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
     
     const userPref = userPrefStore((state: any) => state.userPref);
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
@@ -239,7 +238,7 @@ export default function Settings() {
                             description="Continuous Scroll" 
                             rightElement={
                                 <View style={[styles.toggleContainer, { backgroundColor: themeColors.secondaryContainer }]}>
-                                    <TouchableOpacity style={[styles.toggleOption, { backgroundColor: '#ffffff' }]}>
+                                    <TouchableOpacity style={[styles.toggleOption, { backgroundColor: themeColors.surface }]}>
                                         <AtelierText variant="caption" bold style={{ color: themeColors.secondary }}>Scroll</AtelierText>
                                     </TouchableOpacity>
                                     <TouchableOpacity style={styles.toggleOption}>
@@ -262,28 +261,34 @@ export default function Settings() {
                     </SettingsSection>}
 
                     {/* App Theme Section */}
-                    {false && <SettingsSection title="App Theme" icon="theme-light-dark">
+                    <SettingsSection title="App Theme" icon="theme-light-dark">
                         <SettingsItem 
                             title="Theme Mode" 
                             description={userPref?.theme || "System"}
                             rightElement={
                                 <View style={[styles.toggleContainer, { backgroundColor: themeColors.secondaryContainer }]}>
                                     <TouchableOpacity 
+                                       onPress={() => setUserPref({...userPref, theme: ThemeOptions.System})}
+                                       style={[styles.toggleOption, userPref?.theme === ThemeOptions.System && { backgroundColor: themeColors.surface }]}
+                                    >
+                                        <AtelierText variant="caption" bold>System</AtelierText>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity 
                                        onPress={() => setUserPref({...userPref, theme: ThemeOptions.Light})}
-                                       style={[styles.toggleOption, userPref?.theme === ThemeOptions.Light && { backgroundColor: '#ffffff' }]}
+                                       style={[styles.toggleOption, userPref?.theme === ThemeOptions.Light && { backgroundColor: themeColors.surface }]}
                                     >
                                         <AtelierText variant="caption" bold>Light</AtelierText>
                                     </TouchableOpacity>
                                     <TouchableOpacity 
                                        onPress={() => setUserPref({...userPref, theme: ThemeOptions.Dark})}
-                                       style={[styles.toggleOption, userPref?.theme === ThemeOptions.Dark && { backgroundColor: '#ffffff' }]}
+                                       style={[styles.toggleOption, userPref?.theme === ThemeOptions.Dark && { backgroundColor: themeColors.surface }]}
                                     >
                                         <AtelierText variant="caption" bold>Dark</AtelierText>
                                     </TouchableOpacity>
                                 </View>
                             }
                         />
-                    </SettingsSection>}
+                    </SettingsSection>
 
                     {/* Search Preferences Section */}
                     {false && <UseRepositoryLayout
@@ -331,9 +336,7 @@ export default function Settings() {
 function SearchPreferencesSection({ repos, setSnackbarText }: { repos: Repo[]; setSnackbarText: (text: string) => void; }) {
     const userPref = userPrefStore((state: any) => state.userPref);
     const setDefaultUniversalSearch = userPrefStore((state: any) => state.setDefaultUniversalSearch);
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
     
     const defaultUniversalSearch = userPref?.defaultUniversalSearch ?? false;
 

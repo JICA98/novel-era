@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import { AtelierText } from '@/components/AtelierText';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from 'react-native-paper';
 import Animated, { 
   FadeIn, 
   FadeOut, 
@@ -27,9 +28,7 @@ export const SettingsSection: React.FC<SettingsSectionProps> = ({
   style,
   initialCollapsed = false 
 }) => {
-  const systemColorScheme = useColorScheme();
-  const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-  const themeColors = Colors[colorScheme];
+  const themeColors = useTheme().colors as any;
   const [isCollapsed, setIsCollapsed] = React.useState(initialCollapsed);
 
   const toggleCollapse = () => {
@@ -106,9 +105,7 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({
   showChevron = false,
   disabled = false,
 }) => {
-  const systemColorScheme = useColorScheme();
-  const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-  const themeColors = Colors[colorScheme];
+  const themeColors = useTheme().colors as any;
 
   const content = (
     <View style={styles.itemWrapper}>
@@ -174,9 +171,7 @@ interface StatBoxProps {
 }
 
 export const StatBox: React.FC<StatBoxProps> = ({ value, label }) => {
-  const systemColorScheme = useColorScheme();
-  const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-  const themeColors = Colors[colorScheme];
+  const themeColors = useTheme().colors as any;
 
   return (
     <View style={[styles.statBox, { backgroundColor: 'rgba(255, 255, 255, 0.08)', borderColor: 'rgba(255, 255, 255, 0.1)' }]}>

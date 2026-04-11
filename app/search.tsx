@@ -17,6 +17,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { userPrefStore } from './userpref';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTheme } from 'react-native-paper';
 import {
     chapterTrackerStore,
     getAllTrackersAsync,
@@ -105,9 +106,8 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
     const params = useLocalSearchParams();
     const incomingQuery = params.query as string | undefined;
 
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const theme = useTheme();
+    const themeColors = theme.colors as any;
     const favoriteTrackerStoreState = noveFavoriteStore((state: any) => state.content);
     const chapterTrackerStoreState = chapterTrackerStore((state: any) => state.content);
     const liveFavoriteTrackerStores = favoriteTrackerStoreState instanceof Map ? favoriteTrackerStoreState : undefined;
@@ -513,7 +513,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
         <View style={[styles.promoCard, { backgroundColor: themeColors.primary }]}>
             <AtelierText variant="caption" bold color={themeColors.onPrimary + '88'}>CURATED RECOMMENDATION</AtelierText>
             <AtelierText variant="title" color={themeColors.onPrimary} italic style={styles.promoTitle}>Discover: Shadows of the Atelier</AtelierText>
-            <TouchableOpacity style={styles.promoButton}>
+            <TouchableOpacity style={[styles.promoButton, { backgroundColor: themeColors.surface }]}>
                 <AtelierText variant="label" bold color={themeColors.primary}>Explore Series</AtelierText>
             </TouchableOpacity>
         </View>
@@ -854,8 +854,8 @@ export function SearchResultsView({
     const [content, setContent] = useState<FetchData<Content[]>>({ isLoading: true });
     const [enrichedResults, setEnrichedResults] = useState<EnrichedContent[]>([]);
     const [viewType, setViewType] = useState<'grid' | 'list'>('grid');
-    const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-    const themeColors = Colors[colorScheme];
+    const theme = useTheme();
+    const themeColors = theme.colors as any;
     const favoriteTrackerStoreState = noveFavoriteStore((state: any) => state.content);
     const chapterTrackerStoreState = chapterTrackerStore((state: any) => state.content);
     const liveFavoriteTrackerStores = favoriteTrackerStoreState instanceof Map ? favoriteTrackerStoreState : undefined;
@@ -935,7 +935,7 @@ export function SearchResultsView({
             return (
                 <BlurView 
                     intensity={Platform.OS === 'ios' ? 80 : 100}
-                    tint={colorScheme === 'dark' ? 'dark' : 'light'}
+                    tint={theme.dark ? 'dark' : 'light'}
                     style={styles.stickyHeaderContainer}
                 >
                     <View style={[styles.stickyHeader, { backgroundColor: themeColors.background + 'cc' }]}>
@@ -1388,7 +1388,6 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     promoButton: {
-        backgroundColor: '#fff',
         alignSelf: 'flex-start',
         paddingHorizontal: 20,
         paddingVertical: 10,

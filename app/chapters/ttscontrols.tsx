@@ -88,7 +88,7 @@ export default function TTSControls() {
     const theme = useTheme();
     const colors = theme.colors;
     const previewCardBackground = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].highlight;
-    const previewCardTextColor = readerThemeKey === 'oled' ? '#111111' : readerTextColor;
+    const previewCardTextColor = readerTextColor;
 
     function updateTTS(state: SpeechAction) {
         let t: TTS = { ...tts, state: state }

@@ -12,6 +12,7 @@ import { userPrefStore } from './userpref';
 import UseRepositoryLayout from './_repos';
 import { SearchResultsView } from './search';
 import { useShallow } from 'zustand/react/shallow';
+import { useTheme } from 'react-native-paper';
 
 export default function ExploreAllLayout() {
     return (
@@ -21,9 +22,7 @@ export default function ExploreAllLayout() {
 
 function ExploreAllScreen({ repos }: { repos: Repo[] }) {
     const router = useRouter();
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
 
     const { selectedRepositoryId, setSelectedRepository } = useSearchStore(
         useShallow((state) => ({

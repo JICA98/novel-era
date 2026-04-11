@@ -1,6 +1,8 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { PaperProvider } from "react-native-paper";
+import { ThemeProvider, DarkTheme, DefaultTheme } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 import { allDownloadsStore, setupDownloadStores } from "./downloads/utils";
 import * as p from "plimit-lit";
 import { chapterTrackerStore, noveFavoriteStore, setupFavoriteStores, setupTrackingStores } from "./favorites/tracker";
@@ -54,10 +56,10 @@ export default function RootLayout() {
   const setFirebaseUser = firebaseStore((state: any) => state.setContent);
 
   useEffect(() => {
-    if (loaded || error) {
+    if ((loaded || error) && userPref) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [loaded, error, userPref]);
 
   useEffect(() => {
     let unsubscribeFromBackup: (() => void) | undefined;
@@ -92,20 +94,29 @@ export default function RootLayout() {
   if (!loaded && !error) {
     return null;
   }
-  console.log(userPref);
+  
+  if (!userPref) return null;
+  
+  const currentTheme = getTheme({ colorScheme, theme, themeOptions: userPref.theme });
+
   return (
-    userPref && (<SafeAreaProvider><PaperProvider theme={getTheme({ colorScheme, theme, themeOptions: userPref.theme })}>
-      <Stack>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="repos" options={{ headerShown: false }} />
-        <Stack.Screen name="contents" options={{ headerShown: false }} />
-        <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
-        <Stack.Screen name="browser" options={{ headerShown: false }} />
-        <Stack.Screen name="explore_all" options={{ headerShown: false }} />
-        <Stack.Screen name="search" options={{ headerShown: false }} />
-      </Stack>
-    </PaperProvider></SafeAreaProvider>)
+    <SafeAreaProvider>
+      <PaperProvider theme={currentTheme}>
+        <ThemeProvider value={currentTheme.dark ? DarkTheme : DefaultTheme}>
+          <StatusBar style={currentTheme.dark ? 'light' : 'dark'} />
+          <Stack>
+            <Stack.Screen name="index" options={{ headerShown: false }} />
+            <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="repos" options={{ headerShown: false }} />
+            <Stack.Screen name="contents" options={{ headerShown: false }} />
+            <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />
+            <Stack.Screen name="browser" options={{ headerShown: false }} />
+            <Stack.Screen name="explore_all" options={{ headerShown: false }} />
+            <Stack.Screen name="search" options={{ headerShown: false }} />
+          </Stack>
+        </ThemeProvider>
+      </PaperProvider>
+    </SafeAreaProvider>
   );
 }
 

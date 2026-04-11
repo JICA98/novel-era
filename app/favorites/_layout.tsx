@@ -17,6 +17,7 @@ import { BlurView } from 'expo-blur';
 import { normalizeUrl } from '@/types';
 import { RenderChapterProps } from '../chapters/common';
 import { indexes, useBottomIndexStore } from '../store/bottomIndexStore';
+import { useTheme } from 'react-native-paper';
 
 const { width } = Dimensions.get('window');
 
@@ -32,8 +33,7 @@ const FavoriteScreen = () => {
     const [filterStatus, setFilterStatus] = useState('All');
     const [sortBy, setSortBy] = useState('Updated');
     const [isSortModalVisible, setIsSortModalVisible] = useState(false);
-    const colorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
     const setBottomIndex = useBottomIndexStore((state: any) => state.setIndex);
 
     useEffect(() => {

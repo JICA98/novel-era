@@ -12,6 +12,7 @@ import { BookListItem } from "@/components/BookListItem";
 import { Colors } from "@/constants/Colors";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from 'react-native-paper';
 
 const PAGE_SIZE = 20;
 
@@ -29,9 +30,7 @@ export default function Recents() {
     const [pagination, setPagination] = useState(1);
     const [showDelete, setShowDelete] = useState(false);
     
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
 
     async function fetchTrackers() {
         if (!refreshing) setLoading(true);

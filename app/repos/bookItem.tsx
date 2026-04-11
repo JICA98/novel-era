@@ -7,6 +7,7 @@ import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from 'react-native-paper';
 
 interface BookItemProps {
     repo: Repo;
@@ -23,9 +24,7 @@ const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = (width - 48) / 2; // 2 columns with padding
 
 export default function BookItem({ repo, item, status, progress = 0, totalChapters, lastReadTimestamp, onLinkPress }: BookItemProps) {
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const themeColors = useTheme().colors as any;
     
     const coverUri = normalizeUrl(item.bookImage, repo.repoUrl) || `https://picsum.photos/seed/${item.bookId}/200/300`;
     const ratingLabel = item.rating ? item.rating : undefined;

@@ -10,13 +10,13 @@ import { useColorScheme } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useBottomIndexStore } from './store/bottomIndexStore';
+import { useTheme } from 'react-native-paper';
 
 const MyBottom = () => {
     const index = useBottomIndexStore((state: any) => state.index);
     const setIndex = useBottomIndexStore((state: any) => state.setIndex);
-    const systemColorScheme = useColorScheme();
-    const colorScheme = (systemColorScheme === 'dark' ? 'dark' : 'light') as 'light' | 'dark';
-    const themeColors = Colors[colorScheme];
+    const theme = useTheme();
+    const themeColors = theme.colors as any;
     const [mountedRoutes, setMountedRoutes] = React.useState<Record<number, boolean>>({ 0: true });
 
     const routes = [
@@ -65,9 +65,9 @@ const MyBottom = () => {
             <View style={styles.navWrapper}>
                 <BlurView 
                     intensity={Platform.OS === 'ios' ? 80 : 100} 
-                    tint={colorScheme === 'dark' ? 'dark' : 'light'}
+                    tint={theme.dark ? 'dark' : 'light'}
                     style={[styles.blurView, { 
-                        backgroundColor: colorScheme === 'dark' ? 'rgba(23, 28, 60, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+                        backgroundColor: theme.dark ? 'rgba(23, 28, 60, 0.8)' : 'rgba(255, 255, 255, 0.8)',
                         borderColor: themeColors.outlineVariant + '33'
                     }]}
                 >

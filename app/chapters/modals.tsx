@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { Text, IconButton, useTheme, Button, Divider, SegmentedButtons, Portal, Modal } from 'react-native-paper';
+import { View, TouchableOpacity, ScrollView, StyleSheet, Modal as RNModal } from 'react-native';
+import { Text, IconButton, useTheme, Button, Divider, SegmentedButtons } from 'react-native-paper';
 import { UserPreferences, ThemeOptions, userPrefStore, ReaderThemes } from '../userpref';
 import { RenderChapterProps, navigateToNextChapter } from './common';
 import Slider from '@react-native-community/slider';
@@ -30,10 +30,9 @@ export const ReaderNavigationToc = ({
     }
 
     return (
-        <Portal>
-            <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }} style={{ margin: 0, justifyContent: 'flex-start' }}>
-                <View style={{ flex: 1, flexDirection: 'row' }}>
-                    <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' }}>
+        <RNModal transparent={true} visible={visible} animationType="fade" onRequestClose={onDismiss}>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+                <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.4)' }}>
                         <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
                     </View>
                     <View style={{ width: '85%', maxWidth: 350, height: '100%', backgroundColor: readerBgColor, flexDirection: 'column', elevation: 16, shadowColor: '#000', shadowOffset: { width: 5, height: 0 }, shadowOpacity: 0.2, shadowRadius: 10 }}>
@@ -124,9 +123,8 @@ export const ReaderNavigationToc = ({
                     </View>
                 </View>
             </View>
-        </Modal>
-    </Portal>
-);
+        </RNModal>
+    );
 };
 
 export const ReaderAppearanceSettings = ({
@@ -226,9 +224,8 @@ export const ReaderAppearanceSettings = ({
     }
 
     return (
-        <Portal>
-            <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={{ flex: 1, backgroundColor: 'transparent' }} style={{ margin: 0, justifyContent: 'flex-end' }}>
-                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+        <RNModal transparent={true} visible={visible} animationType="fade" onRequestClose={onDismiss}>
+            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
                     <TouchableOpacity style={{ flex: 1 }} onPress={onDismiss} activeOpacity={1} />
                     
                     <View style={{ 
@@ -450,8 +447,7 @@ export const ReaderAppearanceSettings = ({
                     </ScrollView>
                 </View>
             </View>
-        </Modal>
-    </Portal>
+        </RNModal>
     );
 };
 
