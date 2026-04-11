@@ -25,6 +25,7 @@ VARIANT="debug"
 BUILD_ONLY=false
 UNINSTALL_FIRST=false
 ONLY_FIRST=false
+SYNC_NATIVE=true
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -34,8 +35,11 @@ while [[ $# -gt 0 ]]; do
         --uninstall-first)
             UNINSTALL_FIRST=true
             ;;
+        --skip-native-sync)
+            SYNC_NATIVE=false
+            ;;
         *)
-            error "Unknown argument '$1'. Use: [debug|release] [--uninstall-first]"
+            error "Unknown argument '$1'. Use: [debug|release] [--uninstall-first] [--skip-native-sync]"
             ;;
     esac
     shift
@@ -44,7 +48,7 @@ done
 VARIANT_CAP="${VARIANT^}"
 
 APP_NAME="NovelEra"
-PACKAGE="com.jica98.novelera"
+PACKAGE="com.zenithblue.ateliernovels"
 ACTIVITY=".MainActivity"
 
 GRADLE_TASK="assemble${VARIANT_CAP}"
@@ -52,6 +56,11 @@ ARTIFACT_DIR="android/app/build/outputs/apk/${VARIANT}"
 ARTIFACT_EXT="apk"
 
 # ── Step 1: Build ────────────────────────────────────────────
+if $SYNC_NATIVE; then
+    info "Syncing Expo native assets (including splash screen)"
+    npx expo prebuild --platform android --no-install
+fi
+
 info "Building ${APP_NAME} ${ARTIFACT_EXT^^} variant: ${VARIANT_CAP}"
 cd android && ./gradlew "$GRADLE_TASK" --quiet && cd ..
 
