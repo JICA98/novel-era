@@ -76,7 +76,7 @@ export default function TTSControls() {
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const ttsConfig = userPref.ttsConfig;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
     const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
     const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const setUserPref: SetTTSConfig = (userPrefStore((state: any) => state.setTTSConfig));

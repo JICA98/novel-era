@@ -5,7 +5,7 @@ import { AtelierText } from '@/components/AtelierText';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from 'react-native';
 import { BlurView } from 'expo-blur';
-import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, FadeOut, LinearTransition, useSharedValue, useAnimatedStyle, withSpring, withTiming, withRepeat, withSequence } from 'react-native-reanimated';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import BookItem from './repos/bookItem';
 import { BookListItem } from '@/components/BookListItem';
@@ -42,6 +42,58 @@ export function ExploreLayout({ embedded = false }: { embedded?: boolean }) {
 export default function SearchRoute() {
     return <ExploreLayout embedded={false} />;
 }
+
+const ExploreSkeleton = ({ themeColors }: { themeColors: any }) => {
+    const opacity = useSharedValue(0.3);
+
+    useEffect(() => {
+        opacity.value = withRepeat(
+            withSequence(
+                withTiming(0.7, { duration: 800 }),
+                withTiming(0.3, { duration: 800 })
+            ),
+            -1,
+            true
+        );
+    }, []);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        opacity: opacity.value,
+        backgroundColor: themeColors.onSurfaceVariant,
+    }));
+
+    return (
+        <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 24 }}>
+            <Animated.View style={[{ height: 64, borderRadius: 16, marginBottom: 24 }, animatedStyle]} />
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Animated.View style={[{ height: 24, width: 120, borderRadius: 8 }, animatedStyle]} />
+                <Animated.View style={[{ height: 24, width: 60, borderRadius: 8 }, animatedStyle]} />
+            </View>
+            
+            <View style={{ flexDirection: 'row', marginBottom: 32 }}>
+                {[1, 2, 3].map((i) => (
+                    <Animated.View key={i} style={[{ height: 40, width: 90, borderRadius: 20, marginRight: 10 }, animatedStyle]} />
+                ))}
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <Animated.View style={[{ height: 28, width: 160, borderRadius: 8 }, animatedStyle]} />
+                <Animated.View style={[{ height: 20, width: 80, borderRadius: 8 }, animatedStyle]} />
+            </View>
+
+            <View style={{ flexDirection: 'row' }}>
+                {[1, 2].map((i) => (
+                    <View key={i} style={{ marginRight: 20 }}>
+                        <Animated.View style={[{ width: 160, height: 240, borderRadius: 12, marginBottom: 12 }, animatedStyle]} />
+                        <Animated.View style={[{ height: 16, width: 120, borderRadius: 8, marginBottom: 8 }, animatedStyle]} />
+                        <Animated.View style={[{ height: 12, width: 80, borderRadius: 6 }, animatedStyle]} />
+                    </View>
+                ))}
+            </View>
+        </View>
+    );
+};
 
 function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }) {
     const [viewState, setViewState] = useState<ViewState>('discovery');
@@ -277,12 +329,7 @@ function ExploreScreen({ repos, embedded }: { repos: Repo[]; embedded: boolean }
         const fresh = discoveryEnriched.slice(9, 14);
 
         if (discoveryData.isLoading) {
-            return (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color={themeColors.primary} />
-                    <AtelierText style={{ marginTop: 12 }} color={themeColors.onSurfaceVariant}>Curating your library...</AtelierText>
-                </View>
-            );
+            return <ExploreSkeleton themeColors={themeColors} />;
         }
 
         if (discoveryData.error) {
@@ -1191,7 +1238,6 @@ const styles = StyleSheet.create({
         width: '100%',
         aspectRatio: 2/3,
         borderRadius: 12,
-        backgroundColor: '#eee',
     },
     cardInfo: {
         marginTop: 12,
@@ -1260,7 +1306,6 @@ const styles = StyleSheet.create({
         width: 70,
         height: 100,
         borderRadius: 8,
-        backgroundColor: '#eee',
     },
     arrivalInfo: {
         flex: 1,
@@ -1554,7 +1599,6 @@ const styles = StyleSheet.create({
         width: '100%',
         flex: 1,
         borderRadius: 16,
-        backgroundColor: '#eee',
     },
     bentoSmallInfo: {
         marginTop: 8,

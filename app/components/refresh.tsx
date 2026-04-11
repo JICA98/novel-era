@@ -1,5 +1,6 @@
 import React from "react";
-import { RefreshControl, SafeAreaView, ScrollView, Text, StyleSheet } from "react-native";
+import { RefreshControl, ScrollView, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export const Refresh = () => {
     const [refreshing, setRefreshing] = React.useState(false);

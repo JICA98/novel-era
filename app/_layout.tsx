@@ -97,6 +97,7 @@ export default function RootLayout() {
     userPref && (<SafeAreaProvider><PaperProvider theme={getTheme({ colorScheme, theme, themeOptions: userPref.theme })}>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade' }} />
         <Stack.Screen name="repos" options={{ headerShown: false }} />
         <Stack.Screen name="contents" options={{ headerShown: false }} />
         <Stack.Screen name="chapters" options={{ headerShown: false, animation: 'fade' }} />

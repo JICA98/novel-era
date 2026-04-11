@@ -48,3 +48,45 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## First release checklist (Atelier)
+
+1. Install dependencies and sign in to Expo/EAS.
+
+```bash
+npm install
+eas whoami || eas login
+```
+
+2. Verify release metadata.
+
+- App name: `Atelier`
+- Android package: `com.zenithblue.ateliernovels`
+- iOS bundle ID: `com.zenithblue.ateliernovels`
+- Version: `1.0.0`
+- Android `versionCode`: `1`
+- iOS `buildNumber`: `1`
+
+3. Build store binaries.
+
+```bash
+eas build --platform android --profile production
+eas build --platform ios --profile production
+```
+
+4. Submit builds.
+
+```bash
+eas submit --platform android --profile production
+eas submit --platform ios --profile production
+```
+
+5. Store rollout recommendations.
+
+- Google Play: upload to internal testing first, validate install/update/in-app auth, then promote.
+- App Store Connect: use TestFlight for smoke testing before App Review submission.
+
+6. For next release, bump app version and build numbers.
+
+- Set `expo.version` to next semantic version (for example `1.0.1`).
+- Keep `production.autoIncrement` in `eas.json` enabled to auto-bump native versions on cloud builds.

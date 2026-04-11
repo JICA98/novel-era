@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Linking, SafeAreaView, StyleSheet, View } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Appbar, ActivityIndicator, Text, useTheme } from "react-native-paper";
 import { router, useLocalSearchParams } from "expo-router";
 import { WebView } from "react-native-webview";

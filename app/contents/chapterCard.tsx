@@ -129,7 +129,7 @@ export function ChapterCard({ props }: { props: ChapterCardProps }) {
                     {id === "1" ? "The First Thread" : `Chapter Title ${id}`}
                 </Text>
                 <Text style={[styles.chapterMeta, { color: theme.colors.onSurfaceVariant }]}>
-                    Updated {id === "1" ? "2 days ago" : "just now"} • 3.2k words
+                    Updated {id === "1" ? "2 days ago" : "just now"}
                 </Text>
             </View>
 

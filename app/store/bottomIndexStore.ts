@@ -16,3 +16,8 @@ export const useBottomIndexStore = create<BottomIndexState>((set) => ({
     index: 0,
     setIndex: (index: number) => set({ index }),
 }));
+
+
+export default function DummyBottomIndexStore() {
+    return null;
+}

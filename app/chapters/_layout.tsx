@@ -34,7 +34,7 @@ const ChapterLayout: React.FC = () => {
     const setTTStore: (tts: TTS) => void = ttsStore((state: any) => state.setTTS);
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
     const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
     const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const [focusedMode, setFocusedMode] = useState(props.focusedMode);

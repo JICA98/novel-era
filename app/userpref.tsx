@@ -52,7 +52,7 @@ export const defaultEditorPreferences: EditorPreferences = {
     hasChapterNumber: false,
     lineHeight: 1.5,
     padding: 16,
-    theme: 'light',
+    theme: 'oled',
 };
 
 export interface UserPreferences {
@@ -62,6 +62,7 @@ export interface UserPreferences {
     preferredRepositoryId?: string;
     defaultUniversalSearch?: boolean;
     profile?: UserProfilePreferences;
+    hasSeenOnboarding?: boolean;
 }
 
 export const userPrefStore = create((set, get: any) => ({
@@ -97,6 +98,15 @@ export const userPrefStore = create((set, get: any) => ({
         set({ userPref: updated });
         setUserPreference(updated).then(() => { });
     },
+    setHasSeenOnboarding: (hasSeen: boolean) => {
+        const current: UserPreferences | null = get().userPref;
+        if (!current) {
+            return;
+        }
+        const updated = { ...current, hasSeenOnboarding: hasSeen };
+        set({ userPref: updated });
+        setUserPreference(updated).then(() => { });
+    },
     setTTSConfig: (ttsConfig: TTSConfig) => {
         const userPref: UserPreferences = get().userPref;
         userPref.ttsConfig = ttsConfig;
@@ -113,6 +123,7 @@ export async function getUserPreference(): Promise<UserPreferences> {
         preferredRepositoryId: userPref?.preferredRepositoryId,
         defaultUniversalSearch: userPref?.defaultUniversalSearch ?? false,
         profile: userPref?.profile ?? {},
+        hasSeenOnboarding: userPref?.hasSeenOnboarding ?? false,
     };
 }
 

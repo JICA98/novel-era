@@ -51,6 +51,10 @@ export interface HomeSelector extends Selector {
     summarySelector: Selector;
     authorSelector: Selector;
     tagsSelector?: Selector;
+    ratingSelector?: Selector;
+    viewsSelector?: Selector;
+    bookmarkedSelector?: Selector;
+    statusSelector?: Selector;
 }
 
 export interface SnackBarData {
@@ -107,6 +111,9 @@ export interface Content {
     bookLink: string;
     bookId: string;
     rating?: string;
+    views?: string;
+    bookmarked?: string;
+    status?: string;
     latestChapter?: number;
     summary?: string;
     author?: string;

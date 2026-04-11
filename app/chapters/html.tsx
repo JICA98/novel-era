@@ -11,7 +11,7 @@ const SentenceRenderer = memo(({ sentence, state, currentSentence }:
     const setCurrentSentence: (s: string) => void = ttsStore((state: any) => state.setCurrentSentence);
     const theme = useTheme();
     
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
     const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const lhRatio = editorPref.lineHeight || 1.5;
 

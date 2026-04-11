@@ -1,4 +1,5 @@
-import { RefreshControl, SafeAreaView, View, Text, FlatList, TouchableOpacity, useColorScheme, StyleSheet, ScrollView, LayoutAnimation } from "react-native";
+import { RefreshControl, View, Text, FlatList, TouchableOpacity, useColorScheme, StyleSheet, ScrollView, LayoutAnimation } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { normalizeUrl } from "@/types";
 import { ChapterTracker, getAllTrackersAsync, saveTracker } from "./favorites/tracker";
 import React, { useState, useCallback, useEffect, useMemo } from 'react';

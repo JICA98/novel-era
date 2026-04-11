@@ -18,7 +18,7 @@ export const ReaderNavigationToc = ({
     const theme = useTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
     const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
     const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     const currentChapter = parseInt(props.id);
@@ -134,7 +134,7 @@ export const ReaderAppearanceSettings = ({
 }) => {
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const setUserPref = userPrefStore((state: any) => state.setUserPref);
-    const selectedTheme = userPref.editorPreferences.theme || 'light';
+    const selectedTheme = userPref.editorPreferences.theme || 'oled';
 
     // Dynamic color mapping based on the selected reader theme
     const getThemeColors = (themeKey: string) => {
@@ -209,7 +209,7 @@ export const ReaderAppearanceSettings = ({
                 fontSize: 18,
                 lineHeight: 1.5,
                 padding: 16,
-                theme: 'light'
+                theme: 'oled'
             }
         });
     };
@@ -461,7 +461,7 @@ export const ReaderTTSControlsSettings = ({
     const theme = useTheme();
     const userPref = userPrefStore((state: any) => state.userPref) as UserPreferences;
     const editorPref = userPref.editorPreferences;
-    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'light';
+    const readerThemeKey = editorPref.theme && ReaderThemes[editorPref.theme as keyof typeof ReaderThemes] ? editorPref.theme : 'oled';
     const readerBgColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].background;
     const readerTextColor = ReaderThemes[readerThemeKey as keyof typeof ReaderThemes].text;
     
@@ -517,3 +517,8 @@ export const ReaderTTSControlsSettings = ({
         </Portal>
     );
 };
+
+
+export default function DummyModals() {
+    return null;
+}

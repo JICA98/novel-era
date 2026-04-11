@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AtelierText } from '@/components/AtelierText';

@@ -30,7 +30,7 @@ import { ChapterTracker, chapterTrackerStore, getOrCreateNovelTrackerStore, inve
 import { errorPlaceholder } from "../placeholders";
 import { httpGet } from "../storage";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { ChaptersLoadingView } from "./skeletons";
+import { ChaptersLoadingView, NovelSkeleton } from "./skeletons";
 
 const { width } = Dimensions.get('window');
 const HEADER_MAX_HEIGHT = 400;
@@ -53,6 +53,11 @@ function normalizeNovelTitle(title?: string): string {
         .trim();
 }
 
+function displayMetaValue(value?: string, fallback = 'N/A'): string {
+    const trimmed = value?.trim();
+    return trimmed && trimmed.length > 0 ? trimmed : fallback;
+}
+
 export async function fetchContentChapters(repo: Repo, content: Content, cached: boolean): Promise<Content> {
     try {
         const url = repo.repoUrl + repo.homeSelector.path.replace('[bookId]', content.bookId);
@@ -61,6 +66,17 @@ export async function fetchContentChapters(repo: Repo, content: Content, cached:
             onCache: (data) => {
                 if (!data.latestChapter) {
                     return false;
+                }
+
+                if (
+                    repo.homeSelector.ratingSelector ||
+                    repo.homeSelector.viewsSelector ||
+                    repo.homeSelector.bookmarkedSelector ||
+                    repo.homeSelector.statusSelector
+                ) {
+                    if (!data.rating || !data.views || !data.bookmarked || !data.status) {
+                        return false;
+                    }
                 }
 
                 if (repo.homeSelector.tagsSelector) {
@@ -72,11 +88,24 @@ export async function fetchContentChapters(repo: Repo, content: Content, cached:
             onResponse: async (response) => {
                 const html = await response.text();
                 const dom = IDOMParser.parse(html).documentElement;
-                const latestChapter = parseInt(processData(dom, repo.homeSelector.latestChapterSelector).trim());
+                const latestChapterText = processData(dom, repo.homeSelector.latestChapterSelector).trim().replace(/,/g, '');
+                const latestChapter = parseInt(latestChapterText, 10);
                 const summary = processData(dom, repo.homeSelector.summarySelector);
                 const author = processData(dom, repo.homeSelector.authorSelector);
+                const rating = repo.homeSelector.ratingSelector
+                    ? processData(dom, repo.homeSelector.ratingSelector).trim()
+                    : content.rating;
+                const views = repo.homeSelector.viewsSelector
+                    ? processData(dom, repo.homeSelector.viewsSelector).trim()
+                    : content.views;
+                const bookmarked = repo.homeSelector.bookmarkedSelector
+                    ? processData(dom, repo.homeSelector.bookmarkedSelector).trim()
+                    : content.bookmarked;
+                const status = repo.homeSelector.statusSelector
+                    ? processData(dom, repo.homeSelector.statusSelector).trim()
+                    : content.status;
                 const tags = processDataList(dom, repo.homeSelector.tagsSelector);
-                return { ...content, latestChapter, summary, author, tags };
+                return { ...content, latestChapter, summary, author, rating, views, bookmarked, status, tags };
             }
         });
     } catch (error) {
@@ -203,6 +232,10 @@ export default function ContentLayout() {
         const tagsChanged = existingTags.length !== nextTags.length ||
             existingTags.some((tag, index) => tag !== nextTags[index]);
         const metadataChanged =
+            novelTracker.novel.rating !== content.rating ||
+            novelTracker.novel.views !== content.views ||
+            novelTracker.novel.bookmarked !== content.bookmarked ||
+            novelTracker.novel.status !== content.status ||
             novelTracker.novel.latestChapter !== content.latestChapter ||
             novelTracker.novel.summary !== content.summary ||
             novelTracker.novel.author !== content.author ||
@@ -263,9 +296,7 @@ export default function ContentLayout() {
     if (contentData.isLoading) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-                <View style={[styles.center, { flex: 1 }]}>
-                    <ActivityIndicator animating={true} size="large" color={theme.colors.primary} />
-                </View>
+                <NovelSkeleton />
             </SafeAreaView>
         );
     }
@@ -521,7 +552,9 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
                     </Reanimated.View>
 
                     <Reanimated.View style={[styles.heroDynamicDetails, detailsStyle]}>
-                        <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>ONGOING</Text>
+                        <Text style={[styles.heroStatus, { color: theme.colors.onSurfaceVariant }]}>
+                            {displayMetaValue(content.status, 'UNKNOWN').toUpperCase()}
+                        </Text>
                         <Reanimated.Text style={[styles.heroTitle, { color: theme.colors.primary }, titleStyle]}>{content.title}</Reanimated.Text>
 
                         {/* Author row only visible in Chapters mode (Compact) */}
@@ -540,18 +573,24 @@ const NovelHero = ({ content, tabProgress }: { content: Content, tabProgress: Sh
                 <Reanimated.View style={[styles.statsRow, statsOpacity]}>
                     <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
                         <MaterialCommunityIcons name="star" size={20} color={theme.colors.primary} />
-                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>4.9</Text>
+                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                            {displayMetaValue(content.rating)}
+                        </Text>
                         <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>RATING</Text>
                     </View>
                     <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
                         <MaterialCommunityIcons name="eye" size={20} color={theme.colors.primary} />
-                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>240K</Text>
+                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                            {displayMetaValue(content.views)}
+                        </Text>
                         <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>VIEWS</Text>
                     </View>
                     <View style={[styles.statBox, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
                         <MaterialCommunityIcons name="bookmark" size={20} color={theme.colors.primary} />
-                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>15K</Text>
-                        <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>FOLLOWS</Text>
+                        <Text style={[styles.statValue, { color: theme.colors.onSurface }]}>
+                            {displayMetaValue(content.bookmarked)}
+                        </Text>
+                        <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>BOOKMARKS</Text>
                     </View>
                 </Reanimated.View>
             </Reanimated.View>
@@ -597,20 +636,6 @@ const SynopsisTab = ({ content }: { content: Content }) => {
                     </View>
                 </View>
             )}
-
-            <View style={styles.reviewsSection}>
-                <View style={styles.reviewsHeader}>
-                    <Text style={[styles.reviewsTitle, { color: theme.colors.primary }]}>Top Reviews</Text>
-                    <TouchableOpacity><Text style={[styles.seeAll, { color: theme.colors.onSurfaceVariant }]}>SEE ALL</Text></TouchableOpacity>
-                </View>
-                <View style={[styles.reviewCard, { backgroundColor: (theme.colors as any).surfaceContainer }]}>
-                    <View style={styles.stars}>
-                        {[1, 2, 3, 4, 5].map(i => <MaterialCommunityIcons key={i} name="star" size={14} color={theme.colors.secondary} />)}
-                    </View>
-                    <Text style={[styles.reviewText, { color: theme.colors.onSurface }]}>"The magic system is unlike anything I've read. Absolute masterpiece."</Text>
-                    <Text style={[styles.reviewer, { color: theme.colors.onSurfaceVariant }]}>— LITERARY_KNIGHT</Text>
-                </View>
-            </View>
         </View>
     );
 };
@@ -971,47 +996,6 @@ const styles = StyleSheet.create({
     detailTagText: {
         fontFamily: 'Manrope-Bold',
         fontSize: 12,
-    },
-    reviewsSection: {
-        paddingHorizontal: 24,
-    },
-    reviewsHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    reviewsTitle: {
-        fontFamily: 'NotoSerif-Bold',
-        fontSize: 20,
-    },
-    seeAll: {
-        fontFamily: 'Manrope-Bold',
-        fontSize: 10,
-        letterSpacing: 1,
-    },
-    reviewCard: {
-        backgroundColor: 'rgba(238, 237, 240, 0.5)',
-        padding: 20,
-        borderRadius: 16,
-        marginBottom: 12,
-    },
-    stars: {
-        flexDirection: 'row',
-        marginBottom: 8,
-    },
-    reviewText: {
-        fontFamily: 'Manrope-SemiBold',
-        fontStyle: 'italic',
-        fontSize: 14,
-        lineHeight: 22,
-        marginBottom: 8,
-    },
-    reviewer: {
-        fontFamily: 'Manrope-ExtraBold',
-        fontSize: 10,
-        opacity: 0.6,
-        letterSpacing: 1,
     },
 
     // Chapters Tab Styles

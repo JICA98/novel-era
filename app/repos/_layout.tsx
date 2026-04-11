@@ -1,5 +1,6 @@
 import { ActivityIndicator, Appbar, useTheme } from "react-native-paper";
-import { FlatList, RefreshControl, SafeAreaView, View } from "react-native";
+import { FlatList, RefreshControl, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Content, FetchData, normalizeUrl, processData, Repo, resolveRepoTag, SelectorType } from "@/types";

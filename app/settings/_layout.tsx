@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, useColorScheme } from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, useColorScheme, Linking } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Snackbar, Switch } from "react-native-paper";
@@ -228,7 +228,7 @@ export default function Settings() {
                     </SettingsSection>
 
                     {/* Reading Preferences Section */}
-                    <SettingsSection title="Reading Preferences" icon="book-open-variant">
+                    {false && <SettingsSection title="Reading Preferences" icon="book-open-variant">
                         <SettingsItem 
                             title="Default Font" 
                             description={`${userPref?.editorPreferences?.fontFamily || 'Serif'} (18px)`} 
@@ -259,10 +259,10 @@ export default function Settings() {
                                 </View>
                             }
                         />
-                    </SettingsSection>
+                    </SettingsSection>}
 
                     {/* App Theme Section */}
-                    <SettingsSection title="App Theme" icon="theme-light-dark">
+                    {false && <SettingsSection title="App Theme" icon="theme-light-dark">
                         <SettingsItem 
                             title="Theme Mode" 
                             description={userPref?.theme || "System"}
@@ -283,10 +283,10 @@ export default function Settings() {
                                 </View>
                             }
                         />
-                    </SettingsSection>
+                    </SettingsSection>}
 
                     {/* Search Preferences Section */}
-                    <UseRepositoryLayout
+                    {false && <UseRepositoryLayout
                         props={{
                             renderRepositories: (repos) => (
                                 <SearchPreferencesSection
@@ -295,13 +295,11 @@ export default function Settings() {
                                 />
                             ),
                         }}
-                    />
+                    />}
 
                     {/* About Section */}
                     <SettingsSection title="About" icon="information-outline">
-                        <SettingsItem title="Version" description="2.4.1" />
-                        <SettingsItem title="Privacy Policy" icon="open-in-new" showChevron onPress={() => {}} />
-                        <SettingsItem title="Terms of Service" icon="open-in-new" showChevron onPress={() => {}} />
+                        <SettingsItem title="Privacy Policy" icon="open-in-new" showChevron onPress={() => Linking.openURL('https://zenith-blue.web.app/privacy')} />
                     </SettingsSection>
 
                     {/* Logout Button */}

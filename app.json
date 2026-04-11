@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "novel-era",
+    "name": "Atelier",
     "slug": "novel-era",
     "version": "1.0.0",
     "orientation": "default",
@@ -14,9 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "1",
       "bundleIdentifier": "com.zenithblue.ateliernovels"
     },
     "android": {
+      "versionCode": 1,
       "googleServicesFile": "./assets/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
